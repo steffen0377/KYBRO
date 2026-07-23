@@ -9,7 +9,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     csrf_check();
     $id = (int)($_POST['id'] ?? 0);
     $data = [
-        'sku' => trim($_POST['sku']) ?: null,
         'name' => trim($_POST['name']),
         'description' => trim($_POST['description']),
         'unit' => trim($_POST['unit']) ?: 'Stk.',
@@ -26,20 +25,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         redirect('artikel.php?action=' . ($id ? "edit&id=$id" : 'new'));
     }
     if ($id) {
-        $stmt = $pdo->prepare('UPDATE articles SET sku=?,name=?,description=?,unit=?,purchase_price=?,sale_price=?,tax_rate=?,min_stock=?,active=?,track_stock=?,track_serials=? WHERE id=?');
+        // Artikelnummer wird nach Vergabe nicht mehr verändert.
+        $stmt = $pdo->prepare('UPDATE articles SET name=?,description=?,unit=?,purchase_price=?,sale_price=?,tax_rate=?,min_stock=?,active=?,track_stock=?,track_serials=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
         flash('success', 'Artikel aktualisiert.');
     } else {
         $initialStock = $data['track_stock'] ? (float)str_replace(',', '.', $_POST['stock_qty'] ?? '0') : 0;
-        $stmt = $pdo->prepare('INSERT INTO articles (sku,name,description,unit,purchase_price,sale_price,tax_rate,min_stock,active,track_stock,track_serials,stock_qty) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
-        $stmt->execute([...array_values($data), $initialStock]);
-        $newId = $pdo->lastInsertId();
+        $pdo->beginTransaction();
+        try {
+            // Artikel zunächst mit temporärem Platzhalter anlegen, damit die
+            // spätere, auf der ID basierende 5-stellige Artikelnummer feststeht.
+            $placeholderSku = 'TMP-' . bin2hex(random_bytes(8));
+            $stmt = $pdo->prepare('INSERT INTO articles (sku,name,description,unit,purchase_price,sale_price,tax_rate,min_stock,active,track_stock,track_serials,stock_qty) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+            $stmt->execute([$placeholderSku, ...array_values($data), $initialStock]);
+            $newId = $pdo->lastInsertId();
+            $sku = str_pad((string)$newId, 5, '0', STR_PAD_LEFT);
+            $pdo->prepare('UPDATE articles SET sku=? WHERE id=?')->execute([$sku, $newId]);
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            flash('danger', 'Fehler beim Anlegen: ' . $e->getMessage());
+            redirect('artikel.php?action=new');
+        }
         // Anfangsbestand nur automatisch verbuchen, wenn keine Seriennummern-Pflicht besteht
         // (bei Seriennummern-Artikeln erfolgt die Einbuchung gezielt über das Lager-Modul).
         if ($data['track_stock'] && !$data['track_serials'] && $initialStock != 0) {
             adjust_stock((int)$newId, $initialStock, 'einlagerung', 'initial', null, 'Anfangsbestand');
         }
-        flash('success', 'Artikel angelegt.');
+        flash('success', "Artikel angelegt (Artikelnummer $sku).");
     }
     redirect('artikel.php');
 }
@@ -73,8 +86,13 @@ if ($action === 'new' || $action === 'edit') {
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= $article['id'] ?>">
       <div class="row g-3">
-        <div class="col-md-6"><label class="form-label">Artikelnummer (SKU)</label>
-          <input type="text" name="sku" class="form-control" value="<?= e($article['sku']) ?>"></div>
+        <div class="col-md-6"><label class="form-label">Artikelnummer</label>
+          <?php if ($action === 'edit'): ?>
+            <input type="text" class="form-control" value="<?= e($article['sku']) ?>" disabled>
+          <?php else: ?>
+            <input type="text" class="form-control" value="wird automatisch vergeben" disabled>
+          <?php endif; ?>
+        </div>
         <div class="col-md-6"><label class="form-label">Einheit</label>
           <input type="text" name="unit" class="form-control" value="<?= e($article['unit']) ?>"></div>
         <div class="col-12"><label class="form-label">Name *</label>
@@ -136,11 +154,11 @@ $articles = $stmt->fetchAll();
   <a href="artikel.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Artikel</a>
 </div>
 <form class="mb-3" method="get">
-  <input type="text" name="q" class="form-control" style="max-width:300px;" placeholder="Suche nach Name/SKU" value="<?= e($search) ?>">
+  <input type="text" name="q" class="form-control" style="max-width:300px;" placeholder="Suche nach Name/Artikelnummer" value="<?= e($search) ?>">
 </form>
 <div class="card p-3">
 <table class="table table-hover align-middle">
-  <thead><tr><th>SKU</th><th>Name</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
+  <thead><tr><th>Art.-Nr.</th><th>Name</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($articles as $a): ?>
     <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>">

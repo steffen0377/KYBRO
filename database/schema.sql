@@ -74,7 +74,7 @@ CREATE TABLE customers (
 -- ---------------------------------------------------
 CREATE TABLE articles (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    sku VARCHAR(50) UNIQUE,
+    sku VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(200) NOT NULL,
     description TEXT,
     unit VARCHAR(20) NOT NULL DEFAULT 'Stk.',
