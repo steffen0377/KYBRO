@@ -162,7 +162,7 @@ if ($action === 'view') {
     </div>
     <div class="card p-3 mb-3">
       <table class="table">
-        <thead><tr><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt</th></tr></thead>
+        <thead><tr><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($items as $it): ?>
           <tr>
@@ -171,13 +171,18 @@ if ($action === 'view') {
             <td class="text-end"><?= money($it['unit_price']) ?></td>
             <td class="text-end"><?= num($it['tax_rate']) ?>%</td>
             <td class="text-end"><?= money($it['quantity']*$it['unit_price']) ?></td>
+            <td class="text-end">
+              <?php if (!$it['article_id']): ?>
+                <a href="artikel.php?action=new&from_offer_item=<?= $it['id'] ?>" class="btn btn-sm btn-outline-success">Als Artikel anlegen</a>
+              <?php endif; ?>
+            </td>
           </tr>
         <?php endforeach; ?>
         </tbody>
         <tfoot>
-          <tr><td colspan="4" class="text-end">Netto</td><td class="text-end"><?= money($offer['total_net']) ?></td></tr>
-          <tr><td colspan="4" class="text-end">MwSt.</td><td class="text-end"><?= money($offer['total_tax']) ?></td></tr>
-          <tr><td colspan="4" class="text-end fw-bold">Gesamt</td><td class="text-end fw-bold"><?= money($offer['total_gross']) ?></td></tr>
+          <tr><td colspan="4" class="text-end">Netto</td><td class="text-end"><?= money($offer['total_net']) ?></td><td></td></tr>
+          <tr><td colspan="4" class="text-end">MwSt.</td><td class="text-end"><?= money($offer['total_tax']) ?></td><td></td></tr>
+          <tr><td colspan="4" class="text-end fw-bold">Gesamt</td><td class="text-end fw-bold"><?= money($offer['total_gross']) ?></td><td></td></tr>
         </tfoot>
       </table>
       <?php if ($offer['notes']): ?><p class="text-muted"><?= nl2br(e($offer['notes'])) ?></p><?php endif; ?>

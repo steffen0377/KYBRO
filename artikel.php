@@ -53,6 +53,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             adjust_stock((int)$newId, $initialStock, 'einlagerung', 'initial', null, 'Anfangsbestand');
         }
         flash('success', "Artikel angelegt (Artikelnummer $sku).");
+
+        // Falls der Artikel aus einer manuellen Angebotsposition heraus angelegt wurde:
+        // Position verknüpfen und zurück zum Angebot springen.
+        $fromOfferItem = (int)($_POST['from_offer_item'] ?? 0);
+        if ($fromOfferItem) {
+            $itemStmt = $pdo->prepare('SELECT offer_id FROM offer_items WHERE id=? AND article_id IS NULL');
+            $itemStmt->execute([$fromOfferItem]);
+            $offerItem = $itemStmt->fetch();
+            if ($offerItem) {
+                $pdo->prepare('UPDATE offer_items SET article_id=? WHERE id=?')->execute([$newId, $fromOfferItem]);
+                flash('success', 'Artikel wurde zusätzlich mit der Angebotsposition verknüpft.');
+                redirect('angebote.php?action=view&id=' . $offerItem['offer_id']);
+            }
+        }
     }
     redirect('artikel.php');
 }
@@ -74,6 +88,20 @@ if ($action === 'delete' && isset($_GET['id'])) {
 // ---------- FORMULAR (neu/bearbeiten) ----------
 if ($action === 'new' || $action === 'edit') {
     $article = ['id'=>0,'sku'=>'','name'=>'','description'=>'','unit'=>'Stk.','purchase_price'=>0,'sale_price'=>0,'tax_rate'=>19,'stock_qty'=>0,'min_stock'=>0,'active'=>1,'track_stock'=>1,'track_serials'=>0];
+    $fromOfferItem = 0;
+    if ($action === 'new' && !empty($_GET['from_offer_item'])) {
+        $fromOfferItem = (int)$_GET['from_offer_item'];
+        $stmt = $pdo->prepare('SELECT * FROM offer_items WHERE id=? AND article_id IS NULL');
+        $stmt->execute([$fromOfferItem]);
+        $sourceItem = $stmt->fetch();
+        if ($sourceItem) {
+            $article['name'] = $sourceItem['description'];
+            $article['sale_price'] = $sourceItem['unit_price'];
+            $article['tax_rate'] = $sourceItem['tax_rate'];
+        } else {
+            $fromOfferItem = 0; // bereits verknüpft oder ungültig - normales leeres Formular
+        }
+    }
     if ($action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM articles WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
@@ -82,8 +110,12 @@ if ($action === 'new' || $action === 'edit') {
     }
     ?>
     <h4><?= $action === 'new' ? 'Neuer Artikel' : 'Artikel bearbeiten' ?></h4>
+    <?php if ($fromOfferItem): ?>
+      <div class="alert alert-info">Übernommen aus einer Angebotsposition. Bitte prüfen und bei Bedarf ergänzen (z.B. Einkaufspreis, Einheit, Artikel- und Lagerbestand-Einstellungen).</div>
+    <?php endif; ?>
     <form method="post" action="artikel.php?action=save" class="card p-4" style="max-width:700px;">
       <?= csrf_field() ?>
+      <?php if ($fromOfferItem): ?><input type="hidden" name="from_offer_item" value="<?= $fromOfferItem ?>"><?php endif; ?>
       <input type="hidden" name="id" value="<?= $article['id'] ?>">
       <div class="row g-3">
         <div class="col-md-6"><label class="form-label">Artikelnummer</label>
