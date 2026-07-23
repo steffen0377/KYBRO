@@ -1,0 +1,9 @@
+# Lokale, serverspezifische Konfiguration (enthält Zugangsdaten) - NIE einchecken
+config/config.php
+
+# Composer-Abhängigkeiten (werden per composer install erzeugt)
+/vendor/
+
+# Betriebssystem-/Editor-Dateien
+.DS_Store
+*.log

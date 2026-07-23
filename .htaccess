@@ -1,0 +1,10 @@
+# Zugriff auf sensible Verzeichnisse von außen sperren
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^config/ - [F,L]
+RewriteRule ^includes/ - [F,L]
+RewriteRule ^database/ - [F,L]
+RewriteRule ^vendor/ - [F,L]
+</IfModule>
+
+Options -Indexes
