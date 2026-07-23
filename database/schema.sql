@@ -84,6 +84,7 @@ CREATE TABLE articles (
     stock_qty DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     min_stock DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     track_stock TINYINT(1) NOT NULL DEFAULT 1,
+    track_serials TINYINT(1) NOT NULL DEFAULT 0,
     active TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -171,4 +172,21 @@ CREATE TABLE invoice_items (
     tax_rate DECIMAL(5,2) NOT NULL DEFAULT 19.00,
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
     FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------
+-- Seriennummern (optional, pro Artikel aktivierbar)
+-- ---------------------------------------------------
+CREATE TABLE article_serials (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    article_id INT NOT NULL,
+    serial_number VARCHAR(100) NOT NULL,
+    status ENUM('lager','verkauft','defekt') NOT NULL DEFAULT 'lager',
+    invoice_id INT DEFAULT NULL,
+    note VARCHAR(255) DEFAULT '',
+    sold_at DATETIME DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_article_serial (article_id, serial_number),
+    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

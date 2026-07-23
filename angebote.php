@@ -99,14 +99,25 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
         $stmt->execute([$number, $offer['id'], $offer['customer_id'], date('Y-m-d'), date('Y-m-d', strtotime('+14 days')), 'entwurf', $offer['notes'], $offer['total_net'], $offer['total_tax'], $offer['total_gross'], current_user()['id']]);
         $invoiceId = $pdo->lastInsertId();
         $itemStmt = $pdo->prepare('INSERT INTO invoice_items (invoice_id,article_id,position,description,quantity,unit_price,tax_rate) VALUES (?,?,?,?,?,?,?)');
+        $needsSerialAssignment = false;
         foreach ($items as $it) {
             $itemStmt->execute([$invoiceId, $it['article_id'], $it['position'], $it['description'], $it['quantity'], $it['unit_price'], $it['tax_rate']]);
             if ($it['article_id']) {
-                adjust_stock((int)$it['article_id'], -1 * (float)$it['quantity'], 'verkauf', 'invoice', $invoiceId, 'Verkauf über Rechnung ' . $number);
+                $trackStmt = $pdo->prepare('SELECT track_serials FROM articles WHERE id=?');
+                $trackStmt->execute([$it['article_id']]);
+                if ($trackStmt->fetch()['track_serials'] ?? false) {
+                    $needsSerialAssignment = true;
+                } else {
+                    adjust_stock((int)$it['article_id'], -1 * (float)$it['quantity'], 'verkauf', 'invoice', $invoiceId, 'Verkauf über Rechnung ' . $number);
+                }
             }
         }
         $pdo->prepare("UPDATE offers SET status='angenommen' WHERE id=?")->execute([$offer['id']]);
         $pdo->commit();
+        if ($needsSerialAssignment) {
+            flash('success', "Rechnung $number wurde erstellt. Bitte jetzt die Seriennummern der verkauften Geräte zuordnen.");
+            redirect('rechnungen.php?action=assign_serials&id=' . $invoiceId);
+        }
         flash('success', "Rechnung $number wurde erstellt (Lagerbestand wurde reduziert).");
         redirect('rechnungen.php?action=view&id=' . $invoiceId);
     } catch (Exception $e) {

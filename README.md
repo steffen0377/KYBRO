@@ -122,13 +122,15 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
 
 ## 6. Funktionsüberblick
 
-- **Artikel**: Verwaltung mit SKU, Preisen, MwSt.-Satz, Mindestbestand
-- **Lager**: Wareneingang buchen, Bestandskorrekturen (Inventur), vollständige Bewegungshistorie
+- **Artikel**: Verwaltung mit SKU, Preisen, MwSt.-Satz, Mindestbestand, optionaler Seriennummern-Erfassung
+- **Lager**: Wareneingang buchen (mit oder ohne Seriennummern), Bestandskorrekturen (Inventur), vollständige Bewegungshistorie, Seriennummern-Verwaltung (defekt melden/entfernen)
 - **Kunden**: Stammdatenverwaltung
 - **Angebote**: Erstellen mit mehreren Positionen, PDF-Export, Umwandlung in Rechnung
   (reduziert dabei automatisch den Lagerbestand)
 - **Rechnungen**: Erstellen (reduziert bei Neuanlage automatisch den Lagerbestand),
-  Statusverwaltung (Entwurf/versendet/bezahlt/überfällig/storniert), PDF-Export
+  Statusverwaltung (Entwurf/versendet/bezahlt/überfällig/storniert), PDF-Export.
+  Bei Artikeln mit Seriennummern-Pflicht wirst du nach dem Speichern zur
+  Seriennummern-Zuordnung weitergeleitet – der Lagerbestand wird erst danach reduziert.
 - **Benutzer**: Admin kann weitere Benutzer mit Rolle "Benutzer" oder "Administrator" anlegen
 - **Einstellungen**: Firmendaten, Bankverbindung, Nummernkreise (nur Admin)
 

@@ -19,21 +19,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         'min_stock' => (float)str_replace(',', '.', $_POST['min_stock']),
         'active' => isset($_POST['active']) ? 1 : 0,
         'track_stock' => isset($_POST['track_stock']) ? 1 : 0,
+        'track_serials' => (isset($_POST['track_stock']) && isset($_POST['track_serials'])) ? 1 : 0,
     ];
     if (!$data['name']) {
         flash('danger', 'Name ist Pflichtfeld.');
         redirect('artikel.php?action=' . ($id ? "edit&id=$id" : 'new'));
     }
     if ($id) {
-        $stmt = $pdo->prepare('UPDATE articles SET sku=?,name=?,description=?,unit=?,purchase_price=?,sale_price=?,tax_rate=?,min_stock=?,active=?,track_stock=? WHERE id=?');
+        $stmt = $pdo->prepare('UPDATE articles SET sku=?,name=?,description=?,unit=?,purchase_price=?,sale_price=?,tax_rate=?,min_stock=?,active=?,track_stock=?,track_serials=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
         flash('success', 'Artikel aktualisiert.');
     } else {
         $initialStock = $data['track_stock'] ? (float)str_replace(',', '.', $_POST['stock_qty'] ?? '0') : 0;
-        $stmt = $pdo->prepare('INSERT INTO articles (sku,name,description,unit,purchase_price,sale_price,tax_rate,min_stock,active,track_stock,stock_qty) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+        $stmt = $pdo->prepare('INSERT INTO articles (sku,name,description,unit,purchase_price,sale_price,tax_rate,min_stock,active,track_stock,track_serials,stock_qty) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
         $stmt->execute([...array_values($data), $initialStock]);
         $newId = $pdo->lastInsertId();
-        if ($data['track_stock'] && $initialStock != 0) {
+        // Anfangsbestand nur automatisch verbuchen, wenn keine Seriennummern-Pflicht besteht
+        // (bei Seriennummern-Artikeln erfolgt die Einbuchung gezielt über das Lager-Modul).
+        if ($data['track_stock'] && !$data['track_serials'] && $initialStock != 0) {
             adjust_stock((int)$newId, $initialStock, 'einlagerung', 'initial', null, 'Anfangsbestand');
         }
         flash('success', 'Artikel angelegt.');
@@ -57,7 +60,7 @@ if ($action === 'delete' && isset($_GET['id'])) {
 
 // ---------- FORMULAR (neu/bearbeiten) ----------
 if ($action === 'new' || $action === 'edit') {
-    $article = ['id'=>0,'sku'=>'','name'=>'','description'=>'','unit'=>'Stk.','purchase_price'=>0,'sale_price'=>0,'tax_rate'=>19,'stock_qty'=>0,'min_stock'=>0,'active'=>1,'track_stock'=>1];
+    $article = ['id'=>0,'sku'=>'','name'=>'','description'=>'','unit'=>'Stk.','purchase_price'=>0,'sale_price'=>0,'tax_rate'=>19,'stock_qty'=>0,'min_stock'=>0,'active'=>1,'track_stock'=>1,'track_serials'=>0];
     if ($action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM articles WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
@@ -96,6 +99,11 @@ if ($action === 'new' || $action === 'edit') {
         <?php endif; ?>
         <div class="col-md-6"><label class="form-label">Mindestbestand</label>
           <input type="text" name="min_stock" class="form-control" value="<?= num($article['min_stock']) ?>"></div>
+        <div class="col-12 form-check">
+          <input type="checkbox" name="track_serials" class="form-check-input" id="track_serials" <?= $article['track_serials'] ? 'checked' : '' ?>>
+          <label class="form-check-label" for="track_serials">Seriennummern erfassen</label>
+          <div class="form-text">Jede Einheit wird einzeln mit Seriennummer im Lager geführt (z.B. Elektronik-Geräte). Ein-/Auslagerung erfolgt dann über das Lager-Modul mit Seriennummernerfassung.</div>
+        </div>
         </div>
         <div class="col-12 form-check">
           <input type="checkbox" name="active" class="form-check-input" id="active" <?= $article['active'] ? 'checked' : '' ?>>
@@ -137,7 +145,7 @@ $articles = $stmt->fetchAll();
   <?php foreach ($articles as $a): ?>
     <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>">
       <td><?= e($a['sku']) ?></td>
-      <td><a href="artikel.php?action=edit&id=<?= $a['id'] ?>"><?= e($a['name']) ?></a></td>
+      <td><a href="artikel.php?action=edit&id=<?= $a['id'] ?>"><?= e($a['name']) ?></a> <?= $a['track_serials'] ? '<span class="badge bg-info text-dark">S/N</span>' : '' ?></td>
       <td class="text-end"><?= money($a['sale_price']) ?></td>
       <td class="text-end"><?= num($a['tax_rate']) ?>%</td>
       <td class="text-end <?= ($a['track_stock'] && $a['stock_qty'] <= $a['min_stock']) ? 'low-stock' : '' ?>">
