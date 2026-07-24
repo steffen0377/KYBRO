@@ -3,11 +3,15 @@ body { background-color: #f4f6f9; }
 .table thead { background-color: #eef1f5; }
 .low-stock { color: #b02a37; font-weight: 600; }
 
+html, body { height: 100%; }
 #wrapper { min-height: 100vh; }
 .sidebar {
   width: 240px;
   min-width: 240px;
-  min-height: 100vh;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
 }
 .sidebar .nav-link {
   color: rgba(255,255,255,.75);
