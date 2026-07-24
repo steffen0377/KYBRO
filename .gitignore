@@ -7,3 +7,7 @@ config/config.php
 # Betriebssystem-/Editor-Dateien
 .DS_Store
 *.log
+
+# Hochgeladene Logos (serverspezifisch, nicht versioniert)
+/uploads/*
+!/uploads/.gitkeep

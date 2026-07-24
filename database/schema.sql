@@ -13,6 +13,7 @@ USE warenwirtschaft;
 CREATE TABLE company_settings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     company_name VARCHAR(150) NOT NULL DEFAULT '',
+    logo_path VARCHAR(255) DEFAULT NULL,
     street VARCHAR(150) DEFAULT '',
     zip VARCHAR(20) DEFAULT '',
     city VARCHAR(100) DEFAULT '',

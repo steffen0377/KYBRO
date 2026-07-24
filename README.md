@@ -69,6 +69,7 @@ Rechte setzen:
 sudo chown -R www-data:www-data /var/www/warenwirtschaft
 sudo find /var/www/warenwirtschaft -type d -exec chmod 755 {} \;
 sudo find /var/www/warenwirtschaft -type f -exec chmod 644 {} \;
+sudo chmod 775 /var/www/warenwirtschaft/uploads   # Logo-Upload benötigt Schreibrecht für www-data
 ```
 
 ## 4. Apache virtuellen Host einrichten
@@ -137,7 +138,8 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
 - **Kategorien**: Artikel können mehreren Kategorien zugeordnet werden;
   Kategorien selbst werden über den Menüpunkt "Kategorien" verwaltet und
   lassen sich in der Artikelliste als Filter (Mehrfachauswahl) nutzen
-- **Einstellungen**: Firmendaten, Bankverbindung, Nummernkreise (nur Admin)
+- **Einstellungen**: Firmendaten, Logo (wird in der linken Seitenleiste angezeigt),
+  Bankverbindung, Nummernkreise (nur Admin)
 
 ## 7. Hinweise & bekannte Einschränkungen (MVP)
 

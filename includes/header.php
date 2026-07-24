@@ -3,47 +3,70 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/functions.php';
 require_login();
 $u = current_user();
+$company = company_settings();
+
+// Aktiven Menüpunkt anhand des aktuellen Dateinamens bestimmen
+$currentScript = basename($_SERVER['SCRIPT_NAME']);
+function nav_active(string $script): string {
+    global $currentScript;
+    return $currentScript === $script ? 'active' : '';
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= isset($pageTitle) ? e($pageTitle) . ' – ' : '' ?>Warenwirtschaft</title>
+<title><?= isset($pageTitle) ? e($pageTitle) . ' – ' : '' ?><?= e($company['company_name'] ?: 'Warenwirtschaft') ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="<?= APP_URL ?>/index.php">📦 Warenwirtschaft</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/index.php">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/artikel.php">Artikel</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/kategorien.php">Kategorien</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/lager.php">Lager</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/kunden.php">Kunden</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/angebote.php">Angebote</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/rechnungen.php">Rechnungen</a></li>
-        <?php if ($u['role'] === 'admin'): ?>
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/benutzer.php">Benutzer</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/einstellungen.php">Einstellungen</a></li>
+<div class="d-flex" id="wrapper">
+
+  <nav class="sidebar bg-dark text-white p-3 d-none d-md-block" id="sidebar">
+    <div class="sidebar-brand text-center mb-4">
+      <a href="<?= APP_URL ?>/index.php" class="text-white text-decoration-none">
+        <?php if (!empty($company['logo_path'])): ?>
+          <img src="<?= APP_URL ?>/<?= e($company['logo_path']) ?>" alt="Logo" class="sidebar-logo mb-2">
+        <?php else: ?>
+          <div class="fs-2 mb-1">📦</div>
         <?php endif; ?>
-      </ul>
-      <span class="navbar-text me-3">Angemeldet als <strong><?= e($u['full_name']) ?></strong></span>
-      <a href="<?= APP_URL ?>/logout.php" class="btn btn-outline-light btn-sm">Abmelden</a>
+        <div class="fw-bold"><?= e($company['company_name'] ?: 'Warenwirtschaft') ?></div>
+      </a>
     </div>
-  </div>
-</nav>
-<div class="container-fluid">
-<?php foreach (get_flashes() as $f): ?>
-  <div class="alert alert-<?= e($f['type']) ?> alert-dismissible fade show" role="alert">
-    <?= e($f['message']) ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-<?php endforeach; ?>
+    <ul class="nav nav-pills flex-column gap-1">
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('index.php') ?>" href="<?= APP_URL ?>/index.php"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('artikel.php') ?>" href="<?= APP_URL ?>/artikel.php"><i class="bi bi-box-seam me-2"></i>Artikel</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('kategorien.php') ?>" href="<?= APP_URL ?>/kategorien.php"><i class="bi bi-tags me-2"></i>Kategorien</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('lager.php') ?>" href="<?= APP_URL ?>/lager.php"><i class="bi bi-archive me-2"></i>Lager</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('kunden.php') ?>" href="<?= APP_URL ?>/kunden.php"><i class="bi bi-people me-2"></i>Kunden</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('angebote.php') ?>" href="<?= APP_URL ?>/angebote.php"><i class="bi bi-file-earmark-text me-2"></i>Angebote</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('rechnungen.php') ?>" href="<?= APP_URL ?>/rechnungen.php"><i class="bi bi-receipt me-2"></i>Rechnungen</a></li>
+      <?php if ($u['role'] === 'admin'): ?>
+      <li class="nav-item mt-3"><hr class="text-white-50 my-1"></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('benutzer.php') ?>" href="<?= APP_URL ?>/benutzer.php"><i class="bi bi-person-badge me-2"></i>Benutzer</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('einstellungen.php') ?>" href="<?= APP_URL ?>/einstellungen.php"><i class="bi bi-gear me-2"></i>Einstellungen</a></li>
+      <?php endif; ?>
+    </ul>
+  </nav>
+
+  <div class="flex-grow-1" style="min-width:0;">
+    <div class="topbar d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+      <button class="btn btn-outline-secondary d-md-none" type="button" onclick="document.getElementById('sidebar').classList.toggle('d-none')">
+        <i class="bi bi-list"></i>
+      </button>
+      <span class="d-none d-md-inline"></span>
+      <div>
+        <span class="me-3">Angemeldet als <strong><?= e($u['full_name']) ?></strong></span>
+        <a href="<?= APP_URL ?>/logout.php" class="btn btn-outline-secondary btn-sm">Abmelden</a>
+      </div>
+    </div>
+    <div class="container-fluid p-4">
+    <?php foreach (get_flashes() as $f): ?>
+      <div class="alert alert-<?= e($f['type']) ?> alert-dismissible fade show" role="alert">
+        <?= e($f['message']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <?php endforeach; ?>
