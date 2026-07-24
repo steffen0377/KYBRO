@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         // Artikelnummer wird nach Vergabe nicht mehr verändert.
         $stmt = $pdo->prepare('UPDATE articles SET name=?,description=?,unit=?,purchase_price=?,sale_price=?,tax_rate=?,min_stock=?,active=?,track_stock=?,track_serials=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
+        save_article_categories($pdo, $id, $_POST['category_ids'] ?? []);
         flash('success', 'Artikel aktualisiert.');
     } else {
         $initialStock = $data['track_stock'] ? (float)str_replace(',', '.', $_POST['stock_qty'] ?? '0') : 0;
@@ -41,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             $newId = $pdo->lastInsertId();
             $sku = str_pad((string)$newId, 5, '0', STR_PAD_LEFT);
             $pdo->prepare('UPDATE articles SET sku=? WHERE id=?')->execute([$sku, $newId]);
+            save_article_categories($pdo, (int)$newId, $_POST['category_ids'] ?? []);
             $pdo->commit();
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -108,6 +110,13 @@ if ($action === 'new' || $action === 'edit') {
         $article = $stmt->fetch();
         if (!$article) { flash('danger','Artikel nicht gefunden.'); redirect('artikel.php'); }
     }
+    $allCategories = $pdo->query('SELECT * FROM categories ORDER BY name')->fetchAll();
+    $selectedCategoryIds = [];
+    if ($article['id']) {
+        $catStmt = $pdo->prepare('SELECT category_id FROM article_categories WHERE article_id=?');
+        $catStmt->execute([$article['id']]);
+        $selectedCategoryIds = array_column($catStmt->fetchAll(), 'category_id');
+    }
     ?>
     <h4><?= $action === 'new' ? 'Neuer Artikel' : 'Artikel bearbeiten' ?></h4>
     <?php if ($fromOfferItem): ?>
@@ -155,6 +164,21 @@ if ($action === 'new' || $action === 'edit') {
           <div class="form-text">Jede Einheit wird einzeln mit Seriennummer im Lager geführt (z.B. Elektronik-Geräte). Ein-/Auslagerung erfolgt dann über das Lager-Modul mit Seriennummernerfassung.</div>
         </div>
         </div>
+        <div class="col-12">
+          <label class="form-label">Kategorien</label>
+          <?php if (!$allCategories): ?>
+            <div class="form-text">Noch keine Kategorien angelegt. <a href="kategorien.php">Jetzt anlegen</a>.</div>
+          <?php else: ?>
+          <div class="row">
+            <?php foreach ($allCategories as $cat): ?>
+              <div class="col-md-4 form-check">
+                <input type="checkbox" name="category_ids[]" class="form-check-input" id="cat<?= $cat['id'] ?>" value="<?= $cat['id'] ?>" <?= in_array($cat['id'], $selectedCategoryIds) ? 'checked' : '' ?>>
+                <label class="form-check-label" for="cat<?= $cat['id'] ?>"><?= e($cat['name']) ?></label>
+              </div>
+            <?php endforeach; ?>
+          </div>
+          <?php endif; ?>
+        </div>
         <div class="col-12 form-check">
           <input type="checkbox" name="active" class="form-check-input" id="active" <?= $article['active'] ? 'checked' : '' ?>>
           <label class="form-check-label" for="active">Aktiv</label>
@@ -172,30 +196,77 @@ if ($action === 'new' || $action === 'edit') {
 
 // ---------- LISTE ----------
 $search = trim($_GET['q'] ?? '');
+$selectedFilterCategories = array_values(array_filter(array_map('intval', $_GET['category'] ?? [])));
+
+$where = [];
+$params = [];
 if ($search) {
-    $stmt = $pdo->prepare("SELECT * FROM articles WHERE (name LIKE ? OR sku LIKE ?) ORDER BY name");
-    $like = "%$search%";
-    $stmt->execute([$like, $like]);
-} else {
-    $stmt = $pdo->query('SELECT * FROM articles ORDER BY active DESC, name');
+    $where[] = '(a.name LIKE ? OR a.sku LIKE ?)';
+    $params[] = "%$search%";
+    $params[] = "%$search%";
 }
+if ($selectedFilterCategories) {
+    $placeholders = implode(',', array_fill(0, count($selectedFilterCategories), '?'));
+    $where[] = "a.id IN (SELECT article_id FROM article_categories WHERE category_id IN ($placeholders))";
+    $params = array_merge($params, $selectedFilterCategories);
+}
+$sql = 'SELECT a.* FROM articles a';
+if ($where) {
+    $sql .= ' WHERE ' . implode(' AND ', $where);
+}
+$sql .= ' ORDER BY a.active DESC, a.name';
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
 $articles = $stmt->fetchAll();
+
+// Kategorien je Artikel für die Anzeige nachladen
+$articleCategories = [];
+if ($articles) {
+    $ids = array_column($articles, 'id');
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $catStmt = $pdo->prepare("SELECT ac.article_id, c.name FROM article_categories ac JOIN categories c ON c.id=ac.category_id WHERE ac.article_id IN ($placeholders) ORDER BY c.name");
+    $catStmt->execute($ids);
+    foreach ($catStmt->fetchAll() as $row) {
+        $articleCategories[$row['article_id']][] = $row['name'];
+    }
+}
+$allCategoriesForFilter = $pdo->query('SELECT * FROM categories ORDER BY name')->fetchAll();
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Artikel</h4>
   <a href="artikel.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Artikel</a>
 </div>
-<form class="mb-3" method="get">
-  <input type="text" name="q" class="form-control" style="max-width:300px;" placeholder="Suche nach Name/Artikelnummer" value="<?= e($search) ?>">
+<form class="row g-2 mb-3" method="get">
+  <div class="col-auto">
+    <input type="text" name="q" class="form-control" placeholder="Suche nach Name/Artikelnummer" value="<?= e($search) ?>">
+  </div>
+  <?php if ($allCategoriesForFilter): ?>
+  <div class="col-auto">
+    <select name="category[]" class="form-select" multiple size="<?= min(6, max(2, count($allCategoriesForFilter))) ?>" style="min-width:220px;" title="Nach Kategorie filtern (Mehrfachauswahl mit Strg/Cmd)">
+      <?php foreach ($allCategoriesForFilter as $cat): ?>
+        <option value="<?= $cat['id'] ?>" <?= in_array($cat['id'], $selectedFilterCategories) ? 'selected' : '' ?>><?= e($cat['name']) ?></option>
+      <?php endforeach; ?>
+    </select>
+  </div>
+  <?php endif; ?>
+  <div class="col-auto">
+    <button class="btn btn-outline-primary" type="submit">Filtern</button>
+    <a href="artikel.php" class="btn btn-outline-secondary">Zurücksetzen</a>
+  </div>
 </form>
 <div class="card p-3">
 <table class="table table-hover align-middle">
-  <thead><tr><th>Art.-Nr.</th><th>Name</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
+  <thead><tr><th>Art.-Nr.</th><th>Name</th><th>Kategorien</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($articles as $a): ?>
     <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>">
       <td><?= e($a['sku']) ?></td>
       <td><a href="artikel.php?action=edit&id=<?= $a['id'] ?>"><?= e($a['name']) ?></a> <?= $a['track_serials'] ? '<span class="badge bg-info text-dark">S/N</span>' : '' ?></td>
+      <td>
+        <?php foreach ($articleCategories[$a['id']] ?? [] as $catName): ?>
+          <span class="badge bg-light text-dark border"><?= e($catName) ?></span>
+        <?php endforeach; ?>
+      </td>
       <td class="text-end"><?= money($a['sale_price']) ?></td>
       <td class="text-end"><?= num($a['tax_rate']) ?>%</td>
       <td class="text-end <?= ($a['track_stock'] && $a['stock_qty'] <= $a['min_stock']) ? 'low-stock' : '' ?>">

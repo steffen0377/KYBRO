@@ -25,6 +25,7 @@ $u = current_user();
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/index.php">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/artikel.php">Artikel</a></li>
+        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/kategorien.php">Kategorien</a></li>
         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/lager.php">Lager</a></li>
         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/kunden.php">Kunden</a></li>
         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/angebote.php">Angebote</a></li>

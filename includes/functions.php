@@ -63,6 +63,18 @@ function adjust_stock(int $articleId, float $delta, string $type, ?string $refTy
     $stmt->execute([$articleId, $type, $delta, $refType, $refId, $note, current_user()['id'] ?? null]);
 }
 
+// Kategorie-Zuordnungen eines Artikels ersetzen (Mehrfachzuordnung möglich)
+function save_article_categories(PDO $pdo, int $articleId, array $categoryIds): void {
+    $categoryIds = array_values(array_unique(array_filter(array_map('intval', $categoryIds))));
+    $pdo->prepare('DELETE FROM article_categories WHERE article_id=?')->execute([$articleId]);
+    if ($categoryIds) {
+        $stmt = $pdo->prepare('INSERT INTO article_categories (article_id, category_id) VALUES (?,?)');
+        foreach ($categoryIds as $catId) {
+            $stmt->execute([$articleId, $catId]);
+        }
+    }
+}
+
 function company_settings(): array {
     static $settings = null;
     if ($settings === null) {
