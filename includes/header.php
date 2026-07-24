@@ -20,7 +20,7 @@ function nav_active(string $script): string {
 <title><?= isset($pageTitle) ? e($pageTitle) . ' – ' : '' ?><?= e($company['company_name'] ?: 'Warenwirtschaft') ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<link href="<?= APP_URL ?>/assets/css/style.css" rel="stylesheet">
+<link href="<?= APP_URL ?>/assets/css/style.css?v=<?= @filemtime(__DIR__ . '/../assets/css/style.css') ?: '1' ?>" rel="stylesheet">
 </head>
 <body>
 <div class="d-flex" id="wrapper">
