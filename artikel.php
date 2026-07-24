@@ -12,6 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         'name' => trim($_POST['name']),
         'description' => trim($_POST['description']),
         'unit' => trim($_POST['unit']) ?: 'Stk.',
+        'ean' => trim($_POST['ean'] ?? '') ?: null,
+        'han' => trim($_POST['han'] ?? '') ?: null,
         'purchase_price' => (float)str_replace(',', '.', $_POST['purchase_price']),
         'sale_price' => (float)str_replace(',', '.', $_POST['sale_price']),
         'tax_rate' => (float)str_replace(',', '.', $_POST['tax_rate']),
@@ -26,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     }
     if ($id) {
         // Artikelnummer wird nach Vergabe nicht mehr verändert.
-        $stmt = $pdo->prepare('UPDATE articles SET name=?,description=?,unit=?,purchase_price=?,sale_price=?,tax_rate=?,min_stock=?,active=?,track_stock=?,track_serials=? WHERE id=?');
+        $stmt = $pdo->prepare('UPDATE articles SET name=?,description=?,unit=?,ean=?,han=?,purchase_price=?,sale_price=?,tax_rate=?,min_stock=?,active=?,track_stock=?,track_serials=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
         save_article_categories($pdo, $id, $_POST['category_ids'] ?? []);
         flash('success', 'Artikel aktualisiert.');
@@ -37,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             // Artikel zunächst mit temporärem Platzhalter anlegen, damit die
             // spätere, auf der ID basierende 5-stellige Artikelnummer feststeht.
             $placeholderSku = 'TMP-' . bin2hex(random_bytes(8));
-            $stmt = $pdo->prepare('INSERT INTO articles (sku,name,description,unit,purchase_price,sale_price,tax_rate,min_stock,active,track_stock,track_serials,stock_qty) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+            $stmt = $pdo->prepare('INSERT INTO articles (sku,name,description,unit,ean,han,purchase_price,sale_price,tax_rate,min_stock,active,track_stock,track_serials,stock_qty) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
             $stmt->execute([$placeholderSku, ...array_values($data), $initialStock]);
             $newId = $pdo->lastInsertId();
             $sku = str_pad((string)$newId, 5, '0', STR_PAD_LEFT);
@@ -89,7 +91,7 @@ if ($action === 'delete' && isset($_GET['id'])) {
 
 // ---------- FORMULAR (neu/bearbeiten) ----------
 if ($action === 'new' || $action === 'edit') {
-    $article = ['id'=>0,'sku'=>'','name'=>'','description'=>'','unit'=>'Stk.','purchase_price'=>0,'sale_price'=>0,'tax_rate'=>19,'stock_qty'=>0,'min_stock'=>0,'active'=>1,'track_stock'=>1,'track_serials'=>0];
+    $article = ['id'=>0,'sku'=>'','ean'=>'','han'=>'','name'=>'','description'=>'','unit'=>'Stk.','purchase_price'=>0,'sale_price'=>0,'tax_rate'=>19,'stock_qty'=>0,'min_stock'=>0,'active'=>1,'track_stock'=>1,'track_serials'=>0];
     $fromOfferItem = 0;
     if ($action === 'new' && !empty($_GET['from_offer_item'])) {
         $fromOfferItem = (int)$_GET['from_offer_item'];
@@ -136,6 +138,10 @@ if ($action === 'new' || $action === 'edit') {
         </div>
         <div class="col-md-6"><label class="form-label">Einheit</label>
           <input type="text" name="unit" class="form-control" value="<?= e($article['unit']) ?>"></div>
+        <div class="col-md-6"><label class="form-label">EAN</label>
+          <input type="text" name="ean" class="form-control" value="<?= e($article['ean']) ?>" placeholder="z.B. 4006381333931"></div>
+        <div class="col-md-6"><label class="form-label">HAN (Herstellerartikelnummer)</label>
+          <input type="text" name="han" class="form-control" value="<?= e($article['han']) ?>"></div>
         <div class="col-12"><label class="form-label">Name *</label>
           <input type="text" name="name" class="form-control" required value="<?= e($article['name']) ?>"></div>
         <div class="col-12"><label class="form-label">Beschreibung</label>
@@ -201,7 +207,9 @@ $selectedFilterCategory = (int)($_GET['category'] ?? 0);
 $where = [];
 $params = [];
 if ($search) {
-    $where[] = '(a.name LIKE ? OR a.sku LIKE ?)';
+    $where[] = '(a.name LIKE ? OR a.sku LIKE ? OR a.ean LIKE ? OR a.han LIKE ?)';
+    $params[] = "%$search%";
+    $params[] = "%$search%";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
@@ -243,7 +251,7 @@ if ($selectedFilterCategory) {
 <form class="row g-2 mb-3" method="get">
   <?php if ($selectedFilterCategory): ?><input type="hidden" name="category" value="<?= $selectedFilterCategory ?>"><?php endif; ?>
   <div class="col-auto">
-    <input type="text" name="q" class="form-control" placeholder="Suche nach Name/Artikelnummer" value="<?= e($search) ?>">
+    <input type="text" name="q" class="form-control" placeholder="Suche nach Name/Artikelnummer/EAN/HAN" value="<?= e($search) ?>">
   </div>
   <div class="col-auto">
     <button class="btn btn-outline-primary" type="submit">Suchen</button>

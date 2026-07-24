@@ -124,8 +124,8 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
 ## 6. Funktionsüberblick
 
 - **Artikel**: Verwaltung mit automatisch vergebener, 5-stelliger Artikelnummer
-  (Pflichtfeld, z.B. 00001), Preisen, MwSt.-Satz, Mindestbestand, optionaler
-  Seriennummern-Erfassung
+  (Pflichtfeld, z.B. 00001), EAN und HAN (Herstellerartikelnummer), Preisen,
+  MwSt.-Satz, Mindestbestand, optionaler Seriennummern-Erfassung
 - **Lager**: Wareneingang buchen (mit oder ohne Seriennummern), Bestandskorrekturen (Inventur), vollständige Bewegungshistorie, Seriennummern-Verwaltung (defekt melden/entfernen)
 - **Kunden**: Stammdatenverwaltung
 - **Angebote**: Erstellen mit mehreren Positionen, PDF-Export, Umwandlung in Rechnung
