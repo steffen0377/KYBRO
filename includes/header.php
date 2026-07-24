@@ -15,6 +15,27 @@ function nav_group_active(array $scripts): bool {
     global $currentScript;
     return in_array($currentScript, $scripts, true);
 }
+
+// Kategorien für das Artikel-Untermenü laden und als Baum aufbauen
+$navCategories = db()->query('SELECT id, name, parent_id FROM categories ORDER BY name')->fetchAll();
+$navCategoriesByParent = [];
+foreach ($navCategories as $c) {
+    $navCategoriesByParent[$c['parent_id'] ?? 0][] = $c;
+}
+$navSelectedCategory = ($currentScript === 'artikel.php') ? (int)($_GET['category'] ?? 0) : 0;
+
+function render_article_category_nav(array $byParent, int $parentId, int $depth, int $selectedId): void {
+    if (empty($byParent[$parentId])) return;
+    echo '<ul class="nav flex-column" style="padding-left:' . (12 + $depth * 14) . 'px;">';
+    foreach ($byParent[$parentId] as $cat) {
+        $isActive = $selectedId === (int)$cat['id'];
+        echo '<li class="nav-item">';
+        echo '<a class="nav-link text-white-50 ' . ($isActive ? 'active fw-bold' : '') . '" href="' . APP_URL . '/artikel.php?category=' . $cat['id'] . '">' . htmlspecialchars($cat['name']) . '</a>';
+        render_article_category_nav($byParent, (int)$cat['id'], $depth + 1, $selectedId);
+        echo '</li>';
+    }
+    echo '</ul>';
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -46,7 +67,15 @@ function nav_group_active(array $scripts): bool {
     ?>
     <ul class="nav nav-pills flex-column gap-1">
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('index.php') ?>" href="<?= APP_URL ?>/index.php"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('artikel.php') ?>" href="<?= APP_URL ?>/artikel.php"><i class="bi bi-box-seam me-2"></i>Artikel</a></li>
+      <li class="nav-item">
+        <a class="nav-link text-white <?= nav_active('artikel.php') ?>" href="<?= APP_URL ?>/artikel.php"><i class="bi bi-box-seam me-2"></i>Artikel</a>
+        <?php if ($currentScript === 'artikel.php'): ?>
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item"><a class="nav-link text-white-50 <?= $navSelectedCategory === 0 ? 'active fw-bold' : '' ?>" href="<?= APP_URL ?>/artikel.php"><i class="bi bi-grid me-2"></i>Alle Artikel</a></li>
+          </ul>
+          <?php render_article_category_nav($navCategoriesByParent, 0, 0, $navSelectedCategory); ?>
+        <?php endif; ?>
+      </li>
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('lager.php') ?>" href="<?= APP_URL ?>/lager.php"><i class="bi bi-archive me-2"></i>Lager</a></li>
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('kunden.php') ?>" href="<?= APP_URL ?>/kunden.php"><i class="bi bi-people me-2"></i>Kunden</a></li>
 

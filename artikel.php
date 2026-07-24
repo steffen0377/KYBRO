@@ -229,29 +229,25 @@ if ($articles) {
         $articleCategories[$row['article_id']][] = $row['name'];
     }
 }
-$allCategoriesForFilter = $pdo->query('SELECT * FROM categories ORDER BY name')->fetchAll();
+$selectedCategoryName = null;
+if ($selectedFilterCategory) {
+    $catNameStmt = $pdo->prepare('SELECT name FROM categories WHERE id=?');
+    $catNameStmt->execute([$selectedFilterCategory]);
+    $selectedCategoryName = $catNameStmt->fetch()['name'] ?? null;
+}
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4>Artikel</h4>
+  <h4>Artikel<?= $selectedCategoryName ? ' — Kategorie: ' . e($selectedCategoryName) : '' ?></h4>
   <a href="artikel.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Artikel</a>
 </div>
 <form class="row g-2 mb-3" method="get">
+  <?php if ($selectedFilterCategory): ?><input type="hidden" name="category" value="<?= $selectedFilterCategory ?>"><?php endif; ?>
   <div class="col-auto">
     <input type="text" name="q" class="form-control" placeholder="Suche nach Name/Artikelnummer" value="<?= e($search) ?>">
   </div>
-  <?php if ($allCategoriesForFilter): ?>
   <div class="col-auto">
-    <select name="category" class="form-select" style="min-width:220px;" onchange="this.form.submit()">
-      <option value="">Alle Kategorien</option>
-      <?php foreach ($allCategoriesForFilter as $cat): ?>
-        <option value="<?= $cat['id'] ?>" <?= $selectedFilterCategory===(int)$cat['id'] ? 'selected' : '' ?>><?= e($cat['name']) ?></option>
-      <?php endforeach; ?>
-    </select>
-  </div>
-  <?php endif; ?>
-  <div class="col-auto">
-    <button class="btn btn-outline-primary" type="submit">Filtern</button>
-    <a href="artikel.php" class="btn btn-outline-secondary">Zurücksetzen</a>
+    <button class="btn btn-outline-primary" type="submit">Suchen</button>
+    <a href="<?= $selectedFilterCategory ? 'artikel.php?category=' . $selectedFilterCategory : 'artikel.php' ?>" class="btn btn-outline-secondary">Zurücksetzen</a>
   </div>
 </form>
 <div class="card p-3">

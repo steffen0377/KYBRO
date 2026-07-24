@@ -135,9 +135,11 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
   Bei Artikeln mit Seriennummern-Pflicht wirst du nach dem Speichern zur
   Seriennummern-Zuordnung weitergeleitet – der Lagerbestand wird erst danach reduziert.
 - **Benutzer**: Admin kann weitere Benutzer mit Rolle "Benutzer" oder "Administrator" anlegen
-- **Kategorien**: Artikel können mehreren Kategorien zugeordnet werden;
-  Kategorien selbst werden über den Menüpunkt "Kategorien" verwaltet und
-  lassen sich in der Artikelliste als Filter (Mehrfachauswahl) nutzen
+- **Kategorien**: Artikel können mehreren Kategorien zugeordnet werden
+  (Zuordnung im Artikel-Formular); Kategorien selbst können hierarchisch
+  in Unterkategorien organisiert werden (verwaltet über "Einstellungen
+  > Kategorien") und erscheinen als aufklappbare Menüpunkte unter
+  "Artikel" in der Seitenleiste zum Filtern der Artikelliste
 - **Einstellungen**: Firmendaten, Logo (wird in der linken Seitenleiste angezeigt),
   Bankverbindung, Nummernkreise (nur Admin)
 
