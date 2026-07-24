@@ -63,6 +63,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
     </div>
     <?php
       $verkaufActive = nav_group_active(['angebote.php', 'rechnungen.php']);
+      $einkaufActive = nav_group_active(['lieferanten.php']);
       $einstellungenActive = nav_group_active(['einstellungen.php', 'kategorien.php', 'benutzer.php']);
     ?>
     <ul class="nav nav-pills flex-column gap-1">
@@ -88,6 +89,18 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
           <ul class="nav flex-column ms-3">
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('angebote.php') ?>" href="<?= APP_URL ?>/angebote.php"><i class="bi bi-file-earmark-text me-2"></i>Angebote</a></li>
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('rechnungen.php') ?>" href="<?= APP_URL ?>/rechnungen.php"><i class="bi bi-receipt me-2"></i>Rechnungen</a></li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link text-white d-flex align-items-center <?= $einkaufActive ? '' : 'collapsed' ?>" href="#navEinkauf" data-bs-toggle="collapse" role="button" aria-expanded="<?= $einkaufActive ? 'true' : 'false' ?>" aria-controls="navEinkauf">
+          <i class="bi bi-bag me-2"></i>Einkauf
+          <i class="bi bi-chevron-down ms-auto small nav-chevron"></i>
+        </a>
+        <div class="collapse <?= $einkaufActive ? 'show' : '' ?>" id="navEinkauf">
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('lieferanten.php') ?>" href="<?= APP_URL ?>/lieferanten.php"><i class="bi bi-truck me-2"></i>Lieferanten</a></li>
           </ul>
         </div>
       </li>

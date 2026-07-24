@@ -128,6 +128,8 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
   MwSt.-Satz, Mindestbestand, optionaler Seriennummern-Erfassung
 - **Lager**: Wareneingang buchen (mit oder ohne Seriennummern), Bestandskorrekturen (Inventur), vollständige Bewegungshistorie, Seriennummern-Verwaltung (defekt melden/entfernen)
 - **Kunden**: Stammdatenverwaltung
+- **Einkauf > Lieferanten**: Stammdatenverwaltung für Lieferanten (analog zu
+  Kunden), Nummernkreis "L-00001"
 - **Angebote**: Erstellen mit mehreren Positionen, PDF-Export, Umwandlung in Rechnung
   (reduziert dabei automatisch den Lagerbestand)
 - **Rechnungen**: Erstellen (reduziert bei Neuanlage automatisch den Lagerbestand),
