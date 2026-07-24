@@ -196,7 +196,7 @@ if ($action === 'new' || $action === 'edit') {
 
 // ---------- LISTE ----------
 $search = trim($_GET['q'] ?? '');
-$selectedFilterCategories = array_values(array_filter(array_map('intval', $_GET['category'] ?? [])));
+$selectedFilterCategory = (int)($_GET['category'] ?? 0);
 
 $where = [];
 $params = [];
@@ -205,10 +205,9 @@ if ($search) {
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
-if ($selectedFilterCategories) {
-    $placeholders = implode(',', array_fill(0, count($selectedFilterCategories), '?'));
-    $where[] = "a.id IN (SELECT article_id FROM article_categories WHERE category_id IN ($placeholders))";
-    $params = array_merge($params, $selectedFilterCategories);
+if ($selectedFilterCategory) {
+    $where[] = 'a.id IN (SELECT article_id FROM article_categories WHERE category_id = ?)';
+    $params[] = $selectedFilterCategory;
 }
 $sql = 'SELECT a.* FROM articles a';
 if ($where) {
@@ -242,9 +241,10 @@ $allCategoriesForFilter = $pdo->query('SELECT * FROM categories ORDER BY name')-
   </div>
   <?php if ($allCategoriesForFilter): ?>
   <div class="col-auto">
-    <select name="category[]" class="form-select" multiple size="<?= min(6, max(2, count($allCategoriesForFilter))) ?>" style="min-width:220px;" title="Nach Kategorie filtern (Mehrfachauswahl mit Strg/Cmd)">
+    <select name="category" class="form-select" style="min-width:220px;">
+      <option value="">Alle Kategorien</option>
       <?php foreach ($allCategoriesForFilter as $cat): ?>
-        <option value="<?= $cat['id'] ?>" <?= in_array($cat['id'], $selectedFilterCategories) ? 'selected' : '' ?>><?= e($cat['name']) ?></option>
+        <option value="<?= $cat['id'] ?>" <?= $selectedFilterCategory===(int)$cat['id'] ? 'selected' : '' ?>><?= e($cat['name']) ?></option>
       <?php endforeach; ?>
     </select>
   </div>
