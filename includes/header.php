@@ -11,6 +11,10 @@ function nav_active(string $script): string {
     global $currentScript;
     return $currentScript === $script ? 'active' : '';
 }
+function nav_group_active(array $scripts): bool {
+    global $currentScript;
+    return in_array($currentScript, $scripts, true);
+}
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -36,18 +40,44 @@ function nav_active(string $script): string {
         <div class="fw-bold"><?= e($company['company_name'] ?: 'Warenwirtschaft') ?></div>
       </a>
     </div>
+    <?php
+      $verkaufActive = nav_group_active(['angebote.php', 'rechnungen.php']);
+      $einstellungenActive = nav_group_active(['einstellungen.php', 'kategorien.php', 'benutzer.php']);
+    ?>
     <ul class="nav nav-pills flex-column gap-1">
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('index.php') ?>" href="<?= APP_URL ?>/index.php"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('artikel.php') ?>" href="<?= APP_URL ?>/artikel.php"><i class="bi bi-box-seam me-2"></i>Artikel</a></li>
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('kategorien.php') ?>" href="<?= APP_URL ?>/kategorien.php"><i class="bi bi-tags me-2"></i>Kategorien</a></li>
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('lager.php') ?>" href="<?= APP_URL ?>/lager.php"><i class="bi bi-archive me-2"></i>Lager</a></li>
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('kunden.php') ?>" href="<?= APP_URL ?>/kunden.php"><i class="bi bi-people me-2"></i>Kunden</a></li>
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('angebote.php') ?>" href="<?= APP_URL ?>/angebote.php"><i class="bi bi-file-earmark-text me-2"></i>Angebote</a></li>
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('rechnungen.php') ?>" href="<?= APP_URL ?>/rechnungen.php"><i class="bi bi-receipt me-2"></i>Rechnungen</a></li>
+
+      <li class="nav-item">
+        <a class="nav-link text-white d-flex align-items-center <?= $verkaufActive ? '' : 'collapsed' ?>" href="#navVerkauf" data-bs-toggle="collapse" role="button" aria-expanded="<?= $verkaufActive ? 'true' : 'false' ?>" aria-controls="navVerkauf">
+          <i class="bi bi-cart me-2"></i>Verkauf
+          <i class="bi bi-chevron-down ms-auto small nav-chevron"></i>
+        </a>
+        <div class="collapse <?= $verkaufActive ? 'show' : '' ?>" id="navVerkauf">
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('angebote.php') ?>" href="<?= APP_URL ?>/angebote.php"><i class="bi bi-file-earmark-text me-2"></i>Angebote</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('rechnungen.php') ?>" href="<?= APP_URL ?>/rechnungen.php"><i class="bi bi-receipt me-2"></i>Rechnungen</a></li>
+          </ul>
+        </div>
+      </li>
+
       <?php if ($u['role'] === 'admin'): ?>
       <li class="nav-item mt-3"><hr class="text-white-50 my-1"></li>
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('benutzer.php') ?>" href="<?= APP_URL ?>/benutzer.php"><i class="bi bi-person-badge me-2"></i>Benutzer</a></li>
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('einstellungen.php') ?>" href="<?= APP_URL ?>/einstellungen.php"><i class="bi bi-gear me-2"></i>Einstellungen</a></li>
+      <li class="nav-item">
+        <a class="nav-link text-white d-flex align-items-center <?= $einstellungenActive ? '' : 'collapsed' ?>" href="#navEinstellungen" data-bs-toggle="collapse" role="button" aria-expanded="<?= $einstellungenActive ? 'true' : 'false' ?>" aria-controls="navEinstellungen">
+          <i class="bi bi-gear me-2"></i>Einstellungen
+          <i class="bi bi-chevron-down ms-auto small nav-chevron"></i>
+        </a>
+        <div class="collapse <?= $einstellungenActive ? 'show' : '' ?>" id="navEinstellungen">
+          <ul class="nav flex-column ms-3">
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('einstellungen.php') ?>" href="<?= APP_URL ?>/einstellungen.php"><i class="bi bi-building me-2"></i>Firmeneinstellungen</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('kategorien.php') ?>" href="<?= APP_URL ?>/kategorien.php"><i class="bi bi-tags me-2"></i>Kategorien</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('benutzer.php') ?>" href="<?= APP_URL ?>/benutzer.php"><i class="bi bi-person-badge me-2"></i>Benutzer</a></li>
+          </ul>
+        </div>
+      </li>
       <?php endif; ?>
     </ul>
   </nav>

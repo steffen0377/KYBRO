@@ -26,6 +26,12 @@ html, body { height: 100%; }
   max-height: 70px;
   object-fit: contain;
 }
+.nav-chevron {
+  transition: transform .2s ease;
+}
+.sidebar .nav-link.collapsed .nav-chevron {
+  transform: rotate(-90deg);
+}
 
 @media print {
   .no-print { display: none !important; }
