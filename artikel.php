@@ -241,7 +241,7 @@ $allCategoriesForFilter = $pdo->query('SELECT * FROM categories ORDER BY name')-
   </div>
   <?php if ($allCategoriesForFilter): ?>
   <div class="col-auto">
-    <select name="category" class="form-select" style="min-width:220px;">
+    <select name="category" class="form-select" style="min-width:220px;" onchange="this.form.submit()">
       <option value="">Alle Kategorien</option>
       <?php foreach ($allCategoriesForFilter as $cat): ?>
         <option value="<?= $cat['id'] ?>" <?= $selectedFilterCategory===(int)$cat['id'] ? 'selected' : '' ?>><?= e($cat['name']) ?></option>
