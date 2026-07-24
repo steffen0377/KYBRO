@@ -68,11 +68,11 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
     <ul class="nav nav-pills flex-column gap-1">
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('index.php') ?>" href="<?= APP_URL ?>/index.php"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
       <li class="nav-item">
-        <a class="nav-link text-white <?= nav_active('artikel.php') ?>" href="<?= APP_URL ?>/artikel.php"><i class="bi bi-box-seam me-2"></i>Artikel</a>
+        <a class="nav-link text-white d-flex align-items-center <?= nav_active('artikel.php') ?> <?= $currentScript === 'artikel.php' ? '' : 'collapsed' ?>" href="<?= APP_URL ?>/artikel.php">
+          <i class="bi bi-box-seam me-2"></i>Artikel
+          <i class="bi bi-chevron-down ms-auto small nav-chevron"></i>
+        </a>
         <?php if ($currentScript === 'artikel.php'): ?>
-          <ul class="nav flex-column ms-3">
-            <li class="nav-item"><a class="nav-link text-white-50 <?= $navSelectedCategory === 0 ? 'active fw-bold' : '' ?>" href="<?= APP_URL ?>/artikel.php"><i class="bi bi-grid me-2"></i>Alle Artikel</a></li>
-          </ul>
           <?php render_article_category_nav($navCategoriesByParent, 0, 0, $navSelectedCategory); ?>
         <?php endif; ?>
       </li>
