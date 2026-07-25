@@ -58,7 +58,7 @@ if ($action === 'new' || $action === 'edit') {
         if (!$s) { flash('danger','Lieferant nicht gefunden.'); redirect('lieferanten.php'); }
     }
     ?>
-    <h4><?= $action === 'new' ? 'Neuer Lieferant' : 'Lieferant bearbeiten' ?></h4>
+    <h4><?= $action === 'new' ? 'Neuer Lieferant' : e($s['company'] ?: trim($s['first_name'].' '.$s['last_name'])) ?></h4>
     <form method="post" action="lieferanten.php?action=save" class="card p-4" style="max-width:700px;">
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= $s['id'] ?>">

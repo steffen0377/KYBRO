@@ -57,7 +57,7 @@ if ($action === 'new' || $action === 'edit') {
         if (!$user) { flash('danger','Benutzer nicht gefunden.'); redirect('benutzer.php'); }
     }
     ?>
-    <h4><?= $action==='new' ? 'Neuer Benutzer' : 'Benutzer bearbeiten' ?></h4>
+    <h4><?= $action==='new' ? 'Neuer Benutzer' : e($user['full_name'] ?: $user['username']) ?></h4>
     <form method="post" action="benutzer.php?action=save" class="card p-4" style="max-width:500px;">
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= $user['id'] ?>">

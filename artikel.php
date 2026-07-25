@@ -129,7 +129,7 @@ if ($action === 'new' || $action === 'edit') {
         $articleSuppliers = $supStmt->fetchAll();
     }
     ?>
-    <h4><?= $action === 'new' ? 'Neuer Artikel' : 'Artikel bearbeiten' ?></h4>
+    <h4><?= $action === 'new' ? 'Neuer Artikel' : e($article['name']) ?></h4>
     <?php if ($fromOfferItem): ?>
       <div class="alert alert-info">Übernommen aus einer Angebotsposition. Bitte prüfen und bei Bedarf ergänzen (z.B. Einkaufspreis, Einheit, Artikel- und Lagerbestand-Einstellungen).</div>
     <?php endif; ?>

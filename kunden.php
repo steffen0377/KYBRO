@@ -57,7 +57,7 @@ if ($action === 'new' || $action === 'edit') {
         if (!$c) { flash('danger','Kunde nicht gefunden.'); redirect('kunden.php'); }
     }
     ?>
-    <h4><?= $action === 'new' ? 'Neuer Kunde' : 'Kunde bearbeiten' ?></h4>
+    <h4><?= $action === 'new' ? 'Neuer Kunde' : e($c['company'] ?: trim($c['first_name'].' '.$c['last_name'])) ?></h4>
     <form method="post" action="kunden.php?action=save" class="card p-4" style="max-width:700px;">
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= $c['id'] ?>">
