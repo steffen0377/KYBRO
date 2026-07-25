@@ -1,6 +1,7 @@
 <?php
-$pageTitle = 'Kunden';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
+require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 
@@ -70,6 +71,10 @@ if ($action === 'mark_invoice_paid' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     flash('success', 'Rechnung als bezahlt markiert.');
     redirect('kunden.php?action=edit&id=' . $customerId . '&tab=buchhaltung');
 }
+
+// ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
+$pageTitle = 'Kunden';
+require_once __DIR__ . '/includes/header.php';
 
 if ($action === 'new' || $action === 'edit') {
     $c = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','iban'=>'','bic'=>'','bank_name'=>'','notes'=>''];

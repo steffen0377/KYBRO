@@ -150,7 +150,7 @@ if ($action === 'view') {
         <a href="angebot_pdf.php?id=<?= $offer['id'] ?>" class="btn btn-outline-primary" target="_blank">PDF ansehen</a>
         <a href="angebote.php?action=edit&id=<?= $offer['id'] ?>" class="btn btn-outline-secondary">Bearbeiten</a>
         <?php if ($offer['status'] !== 'angenommen'): ?>
-        <a href="angebote.php?action=to_invoice&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">In Rechnung umwandeln</a>
+        <a href="angebote.php?action=to_invoice&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
         <?php endif; ?>
       </div>
     </div>
@@ -251,6 +251,9 @@ $offers = $stmt->fetchAll();
       <td><?= status_badge($o['status']) ?></td>
       <td class="text-end">
         <a href="angebote.php?action=view&id=<?= $o['id'] ?>" class="btn btn-sm btn-outline-secondary">Ansehen</a>
+        <?php if ($o['status'] !== 'angenommen'): ?>
+        <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
+        <?php endif; ?>
         <a href="angebote.php?action=delete&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Angebot wirklich löschen?')">Löschen</a>
       </td>
     </tr>
