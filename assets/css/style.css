@@ -4,6 +4,7 @@ body { background-color: #f4f6f9; }
 .low-stock { color: #b02a37; font-weight: 600; }
 tr.row-unpaid > td { background-color: #fbdce6 !important; }
 tr.row-paid > td { background-color: #d9f2df !important; }
+tr.row-due > td { background-color: #fff3b0 !important; }
 
 html, body { height: 100%; }
 #wrapper { min-height: 100vh; }

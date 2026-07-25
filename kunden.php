@@ -178,8 +178,8 @@ if ($action === 'new' || $action === 'edit') {
             <?php if (!$offers): ?>
               <p class="text-muted">Noch keine Angebote vorhanden.</p>
             <?php else: ?>
-            <table class="table table-sm">
-              <thead><tr><th>Angebotsnummer</th><th>Angebotsdatum</th><th class="text-end">Summe ohne MwSt.</th><th class="text-end">Summe mit MwSt.</th></tr></thead>
+            <table class="table table-sm align-middle">
+              <thead><tr><th>Angebotsnummer</th><th>Angebotsdatum</th><th class="text-end">Summe ohne MwSt.</th><th class="text-end">Summe mit MwSt.</th><th></th></tr></thead>
               <tbody>
                 <?php foreach ($offers as $o): ?>
                 <tr>
@@ -187,6 +187,9 @@ if ($action === 'new' || $action === 'edit') {
                   <td><?= date('d.m.Y', strtotime($o['offer_date'])) ?></td>
                   <td class="text-end"><?= money($o['total_net']) ?></td>
                   <td class="text-end"><?= money($o['total_gross']) ?></td>
+                  <td class="text-end">
+                    <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
+                  </td>
                 </tr>
                 <?php endforeach; ?>
               </tbody>
@@ -198,12 +201,17 @@ if ($action === 'new' || $action === 'edit') {
               <p class="text-muted">Noch keine Rechnungen vorhanden.</p>
             <?php else: ?>
             <table class="table table-sm align-middle">
-              <thead><tr><th>Rechnungsnummer</th><th>Rechnungsdatum</th><th class="text-end">Summe inkl. MwSt.</th><th class="text-end"></th></tr></thead>
+              <thead><tr><th>Rechnungsnummer</th><th>Rechnungsdatum</th><th>Fällig bis</th><th class="text-end">Summe inkl. MwSt.</th><th class="text-end"></th></tr></thead>
               <tbody>
-                <?php foreach ($invoices as $inv): $isPaid = $inv['status'] === 'bezahlt'; ?>
-                <tr class="<?= $isPaid ? 'row-paid' : 'row-unpaid' ?>">
+                <?php foreach ($invoices as $inv):
+                  $isPaid = $inv['status'] === 'bezahlt';
+                  $isDueSoon = !$isPaid && !empty($inv['due_date']) && strtotime($inv['due_date']) >= strtotime(date('Y-m-d'));
+                  $rowClass = $isPaid ? 'row-paid' : ($isDueSoon ? 'row-due' : 'row-unpaid');
+                ?>
+                <tr class="<?= $rowClass ?>">
                   <td><a href="rechnungen.php?action=view&id=<?= $inv['id'] ?>"><?= e($inv['invoice_number']) ?></a></td>
                   <td><?= date('d.m.Y', strtotime($inv['invoice_date'])) ?></td>
+                  <td><?= $inv['due_date'] ? date('d.m.Y', strtotime($inv['due_date'])) : '–' ?></td>
                   <td class="text-end"><?= money($inv['total_gross']) ?></td>
                   <td class="text-end">
                     <?php if (!$isPaid): ?>
