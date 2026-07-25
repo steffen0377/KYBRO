@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $stmt = $pdo->prepare('UPDATE articles SET name=?,description=?,unit=?,ean=?,han=?,purchase_price=?,sale_price=?,tax_rate=?,min_stock=?,active=?,track_stock=?,track_serials=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
         save_article_categories($pdo, $id, $_POST['category_ids'] ?? []);
+        save_article_suppliers($pdo, $id, $_POST['supplier_id'] ?? [], $_POST['supplier_article_number'] ?? [], $_POST['hek_price'] ?? []);
         flash('success', 'Artikel aktualisiert.');
     } else {
         $initialStock = $data['track_stock'] ? (float)str_replace(',', '.', $_POST['stock_qty'] ?? '0') : 0;
@@ -45,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             $sku = str_pad((string)$newId, 5, '0', STR_PAD_LEFT);
             $pdo->prepare('UPDATE articles SET sku=? WHERE id=?')->execute([$sku, $newId]);
             save_article_categories($pdo, (int)$newId, $_POST['category_ids'] ?? []);
+            save_article_suppliers($pdo, (int)$newId, $_POST['supplier_id'] ?? [], $_POST['supplier_article_number'] ?? [], $_POST['hek_price'] ?? []);
             $pdo->commit();
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -119,82 +121,148 @@ if ($action === 'new' || $action === 'edit') {
         $catStmt->execute([$article['id']]);
         $selectedCategoryIds = array_column($catStmt->fetchAll(), 'category_id');
     }
+    $allSuppliers = $pdo->query('SELECT id, company, first_name, last_name FROM suppliers ORDER BY company, last_name')->fetchAll();
+    $articleSuppliers = [];
+    if ($article['id']) {
+        $supStmt = $pdo->prepare('SELECT * FROM article_suppliers WHERE article_id=?');
+        $supStmt->execute([$article['id']]);
+        $articleSuppliers = $supStmt->fetchAll();
+    }
     ?>
     <h4><?= $action === 'new' ? 'Neuer Artikel' : 'Artikel bearbeiten' ?></h4>
     <?php if ($fromOfferItem): ?>
       <div class="alert alert-info">Übernommen aus einer Angebotsposition. Bitte prüfen und bei Bedarf ergänzen (z.B. Einkaufspreis, Einheit, Artikel- und Lagerbestand-Einstellungen).</div>
     <?php endif; ?>
-    <form method="post" action="artikel.php?action=save" class="card p-4" style="max-width:700px;">
+    <form method="post" action="artikel.php?action=save" class="card p-4" style="max-width:900px;">
       <?= csrf_field() ?>
       <?php if ($fromOfferItem): ?><input type="hidden" name="from_offer_item" value="<?= $fromOfferItem ?>"><?php endif; ?>
       <input type="hidden" name="id" value="<?= $article['id'] ?>">
-      <div class="row g-3">
-        <div class="col-md-6"><label class="form-label">Artikelnummer</label>
-          <?php if ($action === 'edit'): ?>
-            <input type="text" class="form-control" value="<?= e($article['sku']) ?>" disabled>
-          <?php else: ?>
-            <input type="text" class="form-control" value="wird automatisch vergeben" disabled>
-          <?php endif; ?>
-        </div>
-        <div class="col-md-6"><label class="form-label">Einheit</label>
-          <input type="text" name="unit" class="form-control" value="<?= e($article['unit']) ?>"></div>
-        <div class="col-md-6"><label class="form-label">EAN</label>
-          <input type="text" name="ean" class="form-control" value="<?= e($article['ean']) ?>" placeholder="z.B. 4006381333931"></div>
-        <div class="col-md-6"><label class="form-label">HAN (Herstellerartikelnummer)</label>
-          <input type="text" name="han" class="form-control" value="<?= e($article['han']) ?>"></div>
-        <div class="col-12"><label class="form-label">Name *</label>
-          <input type="text" name="name" class="form-control" required value="<?= e($article['name']) ?>"></div>
-        <div class="col-12"><label class="form-label">Beschreibung</label>
-          <textarea name="description" class="form-control" rows="2"><?= e($article['description']) ?></textarea></div>
-        <div class="col-md-4"><label class="form-label">Einkaufspreis (€)</label>
-          <input type="text" name="purchase_price" class="form-control" value="<?= num($article['purchase_price']) ?>"></div>
-        <div class="col-md-4"><label class="form-label">Verkaufspreis (€, netto)</label>
-          <input type="text" name="sale_price" class="form-control" value="<?= num($article['sale_price']) ?>"></div>
-        <div class="col-md-4"><label class="form-label">MwSt.-Satz (%)</label>
-          <input type="text" name="tax_rate" class="form-control" value="<?= num($article['tax_rate']) ?>"></div>
-        <div class="col-12 form-check">
-          <input type="checkbox" name="track_stock" class="form-check-input" id="track_stock" <?= $article['track_stock'] ? 'checked' : '' ?> onchange="document.getElementById('stockFields').style.display = this.checked ? 'flex' : 'none';">
-          <label class="form-check-label" for="track_stock">Lagerbestand für diesen Artikel verwalten</label>
-          <div class="form-text">Ausschalten für Dienstleistungen oder Artikel ohne Bestandsführung.</div>
-        </div>
-        <div class="row g-3 col-12" id="stockFields" style="display: <?= $article['track_stock'] ? 'flex' : 'none' ?>;">
-        <?php if ($action === 'new'): ?>
-        <div class="col-md-6"><label class="form-label">Anfangsbestand</label>
-          <input type="text" name="stock_qty" class="form-control" value="0"></div>
-        <?php endif; ?>
-        <div class="col-md-6"><label class="form-label">Mindestbestand</label>
-          <input type="text" name="min_stock" class="form-control" value="<?= num($article['min_stock']) ?>"></div>
-        <div class="col-12 form-check">
-          <input type="checkbox" name="track_serials" class="form-check-input" id="track_serials" <?= $article['track_serials'] ? 'checked' : '' ?>>
-          <label class="form-check-label" for="track_serials">Seriennummern erfassen</label>
-          <div class="form-text">Jede Einheit wird einzeln mit Seriennummer im Lager geführt (z.B. Elektronik-Geräte). Ein-/Auslagerung erfolgt dann über das Lager-Modul mit Seriennummernerfassung.</div>
-        </div>
-        </div>
-        <div class="col-12">
-          <label class="form-label">Kategorien</label>
-          <?php if (!$allCategories): ?>
-            <div class="form-text">Noch keine Kategorien angelegt. <a href="kategorien.php">Jetzt anlegen</a>.</div>
-          <?php else: ?>
-          <div class="row">
-            <?php foreach ($allCategories as $cat): ?>
-              <div class="col-md-4 form-check">
-                <input type="checkbox" name="category_ids[]" class="form-check-input" id="cat<?= $cat['id'] ?>" value="<?= $cat['id'] ?>" <?= in_array($cat['id'], $selectedCategoryIds) ? 'checked' : '' ?>>
-                <label class="form-check-label" for="cat<?= $cat['id'] ?>"><?= e($cat['name']) ?></label>
+
+      <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="tab-allgemein-btn" data-bs-toggle="tab" data-bs-target="#tab-allgemein" type="button" role="tab" aria-controls="tab-allgemein" aria-selected="true">Allgemein</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-lieferanten-btn" data-bs-toggle="tab" data-bs-target="#tab-lieferanten" type="button" role="tab" aria-controls="tab-lieferanten" aria-selected="false">Lieferanten</button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="tab-allgemein" role="tabpanel" aria-labelledby="tab-allgemein-btn">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Artikelnummer</label>
+              <?php if ($action === 'edit'): ?>
+                <input type="text" class="form-control" value="<?= e($article['sku']) ?>" disabled>
+              <?php else: ?>
+                <input type="text" class="form-control" value="wird automatisch vergeben" disabled>
+              <?php endif; ?>
+            </div>
+            <div class="col-md-6"><label class="form-label">Einheit</label>
+              <input type="text" name="unit" class="form-control" value="<?= e($article['unit']) ?>"></div>
+            <div class="col-md-6"><label class="form-label">EAN</label>
+              <input type="text" name="ean" class="form-control" value="<?= e($article['ean']) ?>" placeholder="z.B. 4006381333931"></div>
+            <div class="col-md-6"><label class="form-label">HAN (Herstellerartikelnummer)</label>
+              <input type="text" name="han" class="form-control" value="<?= e($article['han']) ?>"></div>
+            <div class="col-12"><label class="form-label">Name *</label>
+              <input type="text" name="name" class="form-control" required value="<?= e($article['name']) ?>"></div>
+            <div class="col-12"><label class="form-label">Beschreibung</label>
+              <textarea name="description" class="form-control" rows="2"><?= e($article['description']) ?></textarea></div>
+            <div class="col-md-4"><label class="form-label">Einkaufspreis (€)</label>
+              <input type="text" name="purchase_price" class="form-control" value="<?= num($article['purchase_price']) ?>"></div>
+            <div class="col-md-4"><label class="form-label">Verkaufspreis (€, netto)</label>
+              <input type="text" name="sale_price" class="form-control" value="<?= num($article['sale_price']) ?>"></div>
+            <div class="col-md-4"><label class="form-label">MwSt.-Satz (%)</label>
+              <input type="text" name="tax_rate" class="form-control" value="<?= num($article['tax_rate']) ?>"></div>
+            <div class="col-12 form-check">
+              <input type="checkbox" name="track_stock" class="form-check-input" id="track_stock" <?= $article['track_stock'] ? 'checked' : '' ?> onchange="document.getElementById('stockFields').style.display = this.checked ? 'flex' : 'none';">
+              <label class="form-check-label" for="track_stock">Lagerbestand für diesen Artikel verwalten</label>
+              <div class="form-text">Ausschalten für Dienstleistungen oder Artikel ohne Bestandsführung.</div>
+            </div>
+            <div class="row g-3 col-12" id="stockFields" style="display: <?= $article['track_stock'] ? 'flex' : 'none' ?>;">
+            <?php if ($action === 'new'): ?>
+            <div class="col-md-6"><label class="form-label">Anfangsbestand</label>
+              <input type="text" name="stock_qty" class="form-control" value="0"></div>
+            <?php endif; ?>
+            <div class="col-md-6"><label class="form-label">Mindestbestand</label>
+              <input type="text" name="min_stock" class="form-control" value="<?= num($article['min_stock']) ?>"></div>
+            <div class="col-12 form-check">
+              <input type="checkbox" name="track_serials" class="form-check-input" id="track_serials" <?= $article['track_serials'] ? 'checked' : '' ?>>
+              <label class="form-check-label" for="track_serials">Seriennummern erfassen</label>
+              <div class="form-text">Jede Einheit wird einzeln mit Seriennummer im Lager geführt (z.B. Elektronik-Geräte). Ein-/Auslagerung erfolgt dann über das Lager-Modul mit Seriennummernerfassung.</div>
+            </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Kategorien</label>
+              <?php if (!$allCategories): ?>
+                <div class="form-text">Noch keine Kategorien angelegt. <a href="kategorien.php">Jetzt anlegen</a>.</div>
+              <?php else: ?>
+              <div class="row">
+                <?php foreach ($allCategories as $cat): ?>
+                  <div class="col-md-4 form-check">
+                    <input type="checkbox" name="category_ids[]" class="form-check-input" id="cat<?= $cat['id'] ?>" value="<?= $cat['id'] ?>" <?= in_array($cat['id'], $selectedCategoryIds) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="cat<?= $cat['id'] ?>"><?= e($cat['name']) ?></label>
+                  </div>
+                <?php endforeach; ?>
               </div>
-            <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
+            <div class="col-12 form-check">
+              <input type="checkbox" name="active" class="form-check-input" id="active" <?= $article['active'] ? 'checked' : '' ?>>
+              <label class="form-check-label" for="active">Aktiv</label>
+            </div>
           </div>
-          <?php endif; ?>
         </div>
-        <div class="col-12 form-check">
-          <input type="checkbox" name="active" class="form-check-input" id="active" <?= $article['active'] ? 'checked' : '' ?>>
-          <label class="form-check-label" for="active">Aktiv</label>
+
+        <div class="tab-pane fade" id="tab-lieferanten" role="tabpanel" aria-labelledby="tab-lieferanten-btn">
+          <?php if (!$allSuppliers): ?>
+            <div class="form-text mb-3">Noch keine Lieferanten angelegt. <a href="lieferanten.php">Jetzt anlegen</a>.</div>
+          <?php endif; ?>
+          <table class="table" id="supplierTable">
+            <thead><tr><th style="width:35%">Lieferant</th><th style="width:30%">Artikelnummer beim Lieferanten</th><th style="width:20%">Unser HEK (€)</th><th style="width:5%"></th></tr></thead>
+            <tbody>
+              <?php $supplierRows = $articleSuppliers ?: [['supplier_id' => '', 'supplier_article_number' => '', 'hek_price' => 0]]; ?>
+              <?php foreach ($supplierRows as $row): ?>
+              <tr>
+                <td>
+                  <select name="supplier_id[]" class="form-select">
+                    <option value="">— Lieferant wählen —</option>
+                    <?php foreach ($allSuppliers as $s): ?>
+                      <option value="<?= $s['id'] ?>" <?= (int)($row['supplier_id'] ?? 0) === (int)$s['id'] ? 'selected' : '' ?>><?= e($s['company'] ?: trim($s['first_name'].' '.$s['last_name'])) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </td>
+                <td><input type="text" name="supplier_article_number[]" class="form-control" value="<?= e($row['supplier_article_number'] ?? '') ?>"></td>
+                <td><input type="text" name="hek_price[]" class="form-control" value="<?= num($row['hek_price'] ?? 0) ?>"></td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger remove-supplier-row">✕</button></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+          <button type="button" id="addSupplierRow" class="btn btn-sm btn-outline-primary">+ Lieferant hinzufügen</button>
         </div>
       </div>
+
       <div class="mt-3">
         <button class="btn btn-primary" type="submit">Speichern</button>
         <a href="artikel.php" class="btn btn-secondary">Abbrechen</a>
       </div>
     </form>
+    <script>
+    document.getElementById('addSupplierRow').addEventListener('click', function() {
+      const tbody = document.querySelector('#supplierTable tbody');
+      const row = tbody.rows[0].cloneNode(true);
+      row.querySelectorAll('input').forEach(i => i.value = '');
+      row.querySelector('select').value = '';
+      tbody.appendChild(row);
+      bindSupplierRow(row);
+    });
+    function bindSupplierRow(row) {
+      row.querySelector('.remove-supplier-row').addEventListener('click', function() {
+        if (document.querySelectorAll('#supplierTable tbody tr').length > 1) row.remove();
+      });
+    }
+    document.querySelectorAll('#supplierTable tbody tr').forEach(bindSupplierRow);
+    </script>
     <?php
     require_once __DIR__ . '/includes/footer.php';
     exit;

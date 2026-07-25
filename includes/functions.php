@@ -75,6 +75,24 @@ function save_article_categories(PDO $pdo, int $articleId, array $categoryIds): 
     }
 }
 
+// Lieferanten-Zuordnungen eines Artikels ersetzen (inkl. Lieferanten-Artikelnummer und HEK)
+function save_article_suppliers(PDO $pdo, int $articleId, array $supplierIds, array $supplierArticleNumbers, array $hekPrices): void {
+    $pdo->prepare('DELETE FROM article_suppliers WHERE article_id=?')->execute([$articleId]);
+    $stmt = $pdo->prepare('INSERT INTO article_suppliers (article_id, supplier_id, supplier_article_number, hek_price) VALUES (?,?,?,?)');
+    $seen = [];
+    foreach ($supplierIds as $i => $supplierId) {
+        $supplierId = (int)$supplierId;
+        if (!$supplierId || isset($seen[$supplierId])) continue; // leere Zeile oder Lieferant doppelt gewählt - überspringen
+        $seen[$supplierId] = true;
+        $stmt->execute([
+            $articleId,
+            $supplierId,
+            trim($supplierArticleNumbers[$i] ?? ''),
+            (float)str_replace(',', '.', $hekPrices[$i] ?? '0'),
+        ]);
+    }
+}
+
 function company_settings(): array {
     static $settings = null;
     if ($settings === null) {

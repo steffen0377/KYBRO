@@ -125,7 +125,10 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
 
 - **Artikel**: Verwaltung mit automatisch vergebener, 5-stelliger Artikelnummer
   (Pflichtfeld, z.B. 00001), EAN und HAN (Herstellerartikelnummer), Preisen,
-  MwSt.-Satz, Mindestbestand, optionaler Seriennummern-Erfassung
+  MwSt.-Satz, Mindestbestand, optionaler Seriennummern-Erfassung. Das
+  Formular ist in zwei Registerkarten aufgeteilt: "Allgemein" und
+  "Lieferanten" (dort können einem Artikel mehrere Lieferanten mit jeweils
+  eigener Lieferanten-Artikelnummer und unserem HEK zugeordnet werden)
 - **Lager**: Wareneingang buchen (mit oder ohne Seriennummern), Bestandskorrekturen (Inventur), vollständige Bewegungshistorie, Seriennummern-Verwaltung (defekt melden/entfernen)
 - **Kunden**: Stammdatenverwaltung
 - **Einkauf > Lieferanten**: Stammdatenverwaltung für Lieferanten (analog zu
