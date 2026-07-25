@@ -93,6 +93,23 @@ function save_article_suppliers(PDO $pdo, int $articleId, array $supplierIds, ar
     }
 }
 
+// Ansprechpartner eines Kunden ersetzen (mehrere Ansprechpartner möglich)
+function save_customer_contacts(PDO $pdo, int $customerId, array $lastNames, array $firstNames, array $companies, array $phones, array $emails): void {
+    $pdo->prepare('DELETE FROM customer_contacts WHERE customer_id=?')->execute([$customerId]);
+    $stmt = $pdo->prepare('INSERT INTO customer_contacts (customer_id, last_name, first_name, company, phone, email) VALUES (?,?,?,?,?,?)');
+    foreach ($lastNames as $i => $lastName) {
+        $lastName = trim($lastName);
+        $firstName = trim($firstNames[$i] ?? '');
+        $company = trim($companies[$i] ?? '');
+        $phone = trim($phones[$i] ?? '');
+        $email = trim($emails[$i] ?? '');
+        if ($lastName === '' && $firstName === '' && $company === '' && $phone === '' && $email === '') {
+            continue; // leere Zeile - überspringen
+        }
+        $stmt->execute([$customerId, $lastName, $firstName, $company, $phone, $email]);
+    }
+}
+
 function company_settings(): array {
     static $settings = null;
     if ($settings === null) {

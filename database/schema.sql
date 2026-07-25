@@ -66,8 +66,26 @@ CREATE TABLE customers (
     email VARCHAR(150) DEFAULT '',
     phone VARCHAR(50) DEFAULT '',
     tax_id VARCHAR(50) DEFAULT '',
+    iban VARCHAR(50) DEFAULT '',
+    bic VARCHAR(30) DEFAULT '',
+    bank_name VARCHAR(100) DEFAULT '',
     notes TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------
+-- Ansprechpartner (mehrere pro Kunde möglich)
+-- ---------------------------------------------------
+CREATE TABLE customer_contacts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT NOT NULL,
+    last_name VARCHAR(100) DEFAULT '',
+    first_name VARCHAR(100) DEFAULT '',
+    company VARCHAR(150) DEFAULT '',
+    phone VARCHAR(50) DEFAULT '',
+    email VARCHAR(150) DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------

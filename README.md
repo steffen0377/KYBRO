@@ -130,7 +130,13 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
   "Lieferanten" (dort können einem Artikel mehrere Lieferanten mit jeweils
   eigener Lieferanten-Artikelnummer und unserem HEK zugeordnet werden)
 - **Lager**: Wareneingang buchen (mit oder ohne Seriennummern), Bestandskorrekturen (Inventur), vollständige Bewegungshistorie, Seriennummern-Verwaltung (defekt melden/entfernen)
-- **Kunden**: Stammdatenverwaltung
+- **Kunden**: Stammdatenverwaltung, aufgeteilt in drei Registerkarten:
+  "Allgemein" (Adresse, Kontakt, USt-IdNr.), "Ansprechpartner" (beliebig
+  viele Kontaktpersonen je Kunde mit Name, Vorname, Firma, Telefon,
+  E-Mail) und "Buchhaltung" (Bankverbindung des Kunden, Summe der
+  unbezahlten Rechnungen, die letzten 10 Angebote sowie die letzten 10
+  Rechnungen mit direkter "Bezahlt"-Schaltfläche; unbezahlte
+  Rechnungszeilen sind rosa, bezahlte hellgrün markiert)
 - **Einkauf > Lieferanten**: Stammdatenverwaltung für Lieferanten (analog zu
   Kunden), Nummernkreis "L-00001"
 - **Angebote**: Erstellen mit mehreren Positionen, PDF-Export, Umwandlung in Rechnung

@@ -2,6 +2,8 @@ body { background-color: #f4f6f9; }
 .card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 .table thead { background-color: #eef1f5; }
 .low-stock { color: #b02a37; font-weight: 600; }
+tr.row-unpaid > td { background-color: #fbdce6 !important; }
+tr.row-paid > td { background-color: #d9f2df !important; }
 
 html, body { height: 100%; }
 #wrapper { min-height: 100vh; }
