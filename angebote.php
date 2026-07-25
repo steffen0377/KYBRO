@@ -1,6 +1,7 @@
 <?php
-$pageTitle = 'Angebote';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
+require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 
@@ -134,6 +135,10 @@ if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GE
     redirect('angebote.php');
 }
 
+// ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
+$pageTitle = 'Angebote';
+require_once __DIR__ . '/includes/header.php';
+
 // ---------- ANSICHT ----------
 if ($action === 'view') {
     $stmt = $pdo->prepare('SELECT o.*, c.company, c.first_name, c.last_name, c.street, c.zip, c.city FROM offers o JOIN customers c ON c.id=o.customer_id WHERE o.id=?');
@@ -149,9 +154,7 @@ if ($action === 'view') {
       <div>
         <a href="angebot_pdf.php?id=<?= $offer['id'] ?>" class="btn btn-outline-primary" target="_blank">PDF ansehen</a>
         <a href="angebote.php?action=edit&id=<?= $offer['id'] ?>" class="btn btn-outline-secondary">Bearbeiten</a>
-        <?php if ($offer['status'] !== 'angenommen'): ?>
         <a href="angebote.php?action=to_invoice&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
-        <?php endif; ?>
       </div>
     </div>
     <div class="card p-3 mb-3">
@@ -250,10 +253,7 @@ $offers = $stmt->fetchAll();
       <td class="text-end"><?= money($o['total_gross']) ?></td>
       <td><?= status_badge($o['status']) ?></td>
       <td class="text-end">
-        <a href="angebote.php?action=view&id=<?= $o['id'] ?>" class="btn btn-sm btn-outline-secondary">Ansehen</a>
-        <?php if ($o['status'] !== 'angenommen'): ?>
         <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
-        <?php endif; ?>
         <a href="angebote.php?action=delete&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Angebot wirklich löschen?')">Löschen</a>
       </td>
     </tr>

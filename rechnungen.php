@@ -1,6 +1,7 @@
 <?php
-$pageTitle = 'Rechnungen';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
+require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 
@@ -150,6 +151,10 @@ if ($action === 'assign_serials' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     redirect('rechnungen.php?action=view&id=' . $invoiceId);
 }
+
+// ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
+$pageTitle = 'Rechnungen';
+require_once __DIR__ . '/includes/header.php';
 
 if ($action === 'assign_serials') {
     $stmt = $pdo->prepare('SELECT invoice_number FROM invoices WHERE id=?');
@@ -339,7 +344,6 @@ $invoices = $stmt->fetchAll();
       <td class="text-end"><?= money($i['total_gross']) ?></td>
       <td><?= status_badge($i['status']) ?></td>
       <td class="text-end">
-        <a href="rechnungen.php?action=view&id=<?= $i['id'] ?>" class="btn btn-sm btn-outline-secondary">Ansehen</a>
         <?php if ($i['status']==='entwurf'): ?>
         <a href="rechnungen.php?action=delete&id=<?= $i['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Rechnung wirklich löschen?')">Löschen</a>
         <?php endif; ?>

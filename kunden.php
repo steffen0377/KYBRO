@@ -294,7 +294,6 @@ $customers = $stmt->fetchAll();
       <td><?= e($c['zip'].' '.$c['city']) ?></td>
       <td><?= e($c['email']) ?></td>
       <td class="text-end">
-        <a href="kunden.php?action=edit&id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
         <a href="kunden.php?action=delete&id=<?= $c['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Kunde wirklich löschen?')">Löschen</a>
       </td>
     </tr>
