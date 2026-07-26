@@ -124,7 +124,6 @@ function render_suppliers_table(array $suppliers): void {
           <td><?= e($s['zip'].' '.$s['city']) ?></td>
           <td><?= e($s['email']) ?></td>
           <td class="text-end">
-            <a href="lieferanten.php?action=edit&id=<?= $s['id'] ?>" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
             <a href="lieferanten.php?action=delete&id=<?= $s['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Lieferant wirklich löschen?')">Löschen</a>
           </td>
         </tr>
