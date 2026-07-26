@@ -1,14 +1,14 @@
 <?php
 $pageTitle = 'Artikel';
+// Auth/Funktionen werden immer zuerst geladen (auch für normale Aufrufe),
+// damit POST-Aktionen wie "save" oder "delete" ihren redirect() ausführen
+// können, BEVOR includes/header.php irgendwelches HTML ausgibt. Sonst
+// schlägt header('Location: ...') fehl ("headers already sent") und die
+// Seite bleibt nach dem Speichern leer.
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
+require_login();
 $isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
-if ($isAjax) {
-    // Live-Suche: nur Auth/Funktionen laden, kein komplettes Seitenlayout
-    require_once __DIR__ . '/includes/auth.php';
-    require_once __DIR__ . '/includes/functions.php';
-    require_login();
-} else {
-    require_once __DIR__ . '/includes/header.php';
-}
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 
@@ -97,6 +97,12 @@ if ($action === 'delete' && isset($_GET['id'])) {
         flash('danger', 'Ungültiger Vorgang.');
     }
     redirect('artikel.php');
+}
+
+// Ab hier wird tatsächlich HTML ausgegeben - Seitenlayout jetzt laden
+// (bei AJAX-Live-Suche wird bewusst kein komplettes Layout gerendert).
+if (!$isAjax) {
+    require_once __DIR__ . '/includes/header.php';
 }
 
 // ---------- FORMULAR (neu/bearbeiten) ----------
