@@ -152,6 +152,23 @@ if ($action === 'assign_serials' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('rechnungen.php?action=view&id=' . $invoiceId);
 }
 
+// ---------- STATUS ÄNDERN ----------
+if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+    $stmt = $pdo->prepare('UPDATE invoices SET status=? WHERE id=?');
+    $stmt->execute([$_POST['status'], (int)$_POST['id']]);
+    flash('success', 'Status aktualisiert.');
+    redirect('rechnungen.php?action=view&id=' . (int)$_POST['id']);
+}
+
+// ---------- LÖSCHEN (nur Entwürfe) ----------
+if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
+    $stmt = $pdo->prepare("DELETE FROM invoices WHERE id=? AND status='entwurf'");
+    $stmt->execute([(int)$_GET['id']]);
+    flash('success', 'Rechnung gelöscht (nur Entwürfe können gelöscht werden).');
+    redirect('rechnungen.php');
+}
+
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Rechnungen';
 require_once __DIR__ . '/includes/header.php';
@@ -194,23 +211,6 @@ if ($action === 'assign_serials') {
     </form>
     <?php endif; ?>
     <?php require_once __DIR__ . '/includes/footer.php'; exit;
-}
-
-// ---------- STATUS ÄNDERN ----------
-if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrf_check();
-    $stmt = $pdo->prepare('UPDATE invoices SET status=? WHERE id=?');
-    $stmt->execute([$_POST['status'], (int)$_POST['id']]);
-    flash('success', 'Status aktualisiert.');
-    redirect('rechnungen.php?action=view&id=' . (int)$_POST['id']);
-}
-
-// ---------- LÖSCHEN (nur Entwürfe) ----------
-if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
-    $stmt = $pdo->prepare("DELETE FROM invoices WHERE id=? AND status='entwurf'");
-    $stmt->execute([(int)$_GET['id']]);
-    flash('success', 'Rechnung gelöscht (nur Entwürfe können gelöscht werden).');
-    redirect('rechnungen.php');
 }
 
 // ---------- ANSICHT ----------
