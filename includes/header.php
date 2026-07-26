@@ -50,7 +50,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
 <body>
 <div class="d-flex" id="wrapper">
 
-  <nav class="sidebar bg-dark text-white p-3 d-none d-md-block" id="sidebar">
+  <nav class="sidebar sidebar-bg text-white p-3 d-none d-md-block" id="sidebar">
     <div class="sidebar-brand text-center mb-4">
       <a href="<?= APP_URL ?>/index.php" class="text-white text-decoration-none">
         <?php if (!empty($company['logo_path'])): ?>
