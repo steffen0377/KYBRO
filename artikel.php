@@ -1,6 +1,14 @@
 <?php
 $pageTitle = 'Artikel';
-require_once __DIR__ . '/includes/header.php';
+$isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
+if ($isAjax) {
+    // Live-Suche: nur Auth/Funktionen laden, kein komplettes Seitenlayout
+    require_once __DIR__ . '/includes/auth.php';
+    require_once __DIR__ . '/includes/functions.php';
+    require_login();
+} else {
+    require_once __DIR__ . '/includes/header.php';
+}
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 
@@ -274,7 +282,7 @@ $selectedFilterCategory = (int)($_GET['category'] ?? 0);
 
 $where = [];
 $params = [];
-if ($search) {
+if ($search !== '') {
     $where[] = '(a.name LIKE ? OR a.sku LIKE ? OR a.ean LIKE ? OR a.han LIKE ?)';
     $params[] = "%$search%";
     $params[] = "%$search%";
@@ -290,9 +298,15 @@ if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
 $sql .= ' ORDER BY a.active DESC, a.name';
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$articles = $stmt->fetchAll();
+
+try {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $articles = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $articles = [];
+    flash('danger', 'Fehler bei der Artikelsuche: ' . $e->getMessage());
+}
 
 // Kategorien je Artikel für die Anzeige nachladen
 $articleCategories = [];
@@ -305,55 +319,115 @@ if ($articles) {
         $articleCategories[$row['article_id']][] = $row['name'];
     }
 }
+
+// Rendert nur die Ergebnistabelle (wird auch für die Live-Suche per AJAX genutzt)
+function render_articles_table(array $articles, array $articleCategories): void {
+    ?>
+    <div class="card p-3">
+    <table class="table table-hover align-middle">
+      <thead><tr><th>Art.-Nr.</th><th>Name</th><th>Kategorien</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      <?php if (!$articles): ?>
+        <tr><td colspan="8" class="text-muted text-center py-3">Keine Artikel gefunden.</td></tr>
+      <?php endif; ?>
+      <?php foreach ($articles as $a): ?>
+        <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>">
+          <td><?= e($a['sku']) ?></td>
+          <td><a href="artikel.php?action=edit&id=<?= $a['id'] ?>"><?= e($a['name']) ?></a> <?= $a['track_serials'] ? '<span class="badge bg-info text-dark">S/N</span>' : '' ?></td>
+          <td>
+            <?php foreach ($articleCategories[$a['id']] ?? [] as $catName): ?>
+              <span class="badge bg-light text-dark border"><?= e($catName) ?></span>
+            <?php endforeach; ?>
+          </td>
+          <td class="text-end"><?= money($a['sale_price']) ?></td>
+          <td class="text-end"><?= num($a['tax_rate']) ?>%</td>
+          <td class="text-end <?= ($a['track_stock'] && $a['stock_qty'] <= $a['min_stock']) ? 'low-stock' : '' ?>">
+            <?= $a['track_stock'] ? num($a['stock_qty']) : '<span class="text-muted">— kein Lagerartikel —</span>' ?>
+          </td>
+          <td><?= $a['active'] ? '<span class="badge bg-success">Aktiv</span>' : '<span class="badge bg-secondary">Inaktiv</span>' ?></td>
+          <td class="text-end">
+            <a href="artikel.php?action=edit&id=<?= $a['id'] ?>" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
+            <?php if ($a['active']): ?>
+            <a href="artikel.php?action=delete&id=<?= $a['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Artikel deaktivieren?')">Deaktivieren</a>
+            <?php endif; ?>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
+    <?php
+}
+
+// Bei Live-Suche (AJAX) nur die Tabelle zurückgeben, ohne Layout drumherum
+if ($isAjax) {
+    render_articles_table($articles, $articleCategories);
+    exit;
+}
+
 $selectedCategoryName = null;
 if ($selectedFilterCategory) {
     $catNameStmt = $pdo->prepare('SELECT name FROM categories WHERE id=?');
     $catNameStmt->execute([$selectedFilterCategory]);
-    $selectedCategoryName = $catNameStmt->fetch()['name'] ?? null;
+    $catNameRow = $catNameStmt->fetch();
+    $selectedCategoryName = $catNameRow ? $catNameRow['name'] : null;
 }
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Artikel<?= $selectedCategoryName ? ' — Kategorie: ' . e($selectedCategoryName) : '' ?></h4>
   <a href="artikel.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Artikel</a>
 </div>
-<form class="row g-2 mb-3" method="get">
+<form class="row g-2 mb-3" method="get" id="articleSearchForm">
   <?php if ($selectedFilterCategory): ?><input type="hidden" name="category" value="<?= $selectedFilterCategory ?>"><?php endif; ?>
   <div class="col-auto">
-    <input type="text" name="q" class="form-control" placeholder="Suche nach Name/Artikelnummer/EAN/HAN" value="<?= e($search) ?>">
-  </div>
-  <div class="col-auto">
-    <button class="btn btn-outline-primary" type="submit">Suchen</button>
-    <a href="<?= $selectedFilterCategory ? 'artikel.php?category=' . $selectedFilterCategory : 'artikel.php' ?>" class="btn btn-outline-secondary">Zurücksetzen</a>
+    <div class="position-relative">
+      <input type="text" name="q" id="articleSearchInput" class="form-control" style="padding-right:2rem; min-width:320px;" placeholder="Suche nach Name/Artikelnummer/EAN/HAN" value="<?= e($search) ?>" autocomplete="off">
+      <button type="button" id="articleSearchClear" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2" style="<?= $search === '' ? 'display:none;' : '' ?>" aria-label="Suche leeren"></button>
+    </div>
   </div>
 </form>
-<div class="card p-3">
-<table class="table table-hover align-middle">
-  <thead><tr><th>Art.-Nr.</th><th>Name</th><th>Kategorien</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
-  <tbody>
-  <?php foreach ($articles as $a): ?>
-    <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>">
-      <td><?= e($a['sku']) ?></td>
-      <td><a href="artikel.php?action=edit&id=<?= $a['id'] ?>"><?= e($a['name']) ?></a> <?= $a['track_serials'] ? '<span class="badge bg-info text-dark">S/N</span>' : '' ?></td>
-      <td>
-        <?php foreach ($articleCategories[$a['id']] ?? [] as $catName): ?>
-          <span class="badge bg-light text-dark border"><?= e($catName) ?></span>
-        <?php endforeach; ?>
-      </td>
-      <td class="text-end"><?= money($a['sale_price']) ?></td>
-      <td class="text-end"><?= num($a['tax_rate']) ?>%</td>
-      <td class="text-end <?= ($a['track_stock'] && $a['stock_qty'] <= $a['min_stock']) ? 'low-stock' : '' ?>">
-        <?= $a['track_stock'] ? num($a['stock_qty']) : '<span class="text-muted">— kein Lagerartikel —</span>' ?>
-      </td>
-      <td><?= $a['active'] ? '<span class="badge bg-success">Aktiv</span>' : '<span class="badge bg-secondary">Inaktiv</span>' ?></td>
-      <td class="text-end">
-        <a href="artikel.php?action=edit&id=<?= $a['id'] ?>" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
-        <?php if ($a['active']): ?>
-        <a href="artikel.php?action=delete&id=<?= $a['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Artikel deaktivieren?')">Deaktivieren</a>
-        <?php endif; ?>
-      </td>
-    </tr>
-  <?php endforeach; ?>
-  </tbody>
-</table>
+<div id="articlesTableWrap">
+<?php render_articles_table($articles, $articleCategories); ?>
 </div>
+<script>
+(function() {
+  var input = document.getElementById('articleSearchInput');
+  var clearBtn = document.getElementById('articleSearchClear');
+  var wrap = document.getElementById('articlesTableWrap');
+  var categoryId = <?= (int)$selectedFilterCategory ?>;
+  var timer = null;
+
+  function toggleClear() {
+    clearBtn.style.display = input.value ? '' : 'none';
+  }
+
+  function doSearch() {
+    var params = new URLSearchParams();
+    params.set('q', input.value);
+    if (categoryId) { params.set('category', categoryId); }
+    params.set('ajax', '1');
+    fetch('artikel.php?' + params.toString())
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        wrap.innerHTML = html;
+        var url = new URL(window.location);
+        if (input.value) { url.searchParams.set('q', input.value); } else { url.searchParams.delete('q'); }
+        window.history.replaceState({}, '', url);
+      });
+  }
+
+  input.addEventListener('input', function() {
+    toggleClear();
+    clearTimeout(timer);
+    timer = setTimeout(doSearch, 300);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    input.value = '';
+    toggleClear();
+    doSearch();
+    input.focus();
+  });
+})();
+</script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
