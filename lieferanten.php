@@ -1,6 +1,14 @@
 <?php
 $pageTitle = 'Lieferanten';
-require_once __DIR__ . '/includes/header.php';
+$isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
+if ($isAjax) {
+    // Live-Suche: nur Auth/Funktionen laden, kein komplettes Seitenlayout
+    require_once __DIR__ . '/includes/auth.php';
+    require_once __DIR__ . '/includes/functions.php';
+    require_login();
+} else {
+    require_once __DIR__ . '/includes/header.php';
+}
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 
@@ -85,39 +93,103 @@ if ($action === 'new' || $action === 'edit') {
 }
 
 $search = trim($_GET['q'] ?? '');
-if ($search) {
-    $like = "%$search%";
-    $stmt = $pdo->prepare('SELECT * FROM suppliers WHERE company LIKE ? OR last_name LIKE ? OR supplier_number LIKE ? ORDER BY company, last_name');
-    $stmt->execute([$like, $like, $like]);
-} else {
-    $stmt = $pdo->query('SELECT * FROM suppliers ORDER BY company, last_name');
+try {
+    if ($search !== '') {
+        $like = "%$search%";
+        $stmt = $pdo->prepare('SELECT * FROM suppliers WHERE company LIKE ? OR last_name LIKE ? OR supplier_number LIKE ? ORDER BY company, last_name');
+        $stmt->execute([$like, $like, $like]);
+    } else {
+        $stmt = $pdo->query('SELECT * FROM suppliers ORDER BY company, last_name');
+    }
+    $suppliers = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $suppliers = [];
+    flash('danger', 'Fehler bei der Lieferantensuche: ' . $e->getMessage());
 }
-$suppliers = $stmt->fetchAll();
+
+// Rendert nur die Ergebnistabelle (wird auch für die Live-Suche per AJAX genutzt)
+function render_suppliers_table(array $suppliers): void {
+    ?>
+    <div class="card p-3">
+    <table class="table table-hover align-middle">
+      <thead><tr><th>Nr.</th><th>Name/Firma</th><th>Ort</th><th>E-Mail</th><th></th></tr></thead>
+      <tbody>
+      <?php if (!$suppliers): ?>
+        <tr><td colspan="5" class="text-muted text-center py-3">Keine Lieferanten gefunden.</td></tr>
+      <?php endif; ?>
+      <?php foreach ($suppliers as $s): ?>
+        <tr>
+          <td><?= e($s['supplier_number']) ?></td>
+          <td><a href="lieferanten.php?action=edit&id=<?= $s['id'] ?>"><?= e($s['company'] ?: trim($s['first_name'].' '.$s['last_name'])) ?></a></td>
+          <td><?= e($s['zip'].' '.$s['city']) ?></td>
+          <td><?= e($s['email']) ?></td>
+          <td class="text-end">
+            <a href="lieferanten.php?action=edit&id=<?= $s['id'] ?>" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
+            <a href="lieferanten.php?action=delete&id=<?= $s['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Lieferant wirklich löschen?')">Löschen</a>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
+    <?php
+}
+
+if ($isAjax) {
+    render_suppliers_table($suppliers);
+    exit;
+}
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Lieferanten</h4>
   <a href="lieferanten.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Lieferant</a>
 </div>
-<form class="mb-3" method="get">
-  <input type="text" name="q" class="form-control" style="max-width:300px;" placeholder="Suche" value="<?= e($search) ?>">
-</form>
-<div class="card p-3">
-<table class="table table-hover align-middle">
-  <thead><tr><th>Nr.</th><th>Name/Firma</th><th>Ort</th><th>E-Mail</th><th></th></tr></thead>
-  <tbody>
-  <?php foreach ($suppliers as $s): ?>
-    <tr>
-      <td><?= e($s['supplier_number']) ?></td>
-      <td><a href="lieferanten.php?action=edit&id=<?= $s['id'] ?>"><?= e($s['company'] ?: trim($s['first_name'].' '.$s['last_name'])) ?></a></td>
-      <td><?= e($s['zip'].' '.$s['city']) ?></td>
-      <td><?= e($s['email']) ?></td>
-      <td class="text-end">
-        <a href="lieferanten.php?action=edit&id=<?= $s['id'] ?>" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
-        <a href="lieferanten.php?action=delete&id=<?= $s['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Lieferant wirklich löschen?')">Löschen</a>
-      </td>
-    </tr>
-  <?php endforeach; ?>
-  </tbody>
-</table>
+<div class="mb-3">
+  <div class="position-relative" style="max-width:300px;">
+    <input type="text" name="q" id="supplierSearchInput" class="form-control" style="padding-right:2rem;" placeholder="Suche" value="<?= e($search) ?>" autocomplete="off">
+    <button type="button" id="supplierSearchClear" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2" style="<?= $search === '' ? 'display:none;' : '' ?>" aria-label="Suche leeren"></button>
+  </div>
 </div>
+<div id="suppliersTableWrap">
+<?php render_suppliers_table($suppliers); ?>
+</div>
+<script>
+(function() {
+  var input = document.getElementById('supplierSearchInput');
+  var clearBtn = document.getElementById('supplierSearchClear');
+  var wrap = document.getElementById('suppliersTableWrap');
+  var timer = null;
+
+  function toggleClear() {
+    clearBtn.style.display = input.value ? '' : 'none';
+  }
+
+  function doSearch() {
+    var params = new URLSearchParams();
+    params.set('q', input.value);
+    params.set('ajax', '1');
+    fetch('lieferanten.php?' + params.toString())
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        wrap.innerHTML = html;
+        var url = new URL(window.location);
+        if (input.value) { url.searchParams.set('q', input.value); } else { url.searchParams.delete('q'); }
+        window.history.replaceState({}, '', url);
+      });
+  }
+
+  input.addEventListener('input', function() {
+    toggleClear();
+    clearTimeout(timer);
+    timer = setTimeout(doSearch, 300);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    input.value = '';
+    toggleClear();
+    doSearch();
+    input.focus();
+  });
+})();
+</script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
