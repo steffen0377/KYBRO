@@ -346,7 +346,6 @@ function render_articles_table(array $articles, array $articleCategories): void 
           </td>
           <td><?= $a['active'] ? '<span class="badge bg-success">Aktiv</span>' : '<span class="badge bg-secondary">Inaktiv</span>' ?></td>
           <td class="text-end">
-            <a href="artikel.php?action=edit&id=<?= $a['id'] ?>" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
             <?php if ($a['active']): ?>
             <a href="artikel.php?action=delete&id=<?= $a['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Artikel deaktivieren?')">Deaktivieren</a>
             <?php endif; ?>
