@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/functions.php';
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
+$isAjax = isset($_GET['ajax']) && $action === 'list';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     csrf_check();
@@ -74,7 +75,9 @@ if ($action === 'mark_invoice_paid' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Kunden';
-require_once __DIR__ . '/includes/header.php';
+if (!$isAjax) {
+    require_once __DIR__ . '/includes/header.php';
+}
 
 if ($action === 'new' || $action === 'edit') {
     $c = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','iban'=>'','bic'=>'','bank_name'=>'','notes'=>''];
@@ -267,38 +270,102 @@ if ($action === 'new' || $action === 'edit') {
 }
 
 $search = trim($_GET['q'] ?? '');
-if ($search) {
-    $like = "%$search%";
-    $stmt = $pdo->prepare('SELECT * FROM customers WHERE company LIKE ? OR last_name LIKE ? OR customer_number LIKE ? ORDER BY company, last_name');
-    $stmt->execute([$like, $like, $like]);
-} else {
-    $stmt = $pdo->query('SELECT * FROM customers ORDER BY company, last_name');
+try {
+    if ($search !== '') {
+        $like = "%$search%";
+        $stmt = $pdo->prepare('SELECT * FROM customers WHERE company LIKE ? OR last_name LIKE ? OR customer_number LIKE ? ORDER BY company, last_name');
+        $stmt->execute([$like, $like, $like]);
+    } else {
+        $stmt = $pdo->query('SELECT * FROM customers ORDER BY company, last_name');
+    }
+    $customers = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $customers = [];
+    flash('danger', 'Fehler bei der Kundensuche: ' . $e->getMessage());
 }
-$customers = $stmt->fetchAll();
+
+// Rendert nur die Ergebnistabelle (wird auch für die Live-Suche per AJAX genutzt)
+function render_customers_table(array $customers): void {
+    ?>
+    <div class="card p-3">
+    <table class="table table-hover align-middle">
+      <thead><tr><th>Nr.</th><th>Name/Firma</th><th>Ort</th><th>E-Mail</th><th></th></tr></thead>
+      <tbody>
+      <?php if (!$customers): ?>
+        <tr><td colspan="5" class="text-muted text-center py-3">Keine Kunden gefunden.</td></tr>
+      <?php endif; ?>
+      <?php foreach ($customers as $c): ?>
+        <tr>
+          <td><?= e($c['customer_number']) ?></td>
+          <td><a href="kunden.php?action=edit&id=<?= $c['id'] ?>"><?= e($c['company'] ?: trim($c['first_name'].' '.$c['last_name'])) ?></a></td>
+          <td><?= e($c['zip'].' '.$c['city']) ?></td>
+          <td><?= e($c['email']) ?></td>
+          <td class="text-end">
+            <a href="kunden.php?action=delete&id=<?= $c['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Kunde wirklich löschen?')">Löschen</a>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+    </div>
+    <?php
+}
+
+if ($isAjax) {
+    render_customers_table($customers);
+    exit;
+}
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Kunden</h4>
   <a href="kunden.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Kunde</a>
 </div>
-<form class="mb-3" method="get">
-  <input type="text" name="q" class="form-control" style="max-width:300px;" placeholder="Suche" value="<?= e($search) ?>">
-</form>
-<div class="card p-3">
-<table class="table table-hover align-middle">
-  <thead><tr><th>Nr.</th><th>Name/Firma</th><th>Ort</th><th>E-Mail</th><th></th></tr></thead>
-  <tbody>
-  <?php foreach ($customers as $c): ?>
-    <tr>
-      <td><?= e($c['customer_number']) ?></td>
-      <td><a href="kunden.php?action=edit&id=<?= $c['id'] ?>"><?= e($c['company'] ?: trim($c['first_name'].' '.$c['last_name'])) ?></a></td>
-      <td><?= e($c['zip'].' '.$c['city']) ?></td>
-      <td><?= e($c['email']) ?></td>
-      <td class="text-end">
-        <a href="kunden.php?action=delete&id=<?= $c['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Kunde wirklich löschen?')">Löschen</a>
-      </td>
-    </tr>
-  <?php endforeach; ?>
-  </tbody>
-</table>
+<div class="mb-3">
+  <div class="position-relative" style="max-width:300px;">
+    <input type="text" name="q" id="customerSearchInput" class="form-control" style="padding-right:2rem;" placeholder="Suche" value="<?= e($search) ?>" autocomplete="off">
+    <button type="button" id="customerSearchClear" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2" style="<?= $search === '' ? 'display:none;' : '' ?>" aria-label="Suche leeren"></button>
+  </div>
 </div>
+<div id="customersTableWrap">
+<?php render_customers_table($customers); ?>
+</div>
+<script>
+(function() {
+  var input = document.getElementById('customerSearchInput');
+  var clearBtn = document.getElementById('customerSearchClear');
+  var wrap = document.getElementById('customersTableWrap');
+  var timer = null;
+
+  function toggleClear() {
+    clearBtn.style.display = input.value ? '' : 'none';
+  }
+
+  function doSearch() {
+    var params = new URLSearchParams();
+    params.set('q', input.value);
+    params.set('ajax', '1');
+    fetch('kunden.php?' + params.toString())
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        wrap.innerHTML = html;
+        var url = new URL(window.location);
+        if (input.value) { url.searchParams.set('q', input.value); } else { url.searchParams.delete('q'); }
+        window.history.replaceState({}, '', url);
+      });
+  }
+
+  input.addEventListener('input', function() {
+    toggleClear();
+    clearTimeout(timer);
+    timer = setTimeout(doSearch, 300);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    input.value = '';
+    toggleClear();
+    doSearch();
+    input.focus();
+  });
+})();
+</script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
