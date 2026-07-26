@@ -286,6 +286,14 @@ if ($action === 'new' || $action === 'edit') {
 $search = trim($_GET['q'] ?? '');
 $selectedFilterCategory = (int)($_GET['category'] ?? 0);
 
+// Sortierung: nur Artikelnummer und Name duerfen per Klick auf die Spaltenueberschrift sortiert werden.
+$sortableColumns = ['sku' => 'a.sku', 'name' => 'a.name'];
+$sortColumn = (string)($_GET['sort'] ?? '');
+if (!array_key_exists($sortColumn, $sortableColumns)) {
+    $sortColumn = '';
+}
+$sortDir = (isset($_GET['dir']) && strtolower($_GET['dir']) === 'desc') ? 'desc' : 'asc';
+
 $where = [];
 $params = [];
 if ($search !== '') {
@@ -303,7 +311,11 @@ $sql = 'SELECT a.* FROM articles a';
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
-$sql .= ' ORDER BY a.active DESC, a.name';
+if ($sortColumn) {
+    $sql .= ' ORDER BY ' . $sortableColumns[$sortColumn] . ' ' . strtoupper($sortDir);
+} else {
+    $sql .= ' ORDER BY a.active DESC, a.name';
+}
 
 try {
     $stmt = $pdo->prepare($sql);
@@ -326,12 +338,25 @@ if ($articles) {
     }
 }
 
+// Erzeugt den Link fuer eine sortierbare Spaltenueberschrift inkl. Sortierpfeil
+function article_sort_link(string $column, string $label, string $sortColumn, string $sortDir, string $search, int $selectedFilterCategory): string {
+    $newDir = ($sortColumn === $column && $sortDir === 'asc') ? 'desc' : 'asc';
+    $query = ['sort' => $column, 'dir' => $newDir];
+    if ($search !== '') { $query['q'] = $search; }
+    if ($selectedFilterCategory) { $query['category'] = $selectedFilterCategory; }
+    $arrow = '';
+    if ($sortColumn === $column) {
+        $arrow = $sortDir === 'asc' ? ' <i class="bi bi-caret-up-fill"></i>' : ' <i class="bi bi-caret-down-fill"></i>';
+    }
+    return '<a href="artikel.php?' . http_build_query($query) . '" class="text-dark text-decoration-none">' . e($label) . '</a>' . $arrow;
+}
+
 // Rendert nur die Ergebnistabelle (wird auch für die Live-Suche per AJAX genutzt)
-function render_articles_table(array $articles, array $articleCategories): void {
+function render_articles_table(array $articles, array $articleCategories, string $sortColumn = '', string $sortDir = 'asc', string $search = '', int $selectedFilterCategory = 0): void {
     ?>
     <div class="card p-3">
     <table class="table table-hover align-middle">
-      <thead><tr><th>Art.-Nr.</th><th>Name</th><th>Kategorien</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th><?= article_sort_link('sku', 'Art.-Nr.', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th><?= article_sort_link('name', 'Name', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th>Kategorien</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
       <tbody>
       <?php if (!$articles): ?>
         <tr><td colspan="8" class="text-muted text-center py-3">Keine Artikel gefunden.</td></tr>
@@ -366,7 +391,7 @@ function render_articles_table(array $articles, array $articleCategories): void 
 
 // Bei Live-Suche (AJAX) nur die Tabelle zurückgeben, ohne Layout drumherum
 if ($isAjax) {
-    render_articles_table($articles, $articleCategories);
+    render_articles_table($articles, $articleCategories, $sortColumn, $sortDir, $search, $selectedFilterCategory);
     exit;
 }
 
@@ -392,7 +417,7 @@ if ($selectedFilterCategory) {
   </div>
 </form>
 <div id="articlesTableWrap">
-<?php render_articles_table($articles, $articleCategories); ?>
+<?php render_articles_table($articles, $articleCategories, $sortColumn, $sortDir, $search, $selectedFilterCategory); ?>
 </div>
 <script>
 (function() {
@@ -400,6 +425,8 @@ if ($selectedFilterCategory) {
   var clearBtn = document.getElementById('articleSearchClear');
   var wrap = document.getElementById('articlesTableWrap');
   var categoryId = <?= (int)$selectedFilterCategory ?>;
+  var sortColumn = <?= json_encode($sortColumn) ?>;
+  var sortDir = <?= json_encode($sortDir) ?>;
   var timer = null;
 
   function toggleClear() {
@@ -410,6 +437,7 @@ if ($selectedFilterCategory) {
     var params = new URLSearchParams();
     params.set('q', input.value);
     if (categoryId) { params.set('category', categoryId); }
+    if (sortColumn) { params.set('sort', sortColumn); params.set('dir', sortDir); }
     params.set('ajax', '1');
     fetch('artikel.php?' + params.toString())
       .then(function(r) { return r.text(); })
