@@ -337,7 +337,7 @@ $invoices = $stmt->fetchAll();
   <thead><tr><th>Nr.</th><th>Kunde</th><th>Datum</th><th class="text-end">Betrag</th><th>Status</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($invoices as $i): ?>
-    <tr class="<?= !$i['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='rechnungen.php?action=edit&id=<?= $i['id'] ?>';">
+    <tr class="<?= !$i['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='rechnungen.php?action=view&id=<?= $i['id'] ?>';">
       <td><?= e($i['invoice_number']) ?></a></td>
       <td><?= e($i['company'] ?: trim($i['first_name'].' '.$i['last_name'])) ?></td>
       <td><?= date('d.m.Y', strtotime($i['invoice_date'])) ?></td>
