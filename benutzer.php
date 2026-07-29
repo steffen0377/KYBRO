@@ -89,7 +89,7 @@ $users = $pdo->query('SELECT id,username,full_name,role,active FROM users ORDER 
   <a href="benutzer.php?action=new" class="btn btn-primary">+ Neuer Benutzer</a>
 </div>
 <div class="card p-3">
-<table class="table">
+<table class="table table-hover align-middle">
   <thead><tr><th>Benutzername</th><th>Name</th><th>Rolle</th><th>Status</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($users as $u): ?>
