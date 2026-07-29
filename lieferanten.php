@@ -118,9 +118,9 @@ function render_suppliers_table(array $suppliers): void {
         <tr><td colspan="5" class="text-muted text-center py-3">Keine Lieferanten gefunden.</td></tr>
       <?php endif; ?>
       <?php foreach ($suppliers as $s): ?>
-        <tr>
+        <tr class="<?= !$s['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='lieferanten.php?action=edit&id=<?= $s['id'] ?>';">
           <td><?= e($s['supplier_number']) ?></td>
-          <td><a href="lieferanten.php?action=edit&id=<?= $s['id'] ?>"><?= e($s['company'] ?: trim($s['first_name'].' '.$s['last_name'])) ?></a></td>
+          <td><?= e($s['company'] ?: trim($s['first_name'].' '.$s['last_name'])) ?></a></td>
           <td><?= e($s['zip'].' '.$s['city']) ?></td>
           <td><?= e($s['email']) ?></td>
           <td class="text-end">
