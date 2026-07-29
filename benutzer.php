@@ -93,13 +93,12 @@ $users = $pdo->query('SELECT id,username,full_name,role,active FROM users ORDER 
   <thead><tr><th>Benutzername</th><th>Name</th><th>Rolle</th><th>Status</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($users as $u): ?>
-    <tr>
+    <tr class="<?= !$u['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='benutzer.php?action=edit&id=<?= $u['id'] ?>';">
       <td><?= e($u['username']) ?></td>
       <td><?= e($u['full_name']) ?></td>
       <td><?= $u['role']==='admin' ? 'Administrator' : 'Benutzer' ?></td>
       <td><?= $u['active'] ? '<span class="badge bg-success">Aktiv</span>' : '<span class="badge bg-secondary">Inaktiv</span>' ?></td>
       <td class="text-end">
-        <a href="benutzer.php?action=edit&id=<?= $u['id'] ?>" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
         <?php if ($u['active']): ?>
         <a href="benutzer.php?action=delete&id=<?= $u['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Benutzer deaktivieren?')">Deaktivieren</a>
         <?php endif; ?>
