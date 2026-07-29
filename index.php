@@ -25,7 +25,7 @@ $recentInvoices = $pdo->query('SELECT i.*, c.company, c.first_name, c.last_name 
       <?php if (!$lowStock): ?>
         <p class="text-muted mb-0">Alles im grünen Bereich.</p>
       <?php else: ?>
-        <table class="table table-hover table-sm mb-0">
+        <table class="table table-hover mb-0">
           <thead><tr><th>Artikel</th><th class="text-end">Bestand</th><th class="text-end">Mindestbestand</th></tr></thead>
           <tbody>
           <?php foreach ($lowStock as $a): ?>
