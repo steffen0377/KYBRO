@@ -295,9 +295,9 @@ function render_customers_table(array $customers): void {
         <tr><td colspan="5" class="text-muted text-center py-3">Keine Kunden gefunden.</td></tr>
       <?php endif; ?>
       <?php foreach ($customers as $c): ?>
-        <tr>
+        <tr class="<?= !$c['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='kunden.php?action=edit&id=<?= $c['id'] ?>';">
           <td><?= e($c['customer_number']) ?></td>
-          <td><a href="kunden.php?action=edit&id=<?= $c['id'] ?>"><?= e($c['company'] ?: trim($c['first_name'].' '.$c['last_name'])) ?></a></td>
+          <td><?= e($c['company'] ?: trim($c['first_name'].' '.$c['last_name'])) ?></a></td>
           <td><?= e($c['zip'].' '.$c['city']) ?></td>
           <td><?= e($c['email']) ?></td>
           <td class="text-end">
