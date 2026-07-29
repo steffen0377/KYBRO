@@ -246,8 +246,8 @@ $offers = $stmt->fetchAll();
   <thead><tr><th>Nr.</th><th>Kunde</th><th>Datum</th><th class="text-end">Betrag</th><th>Status</th><th></th></tr></thead>
   <tbody>
   <?php foreach ($offers as $o): ?>
-    <tr>
-      <td><a href="angebote.php?action=view&id=<?= $o['id'] ?>"><?= e($o['offer_number']) ?></a></td>
+    <tr class="<?= !$o['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='angebote.php?action=edit&id=<?= $o['id'] ?>';">
+      <td><?= e($o['offer_number']) ?></a></td>
       <td><?= e($o['company'] ?: trim($o['first_name'].' '.$o['last_name'])) ?></td>
       <td><?= date('d.m.Y', strtotime($o['offer_date'])) ?></td>
       <td class="text-end"><?= money($o['total_gross']) ?></td>
