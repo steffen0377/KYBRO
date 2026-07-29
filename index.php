@@ -29,8 +29,8 @@ $recentInvoices = $pdo->query('SELECT i.*, c.company, c.first_name, c.last_name 
           <thead><tr><th>Artikel</th><th class="text-end">Bestand</th><th class="text-end">Mindestbestand</th></tr></thead>
           <tbody>
           <?php foreach ($lowStock as $a): ?>
-            <tr>
-              <td><a href="artikel.php?action=edit&id=<?= $a['id'] ?>"><?= e($a['name']) ?></a></td>
+            <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='artikel.php?action=edit&id=<?= $a['id'] ?>';">
+              <td><?= e($a['name']) ?></a></td>
               <td class="text-end low-stock"><?= num($a['stock_qty']) ?></td>
               <td class="text-end"><?= num($a['min_stock']) ?></td>
             </tr>
@@ -50,8 +50,8 @@ $recentInvoices = $pdo->query('SELECT i.*, c.company, c.first_name, c.last_name 
           <thead><tr><th>Nr.</th><th>Kunde</th><th class="text-end">Betrag</th><th>Status</th></tr></thead>
           <tbody>
           <?php foreach ($recentInvoices as $i): ?>
-            <tr>
-              <td><a href="rechnungen.php?action=view&id=<?= $i['id'] ?>"><?= e($i['invoice_number']) ?></a></td>
+            <tr class="<?= !$i['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='rechnungen.php?action=view&id=<?= $i['id'] ?>';">
+              <td><?= e($i['invoice_number']) ?></a></td>
               <td><?= e($i['company'] ?: trim($i['first_name'].' '.$i['last_name'])) ?></td>
               <td class="text-end"><?= money($i['total_gross']) ?></td>
               <td><?= status_badge($i['status']) ?></td>
