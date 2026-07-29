@@ -356,15 +356,15 @@ function render_articles_table(array $articles, array $articleCategories, string
     ?>
     <div class="card p-3">
     <table class="table table-hover align-middle">
-      <thead><tr><th><?= article_sort_link('sku', 'Art.-Nr.', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th><?= article_sort_link('name', 'Name', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th>Kategorien</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th><?= article_sort_link('sku', 'Art.-Nr.', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th><?= article_sort_link('name', 'Name', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th>Kategorien</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th></tr></thead>
       <tbody>
       <?php if (!$articles): ?>
-        <tr><td colspan="8" class="text-muted text-center py-3">Keine Artikel gefunden.</td></tr>
+        <tr><td colspan="7" class="text-muted text-center py-3">Keine Artikel gefunden.</td></tr>
       <?php endif; ?>
       <?php foreach ($articles as $a): ?>
-        <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>">
+        <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='artikel.php?action=edit&id=<?= $a['id'] ?>';">
           <td><?= e($a['sku']) ?></td>
-          <td><a href="artikel.php?action=edit&id=<?= $a['id'] ?>"><?= e($a['name']) ?></a> <?= $a['track_serials'] ? '<span class="badge bg-info text-dark">S/N</span>' : '' ?></td>
+          <td><?= e($a['name']) ?> <?= $a['track_serials'] ? '<span class="badge bg-info text-dark">S/N</span>' : '' ?></td>
           <td>
             <?php foreach ($articleCategories[$a['id']] ?? [] as $catName): ?>
               <span class="badge bg-light text-dark border"><?= e($catName) ?></span>
@@ -376,11 +376,6 @@ function render_articles_table(array $articles, array $articleCategories, string
             <?= $a['track_stock'] ? num($a['stock_qty']) : '<span class="text-muted">— kein Lagerartikel —</span>' ?>
           </td>
           <td><?= $a['active'] ? '<span class="badge bg-success">Aktiv</span>' : '<span class="badge bg-secondary">Inaktiv</span>' ?></td>
-          <td class="text-end">
-            <?php if ($a['active']): ?>
-            <a href="artikel.php?action=delete&id=<?= $a['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Artikel deaktivieren?')">Deaktivieren</a>
-            <?php endif; ?>
-          </td>
         </tr>
       <?php endforeach; ?>
       </tbody>
