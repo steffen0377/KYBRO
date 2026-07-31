@@ -332,25 +332,20 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
     <!-- --- AUTHENTIFIZIERUNGSVERFAHREN --- -->
     <div class="card p-4 mb-4">
       <h5 class="mb-3">Authentifizierungsverfahren</h5>
-      <form method="post" action="einstellungen.php?action=save_auth_mode">
+      <form method="post" action="einstellungen.php?action=save_auth_mode" class="row g-2 align-items-end">
         <?= csrf_field() ?>
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="radio" name="auth_mode" id="auth_local" value="local" <?= $authMode === 'local' ? 'checked' : '' ?>>
-          <label class="form-check-label" for="auth_local">Nur lokale Datenbank</label>
+        <div class="col-auto">
+          <label class="form-label" for="auth_mode">Authentifizierungsmethode</label>
+          <select class="form-select" name="auth_mode" id="auth_mode">
+            <option value="local" <?= $authMode === 'local' ? 'selected' : '' ?>>Nur lokale Datenbank</option>
+            <option value="ldap" <?= $authMode === 'ldap' ? 'selected' : '' ?>>Nur LDAP</option>
+            <option value="ldap_then_local" <?= $authMode === 'ldap_then_local' ? 'selected' : '' ?>>LDAP vor lokaler Datenbank</option>
+            <option value="local_then_ldap" <?= $authMode === 'local_then_ldap' ? 'selected' : '' ?>>Lokale Datenbank vor LDAP</option>
+          </select>
         </div>
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="radio" name="auth_mode" id="auth_ldap" value="ldap" <?= $authMode === 'ldap' ? 'checked' : '' ?>>
-          <label class="form-check-label" for="auth_ldap">Nur LDAP</label>
+        <div class="col-auto">
+          <button class="btn btn-primary" type="submit">Speichern</button>
         </div>
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="radio" name="auth_mode" id="auth_ldap_first" value="ldap_then_local" <?= $authMode === 'ldap_then_local' ? 'checked' : '' ?>>
-          <label class="form-check-label" for="auth_ldap_first">LDAP vor lokaler Datenbank</label>
-        </div>
-        <div class="form-check mb-3">
-          <input class="form-check-input" type="radio" name="auth_mode" id="auth_local_first" value="local_then_ldap" <?= $authMode === 'local_then_ldap' ? 'checked' : '' ?>>
-          <label class="form-check-label" for="auth_local_first">Lokale Datenbank vor LDAP</label>
-        </div>
-        <button class="btn btn-primary" type="submit">Speichern</button>
       </form>
     </div>
 
