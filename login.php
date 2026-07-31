@@ -13,6 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     if (attempt_login($username, $password)) {
         redirect('index.php');
+    } elseif (!empty($_SESSION['ldap_unavailable_hint'])) {
+        unset($_SESSION['ldap_unavailable_hint']);
+        $error = 'Der LDAP-Server ist derzeit nicht erreichbar. Bitte wenden Sie sich an einen Administrator.';
     } else {
         $error = 'Benutzername oder Passwort ist falsch.';
     }
