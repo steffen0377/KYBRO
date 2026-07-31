@@ -64,7 +64,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
     <?php
       $verkaufActive = nav_group_active(['angebote.php', 'rechnungen.php']);
       $einkaufActive = nav_group_active(['lieferanten.php']);
-      $einstellungenActive = nav_group_active(['einstellungen.php', 'kategorien.php', 'benutzer.php']);
+      $einstellungenActive = nav_group_active(['einstellungen.php', 'kategorien.php']);
     ?>
     <ul class="nav nav-pills flex-column gap-1">
       <li class="nav-item"><a class="nav-link text-white <?= nav_active('index.php') ?>" href="<?= APP_URL ?>/index.php"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
@@ -116,7 +116,6 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
           <ul class="nav flex-column ms-3">
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('einstellungen.php') ?>" href="<?= APP_URL ?>/einstellungen.php"><i class="bi bi-building me-2"></i>Firmeneinstellungen</a></li>
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('kategorien.php') ?>" href="<?= APP_URL ?>/kategorien.php"><i class="bi bi-tags me-2"></i>Kategorien</a></li>
-            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('benutzer.php') ?>" href="<?= APP_URL ?>/benutzer.php"><i class="bi bi-person-badge me-2"></i>Benutzer</a></li>
           </ul>
         </div>
       </li>

@@ -118,6 +118,70 @@ function company_settings(): array {
     return $settings;
 }
 
+function ldap_settings(): array {
+    static $settings = null;
+    if ($settings === null) {
+        $settings = db()->query('SELECT * FROM ldap_settings WHERE id = 1')->fetch();
+    }
+    return $settings;
+}
+
+function auth_config(): array {
+    static $config = null;
+    if ($config === null) {
+        $config = db()->query('SELECT * FROM auth_config WHERE id = 1')->fetch();
+    }
+    return $config;
+}
+
+// Bekannte Module der Anwendung (für Gruppen-Berechtigungen und Auswahllisten)
+function known_modules(): array {
+    return [
+        'artikel' => 'Artikel',
+        'lager' => 'Lager',
+        'kunden' => 'Kunden',
+        'lieferanten' => 'Lieferanten',
+        'angebote' => 'Angebote',
+        'rechnungen' => 'Rechnungen',
+        'kategorien' => 'Kategorien',
+        'einstellungen' => 'Einstellungen',
+    ];
+}
+
+// Prüft, ob der aktuell angemeldete Benutzer Zugriff ('read' oder 'write') auf
+// ein Modul hat. Administratoren (role='admin') haben immer vollen Zugriff.
+function has_permission(string $module, string $action = 'read'): bool {
+    $user = current_user();
+    if (!$user) {
+        return false;
+    }
+    if ($user['role'] === 'admin') {
+        return true;
+    }
+    if (empty($user['group_id'])) {
+        return false;
+    }
+    static $cache = [];
+    $key = $user['group_id'] . ':' . $module;
+    if (!isset($cache[$key])) {
+        $stmt = db()->prepare('SELECT can_read, can_write FROM group_permissions WHERE group_id = ? AND module = ?');
+        $stmt->execute([$user['group_id'], $module]);
+        $cache[$key] = $stmt->fetch() ?: ['can_read' => 0, 'can_write' => 0];
+    }
+    $field = $action === 'write' ? 'can_write' : 'can_read';
+    return (bool)$cache[$key][$field];
+}
+
+// Bricht mit HTTP 403 ab, wenn der Benutzer keine Berechtigung für das
+// angegebene Modul/die angegebene Aktion hat.
+function require_permission(string $module, string $action = 'read'): void {
+    require_login();
+    if (!has_permission($module, $action)) {
+        http_response_code(403);
+        die('Zugriff verweigert: Ihnen fehlt die Berechtigung für dieses Modul.');
+    }
+}
+
 function status_badge(string $status): string {
     $map = [
         'entwurf' => 'secondary', 'versendet' => 'info', 'angenommen' => 'success',
