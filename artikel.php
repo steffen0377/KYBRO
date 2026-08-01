@@ -356,7 +356,7 @@ function render_articles_table(array $articles, array $articleCategories, string
     ?>
     <div class="card p-3">
     <table class="table table-hover align-middle">
-      <thead><tr><th><?= article_sort_link('sku', 'Art.-Nr.', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th><?= article_sort_link('name', 'Name', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th>Kategorien</th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th></tr></thead>
+      <thead><tr><th><?= article_sort_link('sku', 'Art.-Nr.', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th><?= article_sort_link('name', 'Name', $sortColumn, $sortDir, $search, $selectedFilterCategory) ?></th><th class="text-end">VK-Preis</th><th class="text-end">MwSt.</th><th class="text-end">Bestand</th><th>Status</th></tr></thead>
       <tbody>
       <?php if (!$articles): ?>
         <tr><td colspan="7" class="text-muted text-center py-3">Keine Artikel gefunden.</td></tr>
@@ -365,11 +365,6 @@ function render_articles_table(array $articles, array $articleCategories, string
         <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='artikel.php?action=edit&id=<?= $a['id'] ?>';">
           <td><?= e($a['sku']) ?></td>
           <td><?= e($a['name']) ?> <?= $a['track_serials'] ? '<span class="badge bg-info text-dark">S/N</span>' : '' ?></td>
-          <td>
-            <?php foreach ($articleCategories[$a['id']] ?? [] as $catName): ?>
-              <span class="badge bg-light text-dark border"><?= e($catName) ?></span>
-            <?php endforeach; ?>
-          </td>
           <td class="text-end"><?= money($a['sale_price']) ?></td>
           <td class="text-end"><?= num($a['tax_rate']) ?>%</td>
           <td class="text-end <?= ($a['track_stock'] && $a['stock_qty'] <= $a['min_stock']) ? 'low-stock' : '' ?>">
