@@ -1,10 +1,47 @@
-body { background-color: #f4f6f9; }
-.card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-.table thead { background-color: #eef1f5; }
-.low-stock { color: #b02a37; font-weight: 600; }
-tr.row-unpaid > td { background-color: #fbdce6 !important; }
-tr.row-paid > td { background-color: #d9f2df !important; }
-tr.row-due > td { background-color: #fff3b0 !important; }
+:root {
+  /* ---- Marken-/Akzentfarben (zentrale Design-Tokens) ---- */
+  --color-primary: #0d6efd;
+  --color-secondary: #6c757d;
+  --color-success: #198754;
+  --color-danger: #dc3545;
+  --color-warning: #ffc107;
+  --color-info: #0dcaf0;
+  --color-light: #f8f9fa;
+  --color-dark: #212529;
+
+  /* ---- Layout-/Hintergrundfarben ---- */
+  --color-body-bg: #f4f6f9;
+  --color-card-shadow: rgba(0, 0, 0, 0.08);
+  --color-table-head-bg: #eef1f5;
+  --color-sidebar-bg: rgba(9, 29, 56, 1);
+  --color-sidebar-link: rgba(255, 255, 255, .75);
+  --color-sidebar-link-active: #fff;
+  --color-sidebar-link-active-bg: rgba(255, 255, 255, .12);
+
+  /* ---- Status-/Hinweisfarben ---- */
+  --color-low-stock: #b02a37;
+  --color-row-unpaid-bg: #fbdce6;
+  --color-row-paid-bg: #d9f2df;
+  --color-row-due-bg: #fff3b0;
+
+  /* ---- Bootstrap-Theme an die eigenen Design-Tokens koppeln ---- */
+  --bs-primary: var(--color-primary);
+  --bs-secondary: var(--color-secondary);
+  --bs-success: var(--color-success);
+  --bs-danger: var(--color-danger);
+  --bs-warning: var(--color-warning);
+  --bs-info: var(--color-info);
+  --bs-light: var(--color-light);
+  --bs-dark: var(--color-dark);
+}
+
+body { background-color: var(--color-body-bg); }
+.card { border: none; box-shadow: 0 1px 3px var(--color-card-shadow); }
+.table thead { background-color: var(--color-table-head-bg); }
+.low-stock { color: var(--color-low-stock); font-weight: 600; }
+tr.row-unpaid > td { background-color: var(--color-row-unpaid-bg) !important; }
+tr.row-paid > td { background-color: var(--color-row-paid-bg) !important; }
+tr.row-due > td { background-color: var(--color-row-due-bg) !important; }
 
 html, body { height: 100%; }
 #wrapper { min-height: 100vh; }
@@ -17,12 +54,12 @@ html, body { height: 100%; }
   overflow-y: auto;
 }
 .sidebar .nav-link {
-  color: rgba(255,255,255,.75);
+  color: var(--color-sidebar-link);
 }
 .sidebar .nav-link.active,
 .sidebar .nav-link:hover {
-  color: #fff;
-  background-color: rgba(255,255,255,.12);
+  color: var(--color-sidebar-link-active);
+  background-color: var(--color-sidebar-link-active-bg);
 }
 .sidebar-logo {
   max-width: 160px;
@@ -36,7 +73,7 @@ html, body { height: 100%; }
   transform: rotate(-90deg);
 }
 .sidebar-bg {
-  background-color: rgba(9, 29, 56, 1);
+  background-color: var(--color-sidebar-bg);
 }
 
 @media print {
