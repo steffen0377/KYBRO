@@ -189,5 +189,5 @@ function status_badge(string $status): string {
         'storniert' => 'dark',
     ];
     $class = $map[$status] ?? 'secondary';
-    return '<span class="badge bg-' . $class . '">' . e(ucfirst($status)) . '</span>';
+    return '<span class="badge bg-app-' . $class . '">' . e(ucfirst($status)) . '</span>';
 }

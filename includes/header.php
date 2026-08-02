@@ -125,18 +125,18 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
 
   <div class="flex-grow-1" style="min-width:0;">
     <div class="topbar d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
-      <button class="btn btn-outline-secondary d-md-none" type="button" onclick="document.getElementById('sidebar').classList.toggle('d-none')">
+      <button class="btn btn-app-outline-secondary d-md-none" type="button" onclick="document.getElementById('sidebar').classList.toggle('d-none')">
         <i class="bi bi-list"></i>
       </button>
       <span class="d-none d-md-inline"></span>
       <div>
         <span class="me-3">Angemeldet als <strong><?= e($u['full_name']) ?></strong></span>
-        <a href="<?= APP_URL ?>/logout.php" class="btn btn-outline-secondary btn-sm">Abmelden</a>
+        <a href="<?= APP_URL ?>/logout.php" class="btn btn-app-outline-secondary btn-sm">Abmelden</a>
       </div>
     </div>
     <div class="container-fluid p-4">
     <?php foreach (get_flashes() as $f): ?>
-      <div class="alert alert-<?= e($f['type']) ?> alert-dismissible fade show" role="alert">
+      <div class="alert alert-app-<?= e($f['type']) ?> alert-dismissible fade show" role="alert">
         <?= e($f['message']) ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
