@@ -185,10 +185,6 @@
   color: var(--color-warning-text);
 }
 
-.bg-app-dark {
-  background-color: var(--color-darkblue) !important;
-}
-
 .bg-app-light {
   background-color: var(--color-light) !important;
 }
@@ -209,7 +205,7 @@
 }
 
 .bg-app-dark {
-  background-color: var(--color-dark) !important;
+  background-color: var(--color-darkblue) !important;
   color: #fff;
 }
 
