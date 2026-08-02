@@ -7,6 +7,7 @@
   --color-warning: #ffc107;
   --color-info: #0dcaf0;
   --color-light: #f8f9fa;
+  --color-darkblue: #091d38;
   --color-dark: #212529;
 
   /* ---- Layout-/Hintergrundfarben ---- */
@@ -182,6 +183,10 @@
   background-color: var(--color-warning-bg);
   border: 1px solid var(--color-warning-border);
   color: var(--color-warning-text);
+}
+
+.bg-app-dark {
+  background-color: var(--color-darkblue) !important;
 }
 
 .bg-app-light {
