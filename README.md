@@ -31,25 +31,25 @@ sudo mysql -u root -p
 
 In der MariaDB-Shell:
 ```sql
-CREATE DATABASE warenwirtschaft CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE KYBRO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'ww_user'@'localhost' IDENTIFIED BY 'HIER_SICHERES_PASSWORT';
-GRANT ALL PRIVILEGES ON warenwirtschaft.* TO 'ww_user'@'localhost';
+GRANT ALL PRIVILEGES ON KYBRO.* TO 'ww_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
 
 Schema importieren:
 ```bash
-mysql -u ww_user -p warenwirtschaft < database/schema.sql
+mysql -u ww_user -p KYBRO < database/schema.sql
 ```
 
 ## 3. Anwendung auf den Server kopieren
 
 ```bash
-# Projektordner z.B. nach /var/www/warenwirtschaft kopieren
-sudo mkdir -p /var/www/warenwirtschaft
-sudo cp -r ./* /var/www/warenwirtschaft/
-cd /var/www/warenwirtschaft
+# Projektordner z.B. nach /var/www/KYBRO kopieren
+sudo mkdir -p /var/www/KYBRO
+sudo cp -r ./* /var/www/KYBRO/
+cd /var/www/KYBRO
 ```
 
 Konfigurationsdatei anlegen:
@@ -57,7 +57,7 @@ Konfigurationsdatei anlegen:
 cp config/config.example.php config/config.php
 nano config/config.php
 ```
-Trage dort `DB_USER`, `DB_PASS` und `APP_URL` (z.B. `https://warenwirtschaft.deine-domain.de`) ein.
+Trage dort `DB_USER`, `DB_PASS` und `APP_URL` (z.B. `https://KYBRO.deine-domain.de`) ein.
 
 Composer-Abhängigkeiten installieren:
 ```bash
@@ -66,37 +66,37 @@ composer install --no-dev
 
 Rechte setzen:
 ```bash
-sudo chown -R www-data:www-data /var/www/warenwirtschaft
-sudo find /var/www/warenwirtschaft -type d -exec chmod 755 {} \;
-sudo find /var/www/warenwirtschaft -type f -exec chmod 644 {} \;
-sudo chmod 775 /var/www/warenwirtschaft/uploads   # Logo-Upload benötigt Schreibrecht für www-data
+sudo chown -R www-data:www-data /var/www/KYBRO
+sudo find /var/www/KYBRO -type d -exec chmod 755 {} \;
+sudo find /var/www/KYBRO -type f -exec chmod 644 {} \;
+sudo chmod 775 /var/www/KYBRO/uploads   # Logo-Upload benötigt Schreibrecht für www-data
 ```
 
 ## 4. Apache virtuellen Host einrichten
 
 ```bash
-sudo nano /etc/apache2/sites-available/warenwirtschaft.conf
+sudo nano /etc/apache2/sites-available/KYBRO.conf
 ```
 
 Inhalt:
 ```apache
 <VirtualHost *:80>
-    ServerName warenwirtschaft.deine-domain.de
-    DocumentRoot /var/www/warenwirtschaft
+    ServerName KYBRO.deine-domain.de
+    DocumentRoot /var/www/KYBRO
 
-    <Directory /var/www/warenwirtschaft>
+    <Directory /var/www/KYBRO>
         AllowOverride All
         Require all granted
     </Directory>
 
-    ErrorLog ${APACHE_LOG_DIR}/warenwirtschaft_error.log
-    CustomLog ${APACHE_LOG_DIR}/warenwirtschaft_access.log combined
+    ErrorLog ${APACHE_LOG_DIR}/KYBRO_error.log
+    CustomLog ${APACHE_LOG_DIR}/KYBRO_access.log combined
 </VirtualHost>
 ```
 
 Aktivieren:
 ```bash
-sudo a2ensite warenwirtschaft.conf
+sudo a2ensite KYBRO.conf
 sudo systemctl reload apache2
 ```
 
@@ -106,16 +106,16 @@ die den Zugriff auf `config/`, `includes/`, `database/` und `vendor/` sperren.
 ### HTTPS einrichten (dringend empfohlen)
 ```bash
 sudo apt install certbot python3-certbot-apache
-sudo certbot --apache -d warenwirtschaft.deine-domain.de
+sudo certbot --apache -d KYBRO.deine-domain.de
 ```
 
 ## 5. Ersteinrichtung (Admin-Konto)
 
-1. Im Browser aufrufen: `https://deine-domain.de/setup_admin.php`
+1. Im Browser aufrufen: `https://KYBRO.deine-domain.de/setup_admin.php`
 2. Benutzername, Name und Passwort für das erste Admin-Konto festlegen.
 3. **Danach die Datei `setup_admin.php` unbedingt vom Server löschen:**
    ```bash
-   sudo rm /var/www/warenwirtschaft/setup_admin.php
+   sudo rm /var/www/KYBRO/setup_admin.php
    ```
 4. Unter `login.php` anmelden.
 5. Unter "Einstellungen" die Firmendaten (Adresse, Bankverbindung, USt-IdNr.,
@@ -162,7 +162,7 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
 - Es gibt aktuell keinen automatischen Datenbank-Backup-Mechanismus – richte
   regelmäßige `mysqldump`-Backups ein, z.B. per Cronjob:
   ```bash
-  mysqldump -u ww_user -p warenwirtschaft > backup_$(date +%F).sql
+  mysqldump -u ww_user -p KYBRO > backup_$(date +%F).sql
   ```
 - Die Anwendung ist für den Einsatz durch ein kleines Team ausgelegt (einfache
   Rollen: Benutzer/Administrator). Für komplexere Berechtigungen wäre eine Erweiterung nötig.
@@ -174,5 +174,5 @@ sudo certbot --apache -d warenwirtschaft.deine-domain.de
 sudo apt update && sudo apt upgrade
 
 # Composer-Abhängigkeiten aktualisieren
-cd /var/www/warenwirtschaft && composer update --no-dev
+cd /var/www/KYBRO && composer update --no-dev
 ```
