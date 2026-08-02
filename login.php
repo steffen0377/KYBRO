@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link href="<?= APP_URL ?>/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="<?= APP_URL ?>/assets/css/style.css?v=<?= @filemtime(__DIR__ . '/assets/css/style.css') ?: '1' ?>" rel="stylesheet">
 </head>
-<body class="bg-app-light">
+<body class="bg-app-dark">
 <div class="container d-flex align-items-center justify-content-center" style="min-height:100vh;">
   <div class="card p-4 shadow-sm" style="max-width:380px; width:100%;">
     <h4 class="mb-3 text-center">📦 Warenwirtschaft</h4>
