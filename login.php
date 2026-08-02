@@ -30,11 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link href="<?= APP_URL ?>/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="<?= APP_URL ?>/assets/css/style.css?v=<?= @filemtime(__DIR__ . '/assets/css/style.css') ?: '1' ?>" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body class="bg-app-light">
 <div class="container d-flex align-items-center justify-content-center" style="min-height:100vh;">
   <div class="card p-4 shadow-sm" style="max-width:380px; width:100%;">
     <h4 class="mb-3 text-center">📦 Warenwirtschaft</h4>
-    <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alert alert-app-danger"><?= e($error) ?></div><?php endif; ?>
     <form method="post">
       <?= csrf_field() ?>
       <div class="mb-3">
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label class="form-label">Passwort</label>
         <input type="password" name="password" class="form-control" required>
       </div>
-      <button type="submit" class="btn btn-primary w-100">Anmelden</button>
+      <button type="submit" class="btn btn-app-primary w-100">Anmelden</button>
     </form>
   </div>
 </div>

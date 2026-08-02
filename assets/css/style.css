@@ -24,15 +24,42 @@
   --color-row-paid-bg: #d9f2df;
   --color-row-due-bg: #fff3b0;
 
-  /* ---- Bootstrap-Theme an die eigenen Design-Tokens koppeln ---- */
-  --bs-primary: var(--color-primary);
-  --bs-secondary: var(--color-secondary);
-  --bs-success: var(--color-success);
-  --bs-danger: var(--color-danger);
-  --bs-warning: var(--color-warning);
-  --bs-info: var(--color-info);
-  --bs-light: var(--color-light);
-  --bs-dark: var(--color-dark);
+  /* ---- Zusätzliche Tönungen für eigene Alert-/Hintergrundklassen ---- */
+  --color-danger-bg: #f8d7da;
+  --color-danger-border: #f1aeb5;
+  --color-danger-text: #842029;
+}
+
+/* ====================================================================
+   Eigene Farbklassen (ersetzen Bootstraps .btn-primary, .alert-danger,
+   .bg-light etc. – keine Kopplung mehr an --bs-* Variablen)
+   ==================================================================== */
+
+.btn-app-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.btn-app-primary:hover,
+.btn-app-primary:focus {
+  background-color: color-mix(in srgb, var(--color-primary) 85%, black);
+  border-color: color-mix(in srgb, var(--color-primary) 85%, black);
+  color: #fff;
+}
+.btn-app-primary:active {
+  background-color: color-mix(in srgb, var(--color-primary) 75%, black);
+  border-color: color-mix(in srgb, var(--color-primary) 75%, black);
+  color: #fff;
+}
+
+.alert-app-danger {
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+
+.bg-app-light {
+  background-color: var(--color-light) !important;
 }
 
 body { background-color: var(--color-body-bg); }
