@@ -182,8 +182,8 @@ if ($action === 'assign_serials') {
     ?>
     <h4>Seriennummern zuordnen – Rechnung <?= e($inv['invoice_number']) ?></h4>
     <?php if (!$pending): ?>
-      <div class="alert alert-success">Alle Seriennummern sind bereits zugeordnet.</div>
-      <a href="rechnungen.php?action=view&id=<?= (int)$_GET['id'] ?>" class="btn btn-secondary">Zur Rechnung</a>
+      <div class="alert alert-app-success">Alle Seriennummern sind bereits zugeordnet.</div>
+      <a href="rechnungen.php?action=view&id=<?= (int)$_GET['id'] ?>" class="btn btn-app-secondary">Zur Rechnung</a>
     <?php else: ?>
     <form method="post" action="rechnungen.php?action=assign_serials" class="card p-4">
       <?= csrf_field() ?>
@@ -197,7 +197,7 @@ if ($action === 'assign_serials') {
         <div class="mb-4">
           <label class="form-label fw-bold"><?= e($item['article_name']) ?> — bitte <?= $item['remaining'] ?> Seriennummer(n) auswählen</label>
           <?php if (count($available) < $item['remaining']): ?>
-            <div class="alert alert-danger">Nur <?= count($available) ?> Seriennummer(n) im Lager verfügbar, benötigt werden <?= $item['remaining'] ?>. Bitte zuerst im Lager-Modul Wareneingang buchen.</div>
+            <div class="alert alert-app-danger">Nur <?= count($available) ?> Seriennummer(n) im Lager verfügbar, benötigt werden <?= $item['remaining'] ?>. Bitte zuerst im Lager-Modul Wareneingang buchen.</div>
           <?php endif; ?>
           <select name="serials[<?= $item['article_id'] ?>][]" class="form-select" multiple size="<?= min(8, max(3, count($available))) ?>" required>
             <?php foreach ($available as $s): ?>
@@ -207,7 +207,7 @@ if ($action === 'assign_serials') {
           <div class="form-text">Mehrfachauswahl: Strg/Cmd gedrückt halten.</div>
         </div>
       <?php endforeach; ?>
-      <button class="btn btn-primary" type="submit">Zuordnen und Bestand buchen</button>
+      <button class="btn btn-app-primary" type="submit">Zuordnen und Bestand buchen</button>
     </form>
     <?php endif; ?>
     <?php require_once __DIR__ . '/includes/footer.php'; exit;
@@ -235,16 +235,16 @@ if ($action === 'view') {
     <div class="d-flex justify-content-between mb-3">
       <h4>Rechnung <?= e($invoice['invoice_number']) ?> <?= status_badge($invoice['status']) ?></h4>
       <div>
-        <a href="rechnung_pdf.php?id=<?= $invoice['id'] ?>" class="btn btn-outline-primary" target="_blank">PDF ansehen</a>
+        <a href="rechnung_pdf.php?id=<?= $invoice['id'] ?>" class="btn btn-app-outline-primary" target="_blank">PDF ansehen</a>
         <?php if ($invoice['status'] === 'entwurf'): ?>
-        <a href="rechnungen.php?action=edit&id=<?= $invoice['id'] ?>" class="btn btn-outline-secondary">Bearbeiten</a>
+        <a href="rechnungen.php?action=edit&id=<?= $invoice['id'] ?>" class="btn btn-app-outline-secondary">Bearbeiten</a>
         <?php endif; ?>
       </div>
     </div>
     <?php if ($pending): ?>
-      <div class="alert alert-warning d-flex justify-content-between align-items-center">
+      <div class="alert alert-app-warning d-flex justify-content-between align-items-center">
         <span>Für diese Rechnung fehlen noch Seriennummern.</span>
-        <a href="rechnungen.php?action=assign_serials&id=<?= $invoice['id'] ?>" class="btn btn-sm btn-warning">Jetzt zuordnen</a>
+        <a href="rechnungen.php?action=assign_serials&id=<?= $invoice['id'] ?>" class="btn btn-sm btn-app-warning">Jetzt zuordnen</a>
       </div>
     <?php endif; ?>
     <div class="card p-3 mb-3">
@@ -289,7 +289,7 @@ if ($action === 'view') {
             <option value="<?= $s ?>" <?= $invoice['status']===$s?'selected':'' ?>><?= ucfirst($s) ?></option>
           <?php endforeach; ?>
         </select>
-        <button class="btn btn-outline-primary" type="submit">Status ändern</button>
+        <button class="btn btn-app-outline-primary" type="submit">Status ändern</button>
       </div>
     </form>
     <?php require_once __DIR__ . '/includes/footer.php'; exit;
@@ -330,7 +330,7 @@ $invoices = $stmt->fetchAll();
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Rechnungen</h4>
-  <a href="rechnungen.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neue Rechnung</a>
+  <a href="rechnungen.php?action=new" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neue Rechnung</a>
 </div>
 <div class="card p-3">
 <table class="table table-hover align-middle">
@@ -345,7 +345,7 @@ $invoices = $stmt->fetchAll();
       <td><?= status_badge($i['status']) ?></td>
       <td class="text-end">
         <?php if ($i['status']==='entwurf'): ?>
-        <a href="rechnungen.php?action=delete&id=<?= $i['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Rechnung wirklich löschen?')">Löschen</a>
+        <a href="rechnungen.php?action=delete&id=<?= $i['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Rechnung wirklich löschen?')">Löschen</a>
         <?php endif; ?>
       </td>
     </tr>

@@ -85,8 +85,8 @@ if ($action === 'new' || $action === 'edit') {
         <div class="col-12"><label class="form-label">Notizen</label><textarea name="notes" class="form-control" rows="2"><?= e($s['notes']) ?></textarea></div>
       </div>
       <div class="mt-3">
-        <button class="btn btn-primary" type="submit">Speichern</button>
-        <a href="lieferanten.php" class="btn btn-secondary">Abbrechen</a>
+        <button class="btn btn-app-primary" type="submit">Speichern</button>
+        <a href="lieferanten.php" class="btn btn-app-secondary">Abbrechen</a>
       </div>
     </form>
     <?php require_once __DIR__ . '/includes/footer.php'; exit;
@@ -124,7 +124,7 @@ function render_suppliers_table(array $suppliers): void {
           <td><?= e($s['zip'].' '.$s['city']) ?></td>
           <td><?= e($s['email']) ?></td>
           <td class="text-end">
-            <a href="lieferanten.php?action=delete&id=<?= $s['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Lieferant wirklich löschen?')">Löschen</a>
+            <a href="lieferanten.php?action=delete&id=<?= $s['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Lieferant wirklich löschen?')">Löschen</a>
           </td>
         </tr>
       <?php endforeach; ?>
@@ -141,7 +141,7 @@ if ($isAjax) {
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Lieferanten</h4>
-  <a href="lieferanten.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Lieferant</a>
+  <a href="lieferanten.php?action=new" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neuer Lieferant</a>
 </div>
 <div class="mb-3">
   <div class="position-relative" style="max-width:300px;">

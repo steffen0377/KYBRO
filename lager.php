@@ -156,7 +156,7 @@ if ($viewSerialsArticleId) {
           <div class="col-6"><input type="text" name="qty" class="form-control" placeholder="Menge" required></div>
           <div class="col-6"><input type="text" name="note" class="form-control" placeholder="Notiz (optional)"></div>
         </div>
-        <button class="btn btn-success mt-2" type="submit">Einlagern</button>
+        <button class="btn btn-app-success mt-2" type="submit">Einlagern</button>
       </form>
       <?php endif; ?>
     </div>
@@ -181,7 +181,7 @@ if ($viewSerialsArticleId) {
           <div class="col-6"><input type="text" name="new_qty" class="form-control" placeholder="Neuer Ist-Bestand" required></div>
           <div class="col-6"><input type="text" name="note" class="form-control" placeholder="Notiz (optional)"></div>
         </div>
-        <button class="btn btn-warning mt-2" type="submit">Korrektur speichern</button>
+        <button class="btn btn-app-warning mt-2" type="submit">Korrektur speichern</button>
       </form>
       <?php endif; ?>
     </div>
@@ -210,7 +210,7 @@ if ($viewSerialsArticleId) {
           <div class="form-text">Die Anzahl der Zeilen ergibt automatisch die eingelagerte Menge.</div>
         </div>
         <input type="text" name="note" class="form-control mb-2" placeholder="Notiz (optional)">
-        <button class="btn btn-success" type="submit">Seriennummern einlagern</button>
+        <button class="btn btn-app-success" type="submit">Seriennummern einlagern</button>
       </form>
       <?php endif; ?>
     </div>
@@ -242,13 +242,13 @@ if ($viewSerialsArticleId) {
               <td>
                 <?php
                   $badgeMap = ['lager'=>'success','verkauft'=>'secondary','defekt'=>'danger'];
-                  echo '<span class="badge bg-'.$badgeMap[$s['status']].'">'.e(ucfirst($s['status'])).'</span>';
+                  echo '<span class="badge bg-app-'.$badgeMap[$s['status']].'">'.e(ucfirst($s['status'])).'</span>';
                 ?>
               </td>
               <td class="text-end">
                 <?php if ($s['status'] === 'lager'): ?>
-                  <a href="lager.php?action=seriennummer_defekt&id=<?= $s['id'] ?>&article_id=<?= $viewSerialsArticleId ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Als defekt markieren? Der Bestand wird um 1 reduziert.')">Defekt melden</a>
-                  <a href="lager.php?action=seriennummer_entfernen&id=<?= $s['id'] ?>&article_id=<?= $viewSerialsArticleId ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-secondary" onclick="return confirm('Fälschlich erfasste Seriennummer wirklich entfernen?')">Entfernen</a>
+                  <a href="lager.php?action=seriennummer_defekt&id=<?= $s['id'] ?>&article_id=<?= $viewSerialsArticleId ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Als defekt markieren? Der Bestand wird um 1 reduziert.')">Defekt melden</a>
+                  <a href="lager.php?action=seriennummer_entfernen&id=<?= $s['id'] ?>&article_id=<?= $viewSerialsArticleId ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-secondary" onclick="return confirm('Fälschlich erfasste Seriennummer wirklich entfernen?')">Entfernen</a>
                 <?php endif; ?>
               </td>
             </tr>
@@ -272,7 +272,7 @@ if ($viewSerialsArticleId) {
         <td><?= date('d.m.Y H:i', strtotime($m['created_at'])) ?></td>
         <td><?= e($m['article_name']) ?></td>
         <td><?= e(ucfirst($m['type'])) ?></td>
-        <td class="text-end <?= $m['quantity'] < 0 ? 'text-danger' : 'text-success' ?>"><?= ($m['quantity']>0?'+':'').num($m['quantity']) ?></td>
+        <td class="text-end <?= $m['quantity'] < 0 ? 'text-app-danger' : 'text-app-success' ?>"><?= ($m['quantity']>0?'+':'').num($m['quantity']) ?></td>
         <td><?= e($m['note']) ?></td>
         <td><?= e($m['full_name'] ?? '—') ?></td>
       </tr>

@@ -95,6 +95,23 @@
   color: #fff;
 }
 
+.btn-app-warning {
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+  color: #000;
+}
+.btn-app-warning:hover,
+.btn-app-warning:focus {
+  background-color: color-mix(in srgb, var(--color-warning) 85%, black);
+  border-color: color-mix(in srgb, var(--color-warning) 85%, black);
+  color: #000;
+}
+.btn-app-warning:active {
+  background-color: color-mix(in srgb, var(--color-warning) 75%, black);
+  border-color: color-mix(in srgb, var(--color-warning) 75%, black);
+  color: #000;
+}
+
 .btn-app-outline-primary {
   background-color: transparent;
   border: 1px solid var(--color-primary);
@@ -189,6 +206,14 @@
 .bg-app-dark {
   background-color: var(--color-dark) !important;
   color: #fff;
+}
+
+.text-app-danger {
+  color: var(--color-danger) !important;
+}
+
+.text-app-success {
+  color: var(--color-success) !important;
 }
 
 body { background-color: var(--color-body-bg); }

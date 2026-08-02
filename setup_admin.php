@@ -37,12 +37,12 @@ if ($count > 0) {
 <head><meta charset="UTF-8"><title>Ersteinrichtung</title>
 <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="assets/css/style.css" rel="stylesheet"></head>
-<body class="bg-light">
+<body class="bg-app-light">
 <div class="container py-5" style="max-width:500px;">
   <div class="card p-4 shadow-sm">
     <h4>Ersteinrichtung: Admin-Konto anlegen</h4>
     <?php if ($message): ?>
-      <div class="alert alert-<?= $done || $count > 0 ? 'success' : 'danger' ?>"><?= $message ?></div>
+      <div class="alert alert-app-<?= $done || $count > 0 ? 'success' : 'danger' ?>"><?= $message ?></div>
     <?php endif; ?>
     <?php if ($count == 0 && !$done): ?>
     <form method="post">
@@ -54,7 +54,7 @@ if ($count > 0) {
         <input type="password" name="password" class="form-control" required></div>
       <div class="mb-3"><label class="form-label">Passwort wiederholen</label>
         <input type="password" name="password2" class="form-control" required></div>
-      <button class="btn btn-primary w-100" type="submit">Admin-Konto erstellen</button>
+      <button class="btn btn-app-primary w-100" type="submit">Admin-Konto erstellen</button>
     </form>
     <?php endif; ?>
   </div>
