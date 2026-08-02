@@ -152,9 +152,9 @@ if ($action === 'view') {
     <div class="d-flex justify-content-between mb-3">
       <h4>Angebot <?= e($offer['offer_number']) ?> <?= status_badge($offer['status']) ?></h4>
       <div>
-        <a href="angebot_pdf.php?id=<?= $offer['id'] ?>" class="btn btn-outline-primary" target="_blank">PDF ansehen</a>
-        <a href="angebote.php?action=edit&id=<?= $offer['id'] ?>" class="btn btn-outline-secondary">Bearbeiten</a>
-        <a href="angebote.php?action=to_invoice&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
+        <a href="angebot_pdf.php?id=<?= $offer['id'] ?>" class="btn btn-app-outline-primary" target="_blank">PDF ansehen</a>
+        <a href="angebote.php?action=edit&id=<?= $offer['id'] ?>" class="btn btn-app-outline-secondary">Bearbeiten</a>
+        <a href="angebote.php?action=to_invoice&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-app-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
       </div>
     </div>
     <div class="card p-3 mb-3">
@@ -176,7 +176,7 @@ if ($action === 'view') {
             <td class="text-end"><?= money($it['quantity']*$it['unit_price']) ?></td>
             <td class="text-end">
               <?php if (!$it['article_id']): ?>
-                <a href="artikel.php?action=new&from_offer_item=<?= $it['id'] ?>" class="btn btn-sm btn-outline-success">Als Artikel anlegen</a>
+                <a href="artikel.php?action=new&from_offer_item=<?= $it['id'] ?>" class="btn btn-sm btn-app-outline-success">Als Artikel anlegen</a>
               <?php endif; ?>
             </td>
           </tr>
@@ -199,7 +199,7 @@ if ($action === 'view') {
             <option value="<?= $s ?>" <?= $offer['status']===$s?'selected':'' ?>><?= ucfirst($s) ?></option>
           <?php endforeach; ?>
         </select>
-        <button class="btn btn-outline-primary" type="submit">Status ändern</button>
+        <button class="btn btn-app-outline-primary" type="submit">Status ändern</button>
       </div>
     </form>
     <?php require_once __DIR__ . '/includes/footer.php'; exit;
@@ -239,7 +239,7 @@ $offers = $stmt->fetchAll();
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Angebote</h4>
-  <a href="angebote.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neues Angebot</a>
+  <a href="angebote.php?action=new" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neues Angebot</a>
 </div>
 <div class="card p-3">
 <table class="table table-hover align-middle">
@@ -253,8 +253,8 @@ $offers = $stmt->fetchAll();
       <td class="text-end"><?= money($o['total_gross']) ?></td>
       <td><?= status_badge($o['status']) ?></td>
       <td class="text-end">
-        <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
-        <a href="angebote.php?action=delete&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Angebot wirklich löschen?')">Löschen</a>
+        <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
+        <a href="angebote.php?action=delete&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Angebot wirklich löschen?')">Löschen</a>
       </td>
     </tr>
   <?php endforeach; ?>

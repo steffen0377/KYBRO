@@ -158,12 +158,12 @@ if ($action === 'new' || $action === 'edit') {
                 <td><input type="text" name="contact_company[]" class="form-control" value="<?= e($row['company']) ?>"></td>
                 <td><input type="text" name="contact_phone[]" class="form-control" value="<?= e($row['phone']) ?>"></td>
                 <td><input type="email" name="contact_email[]" class="form-control" value="<?= e($row['email']) ?>"></td>
-                <td><button type="button" class="btn btn-sm btn-outline-danger remove-contact-row">✕</button></td>
+                <td><button type="button" class="btn btn-sm btn-app-outline-danger remove-contact-row">✕</button></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
           </table>
-          <button type="button" id="addContactRow" class="btn btn-sm btn-outline-primary">+ Ansprechpartner hinzufügen</button>
+          <button type="button" id="addContactRow" class="btn btn-sm btn-app-outline-primary">+ Ansprechpartner hinzufügen</button>
         </div>
 
         <div class="tab-pane fade <?= $activeTab === 'buchhaltung' ? 'show active' : '' ?>" id="tab-buchhaltung" role="tabpanel" aria-labelledby="tab-buchhaltung-btn">
@@ -175,9 +175,9 @@ if ($action === 'new' || $action === 'edit') {
           </div>
 
           <?php if (!$c['id']): ?>
-            <div class="alert alert-info">Offene Posten sowie die Angebots- und Rechnungshistorie sind verfügbar, sobald der Kunde gespeichert wurde.</div>
+            <div class="alert alert-app-info">Offene Posten sowie die Angebots- und Rechnungshistorie sind verfügbar, sobald der Kunde gespeichert wurde.</div>
           <?php else: ?>
-            <div class="alert <?= $unpaidSum > 0 ? 'alert-warning' : 'alert-success' ?> d-flex justify-content-between align-items-center">
+            <div class="alert <?= $unpaidSum > 0 ? 'alert-app-warning' : 'alert-app-success' ?> d-flex justify-content-between align-items-center">
               <span>Summe unbezahlter Rechnungen</span>
               <strong><?= money($unpaidSum) ?></strong>
             </div>
@@ -196,7 +196,7 @@ if ($action === 'new' || $action === 'edit') {
                   <td class="text-end"><?= money($o['total_net']) ?></td>
                   <td class="text-end"><?= money($o['total_gross']) ?></td>
                   <td class="text-end">
-                    <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
+                    <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
                   </td>
                 </tr>
                 <?php endforeach; ?>
@@ -223,7 +223,7 @@ if ($action === 'new' || $action === 'edit') {
                   <td class="text-end"><?= money($inv['total_gross']) ?></td>
                   <td class="text-end">
                     <?php if (!$isPaid): ?>
-                    <button type="submit" form="markPaid<?= $inv['id'] ?>" class="btn btn-sm btn-success">Bezahlt</button>
+                    <button type="submit" form="markPaid<?= $inv['id'] ?>" class="btn btn-sm btn-app-success">Bezahlt</button>
                     <?php endif; ?>
                   </td>
                 </tr>
@@ -236,8 +236,8 @@ if ($action === 'new' || $action === 'edit') {
       </div>
 
       <div class="mt-3">
-        <button class="btn btn-primary" type="submit">Speichern</button>
-        <a href="kunden.php" class="btn btn-secondary">Abbrechen</a>
+        <button class="btn btn-app-primary" type="submit">Speichern</button>
+        <a href="kunden.php" class="btn btn-app-secondary">Abbrechen</a>
       </div>
     </form>
 
@@ -301,7 +301,7 @@ function render_customers_table(array $customers): void {
           <td><?= e($c['zip'].' '.$c['city']) ?></td>
           <td><?= e($c['email']) ?></td>
           <td class="text-end">
-            <a href="kunden.php?action=delete&id=<?= $c['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Kunde wirklich löschen?')">Löschen</a>
+            <a href="kunden.php?action=delete&id=<?= $c['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Kunde wirklich löschen?')">Löschen</a>
           </td>
         </tr>
       <?php endforeach; ?>
@@ -318,7 +318,7 @@ if ($isAjax) {
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Kunden</h4>
-  <a href="kunden.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Kunde</a>
+  <a href="kunden.php?action=new" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neuer Kunde</a>
 </div>
 <div class="mb-3">
   <div class="position-relative" style="max-width:300px;">

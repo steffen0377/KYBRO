@@ -265,7 +265,7 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
         <div class="col-md-6"><label class="form-label">Präfix Angebotsnummer</label><input type="text" name="offer_prefix" class="form-control" value="<?= e($s['offer_prefix']) ?>"></div>
         <div class="col-md-6"><label class="form-label">Präfix Rechnungsnummer</label><input type="text" name="invoice_prefix" class="form-control" value="<?= e($s['invoice_prefix']) ?>"></div>
       </div>
-      <button class="btn btn-primary mt-3" type="submit">Speichern</button>
+      <button class="btn btn-app-primary mt-3" type="submit">Speichern</button>
     </form>
   </div>
 
@@ -292,7 +292,7 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
         <div class="col-md-6"><label class="form-label">Absender-E-Mail</label><input type="email" name="smtp_from_email" class="form-control" value="<?= e($s['smtp_from_email']) ?>"></div>
         <div class="col-md-6"><label class="form-label">Absender-Name</label><input type="text" name="smtp_from_name" class="form-control" value="<?= e($s['smtp_from_name']) ?>"></div>
       </div>
-      <button class="btn btn-primary mt-3" type="submit">Speichern</button>
+      <button class="btn btn-app-primary mt-3" type="submit">Speichern</button>
     </form>
   </div>
 
@@ -325,7 +325,7 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
           <div class="col-md-4"><label class="form-label">Attribut Anzeigename</label><input type="text" name="name_attribute" class="form-control" value="<?= e($ldap['name_attribute']) ?>"></div>
           <div class="col-md-4"><label class="form-label">Attribut E-Mail</label><input type="text" name="email_attribute" class="form-control" value="<?= e($ldap['email_attribute']) ?>"></div>
         </div>
-        <button class="btn btn-primary mt-3" type="submit">LDAP-Einstellungen speichern</button>
+        <button class="btn btn-app-primary mt-3" type="submit">LDAP-Einstellungen speichern</button>
       </form>
     </div>
 
@@ -344,7 +344,7 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
           </select>
         </div>
         <div class="col-auto">
-          <button class="btn btn-primary" type="submit">Speichern</button>
+          <button class="btn btn-app-primary" type="submit">Speichern</button>
         </div>
       </form>
     </div>
@@ -368,9 +368,9 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
               <td><?= $usr['auth_source'] === 'ldap' ? 'LDAP' : 'Lokal' ?></td>
               <td><?= $usr['active'] ? 'Ja' : 'Nein' ?></td>
               <td class="text-end">
-                <a href="einstellungen.php?tab=authentifizierung&edit_user=<?= $usr['id'] ?>#user-form" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
+                <a href="einstellungen.php?tab=authentifizierung&edit_user=<?= $usr['id'] ?>#user-form" class="btn btn-sm btn-app-outline-secondary">Bearbeiten</a>
                 <?php if ((int)$usr['id'] !== (int)current_user()['id']): ?>
-                <a href="einstellungen.php?action=delete_user&id=<?= $usr['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Benutzer wirklich löschen?')">Löschen</a>
+                <a href="einstellungen.php?action=delete_user&id=<?= $usr['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Benutzer wirklich löschen?')">Löschen</a>
                 <?php endif; ?>
               </td>
             </tr>
@@ -409,8 +409,8 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
           </div>
         </div>
         <div class="col-12">
-          <button class="btn btn-primary" type="submit">Speichern</button>
-          <?php if ($editUser['id']): ?><a href="einstellungen.php?tab=authentifizierung" class="btn btn-secondary">Abbrechen</a><?php endif; ?>
+          <button class="btn btn-app-primary" type="submit">Speichern</button>
+          <?php if ($editUser['id']): ?><a href="einstellungen.php?tab=authentifizierung" class="btn btn-app-secondary">Abbrechen</a><?php endif; ?>
         </div>
       </form>
     </div>
@@ -427,9 +427,9 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
               <td><?= e($g['name']) ?></td>
               <td><?= e($g['description']) ?></td>
               <td class="text-end">
-                <a href="einstellungen.php?tab=authentifizierung&edit_group=<?= $g['id'] ?>#group-form" class="btn btn-sm btn-outline-secondary">Bearbeiten</a>
+                <a href="einstellungen.php?tab=authentifizierung&edit_group=<?= $g['id'] ?>#group-form" class="btn btn-sm btn-app-outline-secondary">Bearbeiten</a>
                 <?php if ((int)$g['id'] !== 1): ?>
-                <a href="einstellungen.php?action=delete_group&id=<?= $g['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Gruppe wirklich löschen?')">Löschen</a>
+                <a href="einstellungen.php?action=delete_group&id=<?= $g['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Gruppe wirklich löschen?')">Löschen</a>
                 <?php endif; ?>
               </td>
             </tr>
@@ -463,8 +463,8 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
           </table>
         </div>
 
-        <button class="btn btn-primary" type="submit">Speichern</button>
-        <?php if ($editGroup['id']): ?><a href="einstellungen.php?tab=authentifizierung" class="btn btn-secondary">Abbrechen</a><?php endif; ?>
+        <button class="btn btn-app-primary" type="submit">Speichern</button>
+        <?php if ($editGroup['id']): ?><a href="einstellungen.php?tab=authentifizierung" class="btn btn-app-secondary">Abbrechen</a><?php endif; ?>
       </form>
     </div>
 

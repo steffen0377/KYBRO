@@ -28,6 +28,15 @@
   --color-danger-bg: #f8d7da;
   --color-danger-border: #f1aeb5;
   --color-danger-text: #842029;
+  --color-success-bg: #d1e7dd;
+  --color-success-border: #a3cfbb;
+  --color-success-text: #0f5132;
+  --color-info-bg: #cff4fc;
+  --color-info-border: #9eeaf9;
+  --color-info-text: #055160;
+  --color-warning-bg: #fff3cd;
+  --color-warning-border: #ffecb5;
+  --color-warning-text: #664d03;
 }
 
 /* ====================================================================
@@ -52,14 +61,129 @@
   color: #fff;
 }
 
+.btn-app-secondary {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: #fff;
+}
+.btn-app-secondary:hover,
+.btn-app-secondary:focus {
+  background-color: color-mix(in srgb, var(--color-secondary) 85%, black);
+  border-color: color-mix(in srgb, var(--color-secondary) 85%, black);
+  color: #fff;
+}
+.btn-app-secondary:active {
+  background-color: color-mix(in srgb, var(--color-secondary) 75%, black);
+  border-color: color-mix(in srgb, var(--color-secondary) 75%, black);
+  color: #fff;
+}
+
+.btn-app-success {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+.btn-app-success:hover,
+.btn-app-success:focus {
+  background-color: color-mix(in srgb, var(--color-success) 85%, black);
+  border-color: color-mix(in srgb, var(--color-success) 85%, black);
+  color: #fff;
+}
+.btn-app-success:active {
+  background-color: color-mix(in srgb, var(--color-success) 75%, black);
+  border-color: color-mix(in srgb, var(--color-success) 75%, black);
+  color: #fff;
+}
+
+.btn-app-outline-primary {
+  background-color: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+}
+.btn-app-outline-primary:hover,
+.btn-app-outline-primary:focus {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.btn-app-outline-secondary {
+  background-color: transparent;
+  border: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+}
+.btn-app-outline-secondary:hover,
+.btn-app-outline-secondary:focus {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: #fff;
+}
+
+.btn-app-outline-success {
+  background-color: transparent;
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+.btn-app-outline-success:hover,
+.btn-app-outline-success:focus {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+
+.btn-app-outline-danger {
+  background-color: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+.btn-app-outline-danger:hover,
+.btn-app-outline-danger:focus {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
 .alert-app-danger {
   background-color: var(--color-danger-bg);
   border: 1px solid var(--color-danger-border);
   color: var(--color-danger-text);
 }
 
+.alert-app-success {
+  background-color: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success-text);
+}
+
+.alert-app-info {
+  background-color: var(--color-info-bg);
+  border: 1px solid var(--color-info-border);
+  color: var(--color-info-text);
+}
+
+.alert-app-warning {
+  background-color: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+
 .bg-app-light {
   background-color: var(--color-light) !important;
+}
+
+.bg-app-secondary {
+  background-color: var(--color-secondary) !important;
+  color: #fff;
+}
+
+.bg-app-success {
+  background-color: var(--color-success) !important;
+  color: #fff;
+}
+
+.bg-app-info {
+  background-color: var(--color-info) !important;
+  color: var(--color-dark);
 }
 
 body { background-color: var(--color-body-bg); }

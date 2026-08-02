@@ -145,7 +145,7 @@ if ($action === 'new' || $action === 'edit') {
     ?>
     <h4><?= $action === 'new' ? 'Neuer Artikel' : e($article['name']) ?></h4>
     <?php if ($fromOfferItem): ?>
-      <div class="alert alert-info">Übernommen aus einer Angebotsposition. Bitte prüfen und bei Bedarf ergänzen (z.B. Einkaufspreis, Einheit, Artikel- und Lagerbestand-Einstellungen).</div>
+      <div class="alert alert-app-info">Übernommen aus einer Angebotsposition. Bitte prüfen und bei Bedarf ergänzen (z.B. Einkaufspreis, Einheit, Artikel- und Lagerbestand-Einstellungen).</div>
     <?php endif; ?>
     <form method="post" action="artikel.php?action=save" class="card p-4" style="max-width:900px;">
       <?= csrf_field() ?>
@@ -247,18 +247,18 @@ if ($action === 'new' || $action === 'edit') {
                 </td>
                 <td><input type="text" name="supplier_article_number[]" class="form-control" value="<?= e($row['supplier_article_number'] ?? '') ?>"></td>
                 <td><input type="text" name="hek_price[]" class="form-control" value="<?= num($row['hek_price'] ?? 0) ?>"></td>
-                <td><button type="button" class="btn btn-sm btn-outline-danger remove-supplier-row">✕</button></td>
+                <td><button type="button" class="btn btn-sm btn-app-outline-danger remove-supplier-row">✕</button></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
           </table>
-          <button type="button" id="addSupplierRow" class="btn btn-sm btn-outline-primary">+ Lieferant hinzufügen</button>
+          <button type="button" id="addSupplierRow" class="btn btn-sm btn-app-outline-primary">+ Lieferant hinzufügen</button>
         </div>
       </div>
 
       <div class="mt-3">
-        <button class="btn btn-primary" type="submit">Speichern</button>
-        <a href="artikel.php" class="btn btn-secondary">Abbrechen</a>
+        <button class="btn btn-app-primary" type="submit">Speichern</button>
+        <a href="artikel.php" class="btn btn-app-secondary">Abbrechen</a>
       </div>
     </form>
     <script>
@@ -364,13 +364,13 @@ function render_articles_table(array $articles, array $articleCategories, string
       <?php foreach ($articles as $a): ?>
         <tr class="<?= !$a['active'] ? 'text-muted' : '' ?>" style="cursor:pointer;" onclick="window.location='artikel.php?action=edit&id=<?= $a['id'] ?>';">
           <td><?= e($a['sku']) ?></td>
-          <td><?= e($a['name']) ?> <?= $a['track_serials'] ? '<span class="badge bg-info text-dark">S/N</span>' : '' ?></td>
+          <td><?= e($a['name']) ?> <?= $a['track_serials'] ? '<span class="badge bg-app-info text-dark">S/N</span>' : '' ?></td>
           <td class="text-end"><?= money($a['sale_price']) ?></td>
           <td class="text-end"><?= num($a['tax_rate']) ?>%</td>
           <td class="text-end <?= ($a['track_stock'] && $a['stock_qty'] <= $a['min_stock']) ? 'low-stock' : '' ?>">
             <?= $a['track_stock'] ? num($a['stock_qty']) : '<span class="text-muted">— kein Lagerartikel —</span>' ?>
           </td>
-          <td><?= $a['active'] ? '<span class="badge bg-success">Aktiv</span>' : '<span class="badge bg-secondary">Inaktiv</span>' ?></td>
+          <td><?= $a['active'] ? '<span class="badge bg-app-success">Aktiv</span>' : '<span class="badge bg-app-secondary">Inaktiv</span>' ?></td>
         </tr>
       <?php endforeach; ?>
       </tbody>
@@ -395,7 +395,7 @@ if ($selectedFilterCategory) {
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Artikel<?= $selectedCategoryName ? ' — Kategorie: ' . e($selectedCategoryName) : '' ?></h4>
-  <a href="artikel.php?action=new" class="btn btn-primary"><i class="bi bi-plus"></i> Neuer Artikel</a>
+  <a href="artikel.php?action=new" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neuer Artikel</a>
 </div>
 <form class="row g-2 mb-3" method="get" id="articleSearchForm">
   <?php if ($selectedFilterCategory): ?><input type="hidden" name="category" value="<?= $selectedFilterCategory ?>"><?php endif; ?>

@@ -87,12 +87,12 @@ function render_category_rows(array $byParent, int $parentId, int $depth): void 
                 <option value="">— Hauptkategorie —</option>
                 <?php render_category_options($byParent, 0, 0, $excludeIds, (int)($c['parent_id'] ?? 0)); ?>
               </select>
-              <button class="btn btn-sm btn-outline-secondary" type="submit">Speichern</button>
+              <button class="btn btn-sm btn-app-outline-secondary" type="submit">Speichern</button>
             </form>
           </td>
           <td class="text-end"><?= $c['article_count'] ?></td>
           <td class="text-end">
-            <a href="kategorien.php?action=delete&id=<?= $c['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Kategorie wirklich löschen? Unterkategorien werden dabei zu Hauptkategorien, Artikel-Zuordnungen werden entfernt (Artikel selbst bleiben erhalten).')">Löschen</a>
+            <a href="kategorien.php?action=delete&id=<?= $c['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Kategorie wirklich löschen? Unterkategorien werden dabei zu Hauptkategorien, Artikel-Zuordnungen werden entfernt (Artikel selbst bleiben erhalten).')">Löschen</a>
           </td>
         </tr>
         <?php
@@ -118,7 +118,7 @@ require_once __DIR__ . '/includes/header.php';
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Kategorien</h4>
-  <a href="artikel.php" class="btn btn-outline-secondary">Zurück zu Artikel</a>
+  <a href="artikel.php" class="btn btn-app-outline-secondary">Zurück zu Artikel</a>
 </div>
 
 <div class="row g-3">
@@ -137,7 +137,7 @@ require_once __DIR__ . '/includes/header.php';
           </select>
           <div class="form-text">Optional: als Unterkategorie einer bestehenden Kategorie anlegen.</div>
         </div>
-        <button class="btn btn-primary" type="submit">Anlegen</button>
+        <button class="btn btn-app-primary" type="submit">Anlegen</button>
       </form>
     </div>
   </div>

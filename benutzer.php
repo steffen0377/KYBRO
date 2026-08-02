@@ -76,8 +76,8 @@ if ($action === 'new' || $action === 'edit') {
         <input type="checkbox" name="active" class="form-check-input" id="active" <?= $user['active']?'checked':'' ?>>
         <label class="form-check-label" for="active">Aktiv</label>
       </div>
-      <button class="btn btn-primary" type="submit">Speichern</button>
-      <a href="benutzer.php" class="btn btn-secondary">Abbrechen</a>
+      <button class="btn btn-app-primary" type="submit">Speichern</button>
+      <a href="benutzer.php" class="btn btn-app-secondary">Abbrechen</a>
     </form>
     <?php require_once __DIR__ . '/includes/footer.php'; exit;
 }
@@ -86,7 +86,7 @@ $users = $pdo->query('SELECT id,username,full_name,role,active FROM users ORDER 
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Benutzer</h4>
-  <a href="benutzer.php?action=new" class="btn btn-primary">+ Neuer Benutzer</a>
+  <a href="benutzer.php?action=new" class="btn btn-app-primary">+ Neuer Benutzer</a>
 </div>
 <div class="card p-3">
 <table class="table table-hover align-middle">
@@ -97,10 +97,10 @@ $users = $pdo->query('SELECT id,username,full_name,role,active FROM users ORDER 
       <td><?= e($u['username']) ?></td>
       <td><?= e($u['full_name']) ?></td>
       <td><?= $u['role']==='admin' ? 'Administrator' : 'Benutzer' ?></td>
-      <td><?= $u['active'] ? '<span class="badge bg-success">Aktiv</span>' : '<span class="badge bg-secondary">Inaktiv</span>' ?></td>
+      <td><?= $u['active'] ? '<span class="badge bg-app-success">Aktiv</span>' : '<span class="badge bg-app-secondary">Inaktiv</span>' ?></td>
       <td class="text-end">
         <?php if ($u['active']): ?>
-        <a href="benutzer.php?action=delete&id=<?= $u['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Benutzer deaktivieren?')">Deaktivieren</a>
+        <a href="benutzer.php?action=delete&id=<?= $u['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Benutzer deaktivieren?')">Deaktivieren</a>
         <?php endif; ?>
       </td>
     </tr>
