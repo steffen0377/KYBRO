@@ -57,12 +57,12 @@ if (empty($items)) {
         <td><input type="text" name="quantity[]" class="form-control qty-field" value="<?= num($it['quantity']) ?>"></td>
         <td><input type="text" name="unit_price[]" class="form-control price-field" value="<?= num($it['unit_price']) ?>"></td>
         <td><input type="text" name="tax_rate[]" class="form-control tax-field" value="<?= num($it['tax_rate']) ?>"></td>
-        <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">✕</button></td>
+        <td><button type="button" class="btn btn-sm btn-app-outline-danger remove-row">✕</button></td>
       </tr>
       <?php endforeach; ?>
     </tbody>
   </table>
-  <button type="button" id="addRow" class="btn btn-sm btn-outline-primary mb-3">+ Position hinzufügen</button>
+  <button type="button" id="addRow" class="btn btn-sm btn-app-outline-primary mb-3">+ Position hinzufügen</button>
 
   <div class="mb-3">
     <label class="form-label">Notizen</label>
@@ -70,8 +70,8 @@ if (empty($items)) {
   </div>
 
   <div class="mt-3">
-    <button class="btn btn-primary" type="submit">Speichern</button>
-    <a href="<?= $docType === 'offer' ? 'angebote.php' : 'rechnungen.php' ?>" class="btn btn-secondary">Abbrechen</a>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="<?= $docType === 'offer' ? 'angebote.php' : 'rechnungen.php' ?>" class="btn btn-app-secondary">Abbrechen</a>
   </div>
 </form>
 
