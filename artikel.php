@@ -11,6 +11,7 @@ require_login();
 $isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
+require_permission('artikel', in_array($action, ['save', 'delete', 'new', 'edit'], true) ? 'write' : 'read');
 
 // ---------- SPEICHERN ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
