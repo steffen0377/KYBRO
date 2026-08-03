@@ -34,8 +34,12 @@ function redirect(string $path): void {
 // verschachtelten Transaktionen).
 function next_document_number(string $type): string {
     $pdo = db();
-    $field = $type === 'offer' ? 'next_offer_number' : 'next_invoice_number';
-    $prefixField = $type === 'offer' ? 'offer_prefix' : 'invoice_prefix';
+    $fields = [
+        'offer' => ['next_offer_number', 'offer_prefix'],
+        'order' => ['next_order_number', 'order_prefix'],
+        'invoice' => ['next_invoice_number', 'invoice_prefix'],
+    ];
+    [$field, $prefixField] = $fields[$type] ?? $fields['invoice'];
     $stmt = $pdo->query("SELECT $field, $prefixField FROM company_settings WHERE id = 1 FOR UPDATE");
     $row = $stmt->fetch();
     $number = $row[$field];
@@ -61,6 +65,70 @@ function adjust_stock(int $articleId, float $delta, string $type, ?string $refTy
 
     $stmt = $pdo->prepare('INSERT INTO stock_movements (article_id, type, quantity, reference_type, reference_id, note, created_by) VALUES (?,?,?,?,?,?,?)');
     $stmt->execute([$articleId, $type, $delta, $refType, $refId, $note, current_user()['id'] ?? null]);
+}
+
+// Liefert den bereits existierenden Auftrag zu einem Angebot zurück, oder
+// legt (inkl. Positionen) einen neuen an, falls noch keiner existiert.
+// WICHTIG: Muss innerhalb einer bereits laufenden Transaktion der aufrufenden
+// Seite aufgerufen werden (siehe next_document_number()).
+function get_or_create_order_from_offer(PDO $pdo, array $offer): array {
+    $stmt = $pdo->prepare('SELECT * FROM orders WHERE offer_id=?');
+    $stmt->execute([$offer['id']]);
+    $order = $stmt->fetch();
+    if ($order) {
+        return $order;
+    }
+
+    $itemsStmt = $pdo->prepare('SELECT * FROM offer_items WHERE offer_id=? ORDER BY position');
+    $itemsStmt->execute([$offer['id']]);
+    $offerItems = $itemsStmt->fetchAll();
+
+    $number = next_document_number('order');
+    $stmt = $pdo->prepare('INSERT INTO orders (order_number,offer_id,customer_id,order_date,status,notes,total_net,total_tax,total_gross,created_by) VALUES (?,?,?,?,?,?,?,?,?,?)');
+    $stmt->execute([$number, $offer['id'], $offer['customer_id'], date('Y-m-d'), 'offen', $offer['notes'], $offer['total_net'], $offer['total_tax'], $offer['total_gross'], current_user()['id'] ?? null]);
+    $orderId = $pdo->lastInsertId();
+
+    $itemInsert = $pdo->prepare('INSERT INTO order_items (order_id,article_id,position,description,quantity,unit_price,tax_rate) VALUES (?,?,?,?,?,?,?)');
+    foreach ($offerItems as $it) {
+        $itemInsert->execute([$orderId, $it['article_id'], $it['position'], $it['description'], $it['quantity'], $it['unit_price'], $it['tax_rate']]);
+    }
+
+    $stmt = $pdo->prepare('SELECT * FROM orders WHERE id=?');
+    $stmt->execute([$orderId]);
+    return $stmt->fetch();
+}
+
+// Erstellt eine Rechnung aus den Positionen eines Auftrags (Lagerbestand wird
+// dabei wie bisher direkt reduziert, sofern keine Seriennummernpflicht besteht).
+// Gibt ['invoice_id'=>int,'invoice_number'=>string,'needs_serial_assignment'=>bool] zurück.
+// WICHTIG: Muss innerhalb einer bereits laufenden Transaktion der aufrufenden
+// Seite aufgerufen werden (siehe next_document_number()).
+function create_invoice_from_order(PDO $pdo, array $order): array {
+    $itemsStmt = $pdo->prepare('SELECT * FROM order_items WHERE order_id=? ORDER BY position');
+    $itemsStmt->execute([$order['id']]);
+    $items = $itemsStmt->fetchAll();
+
+    $number = next_document_number('invoice');
+    $stmt = $pdo->prepare('INSERT INTO invoices (invoice_number,offer_id,order_id,customer_id,invoice_date,due_date,status,notes,total_net,total_tax,total_gross,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+    $stmt->execute([$number, $order['offer_id'], $order['id'], $order['customer_id'], date('Y-m-d'), date('Y-m-d', strtotime('+14 days')), 'entwurf', $order['notes'], $order['total_net'], $order['total_tax'], $order['total_gross'], current_user()['id'] ?? null]);
+    $invoiceId = $pdo->lastInsertId();
+
+    $itemStmt = $pdo->prepare('INSERT INTO invoice_items (invoice_id,article_id,position,description,quantity,unit_price,tax_rate) VALUES (?,?,?,?,?,?,?)');
+    $needsSerialAssignment = false;
+    foreach ($items as $it) {
+        $itemStmt->execute([$invoiceId, $it['article_id'], $it['position'], $it['description'], $it['quantity'], $it['unit_price'], $it['tax_rate']]);
+        if ($it['article_id']) {
+            $trackStmt = $pdo->prepare('SELECT track_serials FROM articles WHERE id=?');
+            $trackStmt->execute([$it['article_id']]);
+            if ($trackStmt->fetch()['track_serials'] ?? false) {
+                $needsSerialAssignment = true;
+            } else {
+                adjust_stock((int)$it['article_id'], -1 * (float)$it['quantity'], 'verkauf', 'invoice', $invoiceId, 'Verkauf über Rechnung ' . $number);
+            }
+        }
+    }
+
+    return ['invoice_id' => $invoiceId, 'invoice_number' => $number, 'needs_serial_assignment' => $needsSerialAssignment];
 }
 
 // Kategorie-Zuordnungen eines Artikels ersetzen (Mehrfachzuordnung möglich)
@@ -142,6 +210,7 @@ function known_modules(): array {
         'kunden' => 'Kunden',
         'lieferanten' => 'Lieferanten',
         'angebote' => 'Angebote',
+        'auftraege' => 'Aufträge',
         'rechnungen' => 'Rechnungen',
         'kategorien' => 'Kategorien',
         'einstellungen' => 'Einstellungen',
@@ -186,7 +255,8 @@ function status_badge(string $status): string {
     $map = [
         'entwurf' => 'secondary', 'versendet' => 'info', 'angenommen' => 'success',
         'abgelehnt' => 'danger', 'bezahlt' => 'success', 'ueberfaellig' => 'danger',
-        'storniert' => 'dark',
+        'storniert' => 'dark', 'offen' => 'secondary', 'in_bearbeitung' => 'info',
+        'abgeschlossen' => 'success',
     ];
     $class = $map[$status] ?? 'secondary';
     return '<span class="badge bg-app-' . $class . '">' . e(ucfirst($status)) . '</span>';

@@ -62,7 +62,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
       </a>
     </div>
     <?php
-      $verkaufActive = nav_group_active(['angebote.php', 'rechnungen.php']);
+      $verkaufActive = nav_group_active(['angebote.php', 'auftraege.php', 'rechnungen.php']);
       $einkaufActive = nav_group_active(['lieferanten.php']);
       $einstellungenActive = nav_group_active(['einstellungen.php', 'kategorien.php']);
     ?>
@@ -88,6 +88,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
         <div class="collapse <?= $verkaufActive ? 'show' : '' ?>" id="navVerkauf">
           <ul class="nav flex-column ms-3">
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('angebote.php') ?>" href="<?= APP_URL ?>/angebote.php"><i class="bi bi-file-earmark-text me-2"></i>Angebote</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('auftraege.php') ?>" href="<?= APP_URL ?>/auftraege.php"><i class="bi bi-clipboard-check me-2"></i>Aufträge</a></li>
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('rechnungen.php') ?>" href="<?= APP_URL ?>/rechnungen.php"><i class="bi bi-receipt me-2"></i>Rechnungen</a></li>
           </ul>
         </div>

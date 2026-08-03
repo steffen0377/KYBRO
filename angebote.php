@@ -74,53 +74,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
 }
 
 // ---------- STATUS ÄNDERN ----------
+// Wechsel auf 'angenommen' erzeugt automatisch (sofern noch nicht vorhanden)
+// den zugehörigen Auftrag.
 if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    $stmt = $pdo->prepare('UPDATE offers SET status=? WHERE id=?');
-    $stmt->execute([$_POST['status'], (int)$_POST['id']]);
-    flash('success', 'Status aktualisiert.');
-    redirect('angebote.php?action=view&id=' . (int)$_POST['id']);
+    $offerId = (int)$_POST['id'];
+    $newStatus = $_POST['status'];
+    $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
+    $stmt->execute([$offerId]);
+    $offer = $stmt->fetch();
+    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('angebote.php'); }
+
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('UPDATE offers SET status=? WHERE id=?')->execute([$newStatus, $offerId]);
+        if ($newStatus === 'angenommen' && $offer['status'] !== 'angenommen') {
+            $order = get_or_create_order_from_offer($pdo, $offer);
+            $pdo->commit();
+            flash('success', "Status aktualisiert. Auftrag {$order['order_number']} wurde erstellt.");
+        } else {
+            $pdo->commit();
+            flash('success', 'Status aktualisiert.');
+        }
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        flash('danger', 'Fehler: ' . $e->getMessage());
+    }
+    redirect('angebote.php?action=view&id=' . $offerId);
 }
 
 // ---------- IN RECHNUNG UMWANDELN ----------
+// Erzeugt im Hintergrund zuerst den Auftrag (falls noch nicht vorhanden) und
+// daraus dann die Rechnung, damit die Prozesskette Angebot -> Auftrag ->
+// Rechnung auch bei diesem Schnellweg vollständig abgebildet wird.
 if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
     $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
     $stmt->execute([(int)$_GET['id']]);
     $offer = $stmt->fetch();
     if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('angebote.php'); }
 
-    $items = $pdo->prepare('SELECT * FROM offer_items WHERE offer_id=? ORDER BY position');
-    $items->execute([$offer['id']]);
-    $items = $items->fetchAll();
-
     $pdo->beginTransaction();
     try {
-        $number = next_document_number('invoice');
-        $stmt = $pdo->prepare('INSERT INTO invoices (invoice_number,offer_id,customer_id,invoice_date,due_date,status,notes,total_net,total_tax,total_gross,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
-        $stmt->execute([$number, $offer['id'], $offer['customer_id'], date('Y-m-d'), date('Y-m-d', strtotime('+14 days')), 'entwurf', $offer['notes'], $offer['total_net'], $offer['total_tax'], $offer['total_gross'], current_user()['id']]);
-        $invoiceId = $pdo->lastInsertId();
-        $itemStmt = $pdo->prepare('INSERT INTO invoice_items (invoice_id,article_id,position,description,quantity,unit_price,tax_rate) VALUES (?,?,?,?,?,?,?)');
-        $needsSerialAssignment = false;
-        foreach ($items as $it) {
-            $itemStmt->execute([$invoiceId, $it['article_id'], $it['position'], $it['description'], $it['quantity'], $it['unit_price'], $it['tax_rate']]);
-            if ($it['article_id']) {
-                $trackStmt = $pdo->prepare('SELECT track_serials FROM articles WHERE id=?');
-                $trackStmt->execute([$it['article_id']]);
-                if ($trackStmt->fetch()['track_serials'] ?? false) {
-                    $needsSerialAssignment = true;
-                } else {
-                    adjust_stock((int)$it['article_id'], -1 * (float)$it['quantity'], 'verkauf', 'invoice', $invoiceId, 'Verkauf über Rechnung ' . $number);
-                }
-            }
-        }
+        $order = get_or_create_order_from_offer($pdo, $offer);
+        $result = create_invoice_from_order($pdo, $order);
         $pdo->prepare("UPDATE offers SET status='angenommen' WHERE id=?")->execute([$offer['id']]);
+        $pdo->prepare("UPDATE orders SET status='abgeschlossen' WHERE id=?")->execute([$order['id']]);
         $pdo->commit();
-        if ($needsSerialAssignment) {
-            flash('success', "Rechnung $number wurde erstellt. Bitte jetzt die Seriennummern der verkauften Geräte zuordnen.");
-            redirect('rechnungen.php?action=assign_serials&id=' . $invoiceId);
+        if ($result['needs_serial_assignment']) {
+            flash('success', "Auftrag {$order['order_number']} und Rechnung {$result['invoice_number']} wurden erstellt. Bitte jetzt die Seriennummern der verkauften Geräte zuordnen.");
+            redirect('rechnungen.php?action=assign_serials&id=' . $result['invoice_id']);
         }
-        flash('success', "Rechnung $number wurde erstellt (Lagerbestand wurde reduziert).");
-        redirect('rechnungen.php?action=view&id=' . $invoiceId);
+        flash('success', "Auftrag {$order['order_number']} und Rechnung {$result['invoice_number']} wurden erstellt (Lagerbestand wurde reduziert).");
+        redirect('rechnungen.php?action=view&id=' . $result['invoice_id']);
     } catch (Exception $e) {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
@@ -148,15 +153,24 @@ if ($action === 'view') {
     $items = $pdo->prepare('SELECT * FROM offer_items WHERE offer_id=? ORDER BY position');
     $items->execute([$offer['id']]);
     $items = $items->fetchAll();
+    $orderStmt = $pdo->prepare('SELECT id, order_number, status FROM orders WHERE offer_id=?');
+    $orderStmt->execute([$offer['id']]);
+    $relatedOrder = $orderStmt->fetch();
     ?>
     <div class="d-flex justify-content-between mb-3">
       <h4>Angebot <?= e($offer['offer_number']) ?> <?= status_badge($offer['status']) ?></h4>
       <div>
         <a href="angebot_pdf.php?id=<?= $offer['id'] ?>" class="btn btn-app-outline-primary" target="_blank">PDF ansehen</a>
         <a href="angebote.php?action=edit&id=<?= $offer['id'] ?>" class="btn btn-app-outline-secondary">Bearbeiten</a>
-        <a href="angebote.php?action=to_invoice&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-app-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
+        <a href="angebote.php?action=to_invoice&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-app-success" onclick="return confirm('Auftrag anlegen (falls noch nicht vorhanden) und Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
       </div>
     </div>
+    <?php if ($relatedOrder): ?>
+      <div class="alert alert-app-info d-flex justify-content-between align-items-center">
+        <span>Zu diesem Angebot wurde bereits Auftrag <?= e($relatedOrder['order_number']) ?> <?= status_badge($relatedOrder['status']) ?> erstellt.</span>
+        <a href="auftraege.php?action=view&id=<?= $relatedOrder['id'] ?>" class="btn btn-sm btn-app-outline-primary">Auftrag ansehen</a>
+      </div>
+    <?php endif; ?>
     <div class="card p-3 mb-3">
       <strong>Kunde:</strong> <?= e($offer['company'] ?: trim($offer['first_name'].' '.$offer['last_name'])) ?><br>
       <?= e($offer['street']) ?>, <?= e($offer['zip'].' '.$offer['city']) ?><br>
