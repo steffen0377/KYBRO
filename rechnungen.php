@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/functions.php';
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
+require_permission('rechnungen', in_array($action, ['save', 'assign_serials', 'status', 'delete', 'new', 'edit'], true) ? 'write' : 'read');
 
 function calc_totals_inv(array $descriptions, array $quantities, array $prices, array $taxRates): array {
     $net = 0.0; $tax = 0.0;
