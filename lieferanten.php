@@ -11,6 +11,7 @@ if ($isAjax) {
 }
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
+require_permission('lieferanten', in_array($action, ['save', 'delete', 'new', 'edit'], true) ? 'write' : 'read');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     csrf_check();
