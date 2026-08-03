@@ -5,7 +5,9 @@ mit Vor-Ort-Unterschrift für Aufträge).
 
 ## Setup
 
-1. Migration einspielen: `database/migrations/migration_011_orders.sql`
+1. Migrationen einspielen: `database/migrations/migration_011_orders.sql`
+   (bei dir ggf. umbenannt zu `migration_012_orders.sql`),
+   `migration_013_updated_at.sql`, `migration_014_rate_limit.sql`
 2. In `config.local.php` (nicht versioniert) einen eigenen JWT-Schlüssel setzen:
    ```php
    define('JWT_SECRET', 'ein-langer-zufälliger-schlüssel');
@@ -16,11 +18,14 @@ mit Vor-Ort-Unterschrift für Aufträge).
 
 ## Endpunkte
 
-| Endpoint          | Methode | Zweck                                              |
-|-------------------|---------|-----------------------------------------------------|
-| `api/auth.php`    | POST    | Login, gibt Bearer-Token zurück                     |
-| `api/orders.php`  | GET     | Aufträge lesen (Liste, Einzelauftrag, Delta via `since`) |
-| `api/orders.php`  | POST    | Auftrag/Positionen/Unterschrift synchronisieren     |
+| Endpoint                    | Methode | Zweck                                                     |
+|-----------------------------|---------|-------------------------------------------------------------|
+| `api/auth.php`              | POST    | Login, gibt Bearer-Token zurück (rate-limited)               |
+| `api/orders.php`            | GET     | Aufträge lesen (Liste, Einzelauftrag, Delta via `since`)     |
+| `api/orders.php`            | POST    | Auftrag/Positionen/Unterschrift synchronisieren               |
+| `api/orders_to_invoice.php` | POST    | Rechnung aus unterschriebenem/abgeschlossenem Auftrag erzeugen |
+| `api/customers.php`         | GET     | Kunden lesen (Liste, Einzelkunde, Delta via `since`)          |
+| `api/articles.php`          | GET     | Artikel lesen (Liste, Einzelartikel, Delta via `since`)       |
 
 Alle Endpunkte außer `auth.php` erwarten den Header:
 `Authorization: Bearer <token>`
@@ -37,9 +42,17 @@ selbst (z. B. UUID v4), bevor sie synchronisiert. Der Server nutzt diese
 UUID, um bei wiederholten Sync-Versuchen (z. B. nach Verbindungsabbruch)
 keine doppelten Datensätze anzulegen.
 
+## Rate-Limiting
+
+`api/auth.php` sperrt eine Kombination aus Benutzername + IP-Adresse nach
+5 Fehlversuchen innerhalb von 15 Minuten (Tabelle `api_login_attempts`,
+siehe `migration_014_rate_limit.sql`). Bewusst nicht rein pro Benutzername,
+damit niemand durch gezielte Fehlversuche einen echten Account aussperren
+kann.
+
 ## Noch offen (nächste Schritte)
 
-- Endpunkte für `customers.php` und `articles.php` (Stammdaten für die App,
-  damit Aufträge offline mit gültigen IDs angelegt werden können)
-- Rechnungserstellung aus einem abgeschlossenen Auftrag
-- Rate-Limiting / Brute-Force-Schutz auf `api/auth.php`
+- Löschen/Stornieren von Aufträgen per API (aktuell nur über das Web-Backend)
+- Ausführlicheres Berechtigungsmodell, falls später mehrere Rollen
+  unterschiedliche Rechte in der App bekommen sollen (aktuell: jeder
+  eingeloggte Benutzer sieht alle Aufträge/Kunden/Artikel)

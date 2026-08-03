@@ -8,6 +8,7 @@
  * includes/api_auth.php::api_attempt_login().
  */
 require_once __DIR__ . '/../includes/api_auth.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     api_json_error('Nur POST erlaubt.', 405);
@@ -21,7 +22,12 @@ if ($username === '' || $password === '') {
     api_json_error('Benutzername und Passwort erforderlich.', 400);
 }
 
+$ip = client_ip();
+rate_limit_check($username, $ip);
+
 $user = api_attempt_login($username, $password);
+rate_limit_record($username, $ip, (bool)$user);
+
 if (!$user) {
     api_json_error('Benutzername oder Passwort ist falsch.', 401);
 }
