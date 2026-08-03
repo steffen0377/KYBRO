@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/functions.php';
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
+require_permission('auftraege', in_array($action, ['status', 'to_invoice', 'delete'], true) ? 'write' : 'read');
 
 // ---------- STATUS ÄNDERN ----------
 if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
