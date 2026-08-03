@@ -1,6 +1,5 @@
 <?php
 $pageTitle = 'Lager';
-require_once __DIR__ . '/includes/header.php';
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 
@@ -132,6 +131,8 @@ if ($viewSerialsArticleId) {
     $stmt->execute([$viewSerialsArticleId]);
     $serialsOfArticle = $stmt->fetchAll();
 }
+
+require_once __DIR__ . '/includes/header.php';
 ?>
 <h4>Lagerverwaltung</h4>
 
