@@ -5,6 +5,7 @@ require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 $isAjax = isset($_GET['ajax']) && $action === 'list';
+require_permission('kunden', in_array($action, ['save', 'delete', 'mark_invoice_paid', 'new', 'edit'], true) ? 'write' : 'read');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     csrf_check();
