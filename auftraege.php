@@ -74,6 +74,7 @@ if ($action === 'view') {
     <div class="d-flex justify-content-between mb-3">
       <h4>Auftrag <?= e($order['order_number']) ?> <?= status_badge($order['status']) ?></h4>
       <div>
+        <a href="auftrag_pdf.php?id=<?= $order['id'] ?>" class="btn btn-app-outline-primary" target="_blank">PDF ansehen</a>
         <?php if (!$relatedInvoices): ?>
         <a href="auftraege.php?action=to_invoice&id=<?= $order['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-app-success" onclick="return confirm('Rechnung aus diesem Auftrag erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
         <?php endif; ?>
