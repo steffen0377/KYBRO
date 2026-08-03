@@ -1,4 +1,4 @@
-# Warenwirtschaft – Installationsanleitung (Ubuntu Server + MariaDB)
+# KYBRO – Installationsanleitung (Ubuntu Server + MariaDB)
 
 Eine PHP-basierte Warenwirtschaft mit Artikel-, Lager-, Kunden-, Angebots- und
 Rechnungsverwaltung inkl. Benutzerlogin und PDF-Export.
