@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/functions.php';
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
+require_permission('kategorien', in_array($action, ['save', 'delete'], true) ? 'write' : 'read');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     csrf_check();
