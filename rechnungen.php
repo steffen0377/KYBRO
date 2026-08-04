@@ -237,6 +237,7 @@ if ($action === 'view') {
       <h4>Rechnung <?= e($invoice['invoice_number']) ?> <?= status_badge($invoice['status']) ?></h4>
       <div>
         <a href="rechnung_pdf.php?id=<?= $invoice['id'] ?>" class="btn btn-app-outline-primary" target="_blank">PDF ansehen</a>
+        <a href="rechnung_pdf.php?id=<?= $invoice['id'] ?>&zugferd=1" class="btn btn-app-outline-primary">ZUGFeRD-PDF herunterladen</a>
         <?php if ($invoice['status'] === 'entwurf'): ?>
         <a href="rechnungen.php?action=edit&id=<?= $invoice['id'] ?>" class="btn btn-app-outline-secondary">Bearbeiten</a>
         <?php endif; ?>

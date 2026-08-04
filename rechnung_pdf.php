@@ -31,4 +31,21 @@ $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
-$dompdf->stream($doc['invoice_number'] . '.pdf', ['Attachment' => false]);
+
+$wantsZugferd = isset($_GET['zugferd']) && $_GET['zugferd'] === '1';
+
+if (!$wantsZugferd) {
+    $dompdf->stream($doc['invoice_number'] . '.pdf', ['Attachment' => false]);
+    exit;
+}
+
+// ---------- ZUGFeRD-Export (PDF/A-3 mit eingebettetem XML) ----------
+require_once __DIR__ . '/includes/zugferd_builder.php';
+
+$zugferdDocument = build_zugferd_document($doc, $items, $company);
+$pdfContent = embed_zugferd_into_pdf($zugferdDocument, $dompdf->output());
+
+header('Content-Type: application/pdf');
+header('Content-Disposition: attachment; filename="' . $doc['invoice_number'] . '_zugferd.pdf"');
+header('Content-Length: ' . strlen($pdfContent));
+echo $pdfContent;
