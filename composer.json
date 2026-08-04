@@ -3,6 +3,7 @@
     "description": "Warenwirtschaft mit Artikel-, Angebots- und Rechnungsverwaltung",
     "require": {
         "php": ">=8.0",
-        "dompdf/dompdf": "^3.0"
+        "dompdf/dompdf": "^3.0",
+        "horstoeko/zugferd": "^1.0"
     }
 }
