@@ -8,10 +8,10 @@ $action = $_GET['action'] ?? 'view';
 // ---------- FIRMENEINSTELLUNGEN SPEICHERN ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_company') {
     csrf_check();
-    $stmt = $pdo->prepare('UPDATE company_settings SET company_name=?,street=?,zip=?,city=?,country=?,tax_id=?,iban=?,bic=?,bank_name=?,email=?,phone=?,offer_prefix=?,invoice_prefix=?,default_tax_rate=? WHERE id=1');
+    $stmt = $pdo->prepare('UPDATE company_settings SET company_name=?,street=?,zip=?,city=?,country=?,tax_id=?,vat_id=?,iban=?,bic=?,bank_name=?,email=?,phone=?,offer_prefix=?,invoice_prefix=?,default_tax_rate=? WHERE id=1');
     $stmt->execute([
         trim($_POST['company_name']), trim($_POST['street']), trim($_POST['zip']), trim($_POST['city']),
-        trim($_POST['country']), trim($_POST['tax_id']), trim($_POST['iban']), trim($_POST['bic']),
+        trim($_POST['country']), trim($_POST['tax_id']), trim($_POST['vat_id']), trim($_POST['iban']), trim($_POST['bic']),
         trim($_POST['bank_name']), trim($_POST['email']), trim($_POST['phone']),
         trim($_POST['offer_prefix']), trim($_POST['invoice_prefix']),
         (float)str_replace(',', '.', $_POST['default_tax_rate']),
@@ -257,7 +257,8 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
         <div class="col-md-6"><label class="form-label">Land</label><input type="text" name="country" class="form-control" value="<?= e($s['country']) ?>"></div>
         <div class="col-md-6"><label class="form-label">E-Mail</label><input type="email" name="email" class="form-control" value="<?= e($s['email']) ?>"></div>
         <div class="col-md-6"><label class="form-label">Telefon</label><input type="text" name="phone" class="form-control" value="<?= e($s['phone']) ?>"></div>
-        <div class="col-md-6"><label class="form-label">USt-IdNr.</label><input type="text" name="tax_id" class="form-control" value="<?= e($s['tax_id']) ?>"></div>
+        <div class="col-md-6"><label class="form-label">Steuernummer</label><input type="text" name="tax_id" class="form-control" value="<?= e($s['tax_id']) ?>"></div>
+        <div class="col-md-6"><label class="form-label">USt-IdNr.</label><input type="text" name="vat_id" class="form-control" value="<?= e($s['vat_id']) ?>" placeholder="z.B. DE123456789"></div>
         <div class="col-md-6"><label class="form-label">Standard-MwSt.-Satz (%)</label><input type="text" name="default_tax_rate" class="form-control" value="<?= num($s['default_tax_rate']) ?>"></div>
         <div class="col-md-4"><label class="form-label">IBAN</label><input type="text" name="iban" class="form-control" value="<?= e($s['iban']) ?>"></div>
         <div class="col-md-4"><label class="form-label">BIC</label><input type="text" name="bic" class="form-control" value="<?= e($s['bic']) ?>"></div>

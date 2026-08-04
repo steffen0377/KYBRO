@@ -19,6 +19,7 @@ CREATE TABLE company_settings (
     city VARCHAR(100) DEFAULT '',
     country VARCHAR(100) DEFAULT 'Deutschland',
     tax_id VARCHAR(50) DEFAULT '',
+    vat_id VARCHAR(20) DEFAULT '',
     iban VARCHAR(50) DEFAULT '',
     bic VARCHAR(30) DEFAULT '',
     bank_name VARCHAR(100) DEFAULT '',
@@ -26,6 +27,8 @@ CREATE TABLE company_settings (
     phone VARCHAR(50) DEFAULT '',
     offer_prefix VARCHAR(20) NOT NULL DEFAULT 'ANG-',
     next_offer_number INT NOT NULL DEFAULT 1,
+    order_prefix VARCHAR(20) NOT NULL DEFAULT 'AUF-',
+    next_order_number INT NOT NULL DEFAULT 1,
     invoice_prefix VARCHAR(20) NOT NULL DEFAULT 'RE-',
     next_invoice_number INT NOT NULL DEFAULT 1,
     default_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 19.00
@@ -51,6 +54,18 @@ CREATE TABLE users (
 -- Das stellt sicher, dass das Passwort korrekt und sicher gehasht wird.
 
 -- ---------------------------------------------------
+-- Rate-Limiting für api/auth.php
+-- ---------------------------------------------------
+CREATE TABLE api_login_attempts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    success TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_lookup (username, ip_address, created_at)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------
 -- Kunden
 -- ---------------------------------------------------
 CREATE TABLE customers (
@@ -66,11 +81,13 @@ CREATE TABLE customers (
     email VARCHAR(150) DEFAULT '',
     phone VARCHAR(50) DEFAULT '',
     tax_id VARCHAR(50) DEFAULT '',
+    vat_id VARCHAR(20) DEFAULT '',
     iban VARCHAR(50) DEFAULT '',
     bic VARCHAR(30) DEFAULT '',
     bank_name VARCHAR(100) DEFAULT '',
     notes TEXT,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------
@@ -128,7 +145,8 @@ CREATE TABLE articles (
     track_stock TINYINT(1) NOT NULL DEFAULT 1,
     track_serials TINYINT(1) NOT NULL DEFAULT 0,
     active TINYINT(1) NOT NULL DEFAULT 1,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------
@@ -216,14 +234,59 @@ CREATE TABLE offer_items (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------
+-- Aufträge (Prozesskette Angebot -> Auftrag -> Rechnung)
+-- client_uuid dient der Offline-App: sie vergibt die UUID selbst beim
+-- Anlegen, damit wiederholte Sync-Versuche (z.B. nach Verbindungsabbruch)
+-- keine doppelten Datensätze erzeugen.
+-- ---------------------------------------------------
+CREATE TABLE orders (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    order_number VARCHAR(30) NOT NULL UNIQUE,
+    offer_id INT DEFAULT NULL,
+    customer_id INT NOT NULL,
+    order_date DATE NOT NULL,
+    status ENUM('offen','in_bearbeitung','unterschrieben','abgeschlossen','storniert') NOT NULL DEFAULT 'offen',
+    notes TEXT,
+    signature_path VARCHAR(255) DEFAULT NULL,
+    signed_at DATETIME DEFAULT NULL,
+    signed_by_name VARCHAR(150) DEFAULT NULL,
+    client_uuid VARCHAR(36) DEFAULT NULL UNIQUE,
+    total_net DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    total_tax DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    total_gross DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_by INT DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id),
+    FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE order_items (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    order_id INT NOT NULL,
+    article_id INT DEFAULT NULL,
+    position INT NOT NULL DEFAULT 0,
+    description VARCHAR(255) NOT NULL,
+    quantity DECIMAL(10,2) NOT NULL DEFAULT 1.00,
+    unit_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    tax_rate DECIMAL(5,2) NOT NULL DEFAULT 19.00,
+    client_uuid VARCHAR(36) DEFAULT NULL UNIQUE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------
 -- Rechnungen
 -- ---------------------------------------------------
 CREATE TABLE invoices (
     id INT PRIMARY KEY AUTO_INCREMENT,
     invoice_number VARCHAR(30) NOT NULL UNIQUE,
     offer_id INT DEFAULT NULL,
+    order_id INT DEFAULT NULL,
     customer_id INT NOT NULL,
     invoice_date DATE NOT NULL,
+    service_date DATE DEFAULT NULL,
     due_date DATE DEFAULT NULL,
     status ENUM('entwurf','versendet','bezahlt','ueberfaellig','storniert') NOT NULL DEFAULT 'entwurf',
     notes TEXT,
@@ -234,6 +297,7 @@ CREATE TABLE invoices (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(id),
     FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE SET NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 

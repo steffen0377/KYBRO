@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         'email' => trim($_POST['email']),
         'phone' => trim($_POST['phone']),
         'tax_id' => trim($_POST['tax_id']),
+        'vat_id' => trim($_POST['vat_id'] ?? ''),
         'iban' => trim($_POST['iban'] ?? ''),
         'bic' => trim($_POST['bic'] ?? ''),
         'bank_name' => trim($_POST['bank_name'] ?? ''),
@@ -31,12 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         redirect('kunden.php?action=' . ($id ? "edit&id=$id" : 'new'));
     }
     if ($id) {
-        $stmt = $pdo->prepare('UPDATE customers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,iban=?,bic=?,bank_name=?,notes=? WHERE id=?');
+        $stmt = $pdo->prepare('UPDATE customers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,vat_id=?,iban=?,bic=?,bank_name=?,notes=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
         $customerId = $id;
         flash('success', 'Kunde aktualisiert.');
     } else {
-        $stmt = $pdo->prepare('INSERT INTO customers (company,first_name,last_name,street,zip,city,country,email,phone,tax_id,iban,bic,bank_name,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+        $stmt = $pdo->prepare('INSERT INTO customers (company,first_name,last_name,street,zip,city,country,email,phone,tax_id,vat_id,iban,bic,bank_name,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
         $stmt->execute(array_values($data));
         $customerId = (int)$pdo->lastInsertId();
         $pdo->prepare('UPDATE customers SET customer_number=? WHERE id=?')->execute(['K-' . str_pad($customerId, 5, '0', STR_PAD_LEFT), $customerId]);
@@ -81,7 +82,7 @@ if (!$isAjax) {
 }
 
 if ($action === 'new' || $action === 'edit') {
-    $c = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','iban'=>'','bic'=>'','bank_name'=>'','notes'=>''];
+    $c = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','vat_id'=>'','iban'=>'','bic'=>'','bank_name'=>'','notes'=>''];
     if ($action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM customers WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
@@ -142,7 +143,8 @@ if ($action === 'new' || $action === 'edit') {
             <div class="col-md-6"><label class="form-label">Land</label><input type="text" name="country" class="form-control" value="<?= e($c['country']) ?>"></div>
             <div class="col-md-6"><label class="form-label">E-Mail</label><input type="email" name="email" class="form-control" value="<?= e($c['email']) ?>"></div>
             <div class="col-md-6"><label class="form-label">Telefon</label><input type="text" name="phone" class="form-control" value="<?= e($c['phone']) ?>"></div>
-            <div class="col-md-6"><label class="form-label">USt-IdNr.</label><input type="text" name="tax_id" class="form-control" value="<?= e($c['tax_id']) ?>"></div>
+            <div class="col-md-6"><label class="form-label">Steuernummer</label><input type="text" name="tax_id" class="form-control" value="<?= e($c['tax_id']) ?>"></div>
+            <div class="col-md-6"><label class="form-label">USt-IdNr.</label><input type="text" name="vat_id" class="form-control" value="<?= e($c['vat_id']) ?>" placeholder="z.B. DE123456789"></div>
             <div class="col-12"><label class="form-label">Notizen</label><textarea name="notes" class="form-control" rows="2"><?= e($c['notes']) ?></textarea></div>
           </div>
         </div>
