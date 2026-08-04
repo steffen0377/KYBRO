@@ -174,5 +174,5 @@ function embed_zugferd_into_pdf(ZugferdDocumentBuilder $documentBuilder, string 
 {
     $pdfBuilder = new ZugferdDocumentPdfBuilder($documentBuilder, $pdfContent);
     $pdfBuilder->generateDocument();
-    return $pdfBuilder->downloadTring();
+    return $pdfBuilder->downloadString();
 }
