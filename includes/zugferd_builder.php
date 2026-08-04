@@ -94,10 +94,10 @@ function build_zugferd_document(array $doc, array $items, array $company): Zugfe
     }
     if (!empty($company['iban'])) {
         $documentBuilder->addDocumentPaymentMeanToCreditTransfer(
-            $iban,          // IBAN des Verkäufers (Pflichtfeld)
-            $accountName,   // Kontoinhaber (Optional, kann null sein)
-            $bic,           // BIC der Bank (Optional, kann null sein)
-            $proprietaryId  // Eigene ID / Verwendungszweck (Optional, kann null sein)
+            $company['iban'],          // IBAN des Verkäufers (Pflichtfeld)
+            $company['accountName'],   // Kontoinhaber (Optional, kann null sein)
+            $company['bic'],           // BIC der Bank (Optional, kann null sein)
+            $doc['invoice_number']  // Eigene ID / Verwendungszweck (Optional, kann null sein)
         );
     }
 
