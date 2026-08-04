@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="bg-app-dark">
 <div class="container d-flex align-items-center justify-content-center" style="min-height:100vh;">
   <div class="card p-4 shadow-sm" style="max-width:380px; width:100%;">
-    <h4 class="mb-3 text-center">📦 Warenwirtschaft</h4>
+    <h4 class="mb-3 text-center">KYBRO</h4>
     <?php if ($error): ?><div class="alert alert-app-danger"><?= e($error) ?></div><?php endif; ?>
     <form method="post">
       <?= csrf_field() ?>
