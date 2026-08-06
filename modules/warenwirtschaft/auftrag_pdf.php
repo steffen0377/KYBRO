@@ -1,8 +1,10 @@
 <?php
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/license.php';
 require_login();
-require_once __DIR__ . '/vendor/autoload.php';
+require_module_license('warenwirtschaft');
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -23,7 +25,7 @@ $docNumberField = 'order_number';
 $dateField = 'order_date'; $dateLabel = 'Auftragsdatum';
 $secondDateField = 'signed_at'; $secondDateLabel = 'Unterschrieben am';
 
-$html = include __DIR__ . '/includes/pdf_template.php';
+$html = include __DIR__ . '/../includes/pdf_template.php';
 
 $options = new Options();
 $options->set('isRemoteEnabled', false);

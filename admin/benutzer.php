@@ -1,7 +1,9 @@
 <?php
 $pageTitle = 'Benutzer';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_admin();
+require_once __DIR__ . '/../includes/header.php';
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 
@@ -79,7 +81,7 @@ if ($action === 'new' || $action === 'edit') {
       <button class="btn btn-app-primary" type="submit">Speichern</button>
       <a href="benutzer.php" class="btn btn-app-secondary">Abbrechen</a>
     </form>
-    <?php require_once __DIR__ . '/includes/footer.php'; exit;
+    <?php require_once __DIR__ . '/../includes/footer.php'; exit;
 }
 
 $users = $pdo->query('SELECT id,username,full_name,role,active FROM users ORDER BY username')->fetchAll();
@@ -108,4 +110,4 @@ $users = $pdo->query('SELECT id,username,full_name,role,active FROM users ORDER 
   </tbody>
 </table>
 </div>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

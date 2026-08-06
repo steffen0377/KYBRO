@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -115,7 +115,7 @@ function render_category_options(array $byParent, int $parentId, int $depth, arr
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Kategorien';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Kategorien</h4>
@@ -158,4 +158,4 @@ require_once __DIR__ . '/includes/header.php';
     </div>
   </div>
 </div>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

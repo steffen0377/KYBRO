@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Lager';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -136,7 +136,7 @@ if ($viewSerialsArticleId) {
     $serialsOfArticle = $stmt->fetchAll();
 }
 
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 ?>
 <h4>Lagerverwaltung</h4>
 
@@ -285,4 +285,4 @@ require_once __DIR__ . '/includes/header.php';
     </tbody>
   </table>
 </div>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

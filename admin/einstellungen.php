@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_admin();
 $pdo = db();
 $action = $_GET['action'] ?? 'view';
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_company') {
 
     if (!empty($_POST['remove_logo'])) {
         $current = $pdo->query('SELECT logo_path FROM company_settings WHERE id=1')->fetch()['logo_path'];
-        if ($current) { @unlink(__DIR__ . '/' . $current); }
+        if ($current) { @unlink(__DIR__ . '/../' . $current); }
         $pdo->prepare('UPDATE company_settings SET logo_path=NULL WHERE id=1')->execute();
     } elseif (!empty($_FILES['logo']['name']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
         $allowed = ['image/png' => 'png', 'image/jpeg' => 'jpg', 'image/svg+xml' => 'svg', 'image/webp' => 'webp'];
@@ -27,9 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_company') {
         $mime = finfo_file($finfo, $_FILES['logo']['tmp_name']);
         finfo_close($finfo);
         if (isset($allowed[$mime]) && $_FILES['logo']['size'] <= 2 * 1024 * 1024) {
-            foreach (glob(__DIR__ . '/uploads/logo.*') as $old) { @unlink($old); }
+            foreach (glob(__DIR__ . '/../uploads/logo.*') as $old) { @unlink($old); }
             $target = 'uploads/logo.' . $allowed[$mime];
-            if (move_uploaded_file($_FILES['logo']['tmp_name'], __DIR__ . '/' . $target)) {
+            if (move_uploaded_file($_FILES['logo']['tmp_name'], __DIR__ . '/../' . $target)) {
                 $pdo->prepare('UPDATE company_settings SET logo_path=? WHERE id=1')->execute([$target]);
             } else {
                 flash('danger', 'Logo konnte nicht gespeichert werden. Bitte Schreibrechte für den Ordner "uploads/" prüfen.');
@@ -185,7 +185,7 @@ if ($action === 'delete_group' && isset($_GET['id']) && hash_equals(csrf_token()
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Einstellungen';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 
 $activeTab = in_array($_GET['tab'] ?? '', ['firma', 'email', 'authentifizierung'], true) ? $_GET['tab'] : 'firma';
 $s = company_settings();
@@ -471,4 +471,4 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
 
   </div>
 </div>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

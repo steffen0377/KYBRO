@@ -1,7 +1,9 @@
 <?php
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/license.php';
 require_login();
+require_module_license('warenwirtschaft');
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 require_permission('angebote', in_array($action, ['save', 'status', 'to_invoice', 'delete', 'new', 'edit'], true) ? 'write' : 'read');
@@ -33,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
 
     if (!$customerId || !array_filter($descriptions, fn($d)=>trim($d)!=='')) {
         flash('danger', 'Bitte Kunde und mindestens eine Position angeben.');
-        redirect('angebote.php?action=' . ($id ? "edit&id=$id" : 'new'));
+        redirect('modules/warenwirtschaft/angebote.php?action=' . ($id ? "edit&id=$id" : 'new'));
     }
 
     [$net, $tax, $gross] = calc_totals($descriptions, $quantities, $prices, $taxRates);
@@ -71,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $pdo->rollBack();
         flash('danger', 'Fehler beim Speichern: ' . $e->getMessage());
     }
-    redirect('angebote.php?action=view&id=' . $offerId);
+    redirect('modules/warenwirtschaft/angebote.php?action=view&id=' . $offerId);
 }
 
 // ---------- STATUS ÄNDERN ----------
@@ -84,7 +86,7 @@ if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
     $stmt->execute([$offerId]);
     $offer = $stmt->fetch();
-    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('angebote.php'); }
+    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('modules/warenwirtschaft/angebote.php'); }
 
     $pdo->beginTransaction();
     try {
@@ -101,7 +103,7 @@ if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
     }
-    redirect('angebote.php?action=view&id=' . $offerId);
+    redirect('modules/warenwirtschaft/angebote.php?action=view&id=' . $offerId);
 }
 
 // ---------- IN RECHNUNG UMWANDELN ----------
@@ -112,7 +114,7 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
     $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
     $stmt->execute([(int)$_GET['id']]);
     $offer = $stmt->fetch();
-    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('angebote.php'); }
+    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('modules/warenwirtschaft/angebote.php'); }
 
     $pdo->beginTransaction();
     try {
@@ -123,14 +125,14 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
         $pdo->commit();
         if ($result['needs_serial_assignment']) {
             flash('success', "Auftrag {$order['order_number']} und Rechnung {$result['invoice_number']} wurden erstellt. Bitte jetzt die Seriennummern der verkauften Geräte zuordnen.");
-            redirect('rechnungen.php?action=assign_serials&id=' . $result['invoice_id']);
+            redirect('modules/warenwirtschaft/rechnungen.php?action=assign_serials&id=' . $result['invoice_id']);
         }
         flash('success', "Auftrag {$order['order_number']} und Rechnung {$result['invoice_number']} wurden erstellt (Lagerbestand wurde reduziert).");
-        redirect('rechnungen.php?action=view&id=' . $result['invoice_id']);
+        redirect('modules/warenwirtschaft/rechnungen.php?action=view&id=' . $result['invoice_id']);
     } catch (Exception $e) {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
-        redirect('angebote.php?action=view&id=' . $offer['id']);
+        redirect('modules/warenwirtschaft/angebote.php?action=view&id=' . $offer['id']);
     }
 }
 
@@ -138,19 +140,19 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
 if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
     $pdo->prepare('DELETE FROM offers WHERE id=?')->execute([(int)$_GET['id']]);
     flash('success', 'Angebot gelöscht.');
-    redirect('angebote.php');
+    redirect('modules/warenwirtschaft/angebote.php');
 }
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Angebote';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 
 // ---------- ANSICHT ----------
 if ($action === 'view') {
     $stmt = $pdo->prepare('SELECT o.*, c.company, c.first_name, c.last_name, c.street, c.zip, c.city FROM offers o JOIN customers c ON c.id=o.customer_id WHERE o.id=?');
     $stmt->execute([(int)$_GET['id']]);
     $offer = $stmt->fetch();
-    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('angebote.php'); }
+    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('modules/warenwirtschaft/angebote.php'); }
     $items = $pdo->prepare('SELECT * FROM offer_items WHERE offer_id=? ORDER BY position');
     $items->execute([$offer['id']]);
     $items = $items->fetchAll();
@@ -191,7 +193,7 @@ if ($action === 'view') {
             <td class="text-end"><?= money($it['quantity']*$it['unit_price']) ?></td>
             <td class="text-end">
               <?php if (!$it['article_id']): ?>
-                <a href="artikel.php?action=new&from_offer_item=<?= $it['id'] ?>" class="btn btn-sm btn-app-outline-success">Als Artikel anlegen</a>
+                <a href="../stammdaten/artikel.php?action=new&from_offer_item=<?= $it['id'] ?>" class="btn btn-sm btn-app-outline-success">Als Artikel anlegen</a>
               <?php endif; ?>
             </td>
           </tr>
@@ -217,7 +219,7 @@ if ($action === 'view') {
         <button class="btn btn-app-outline-primary" type="submit">Status ändern</button>
       </div>
     </form>
-    <?php require_once __DIR__ . '/includes/footer.php'; exit;
+    <?php require_once __DIR__ . '/../includes/footer.php'; exit;
 }
 
 // ---------- FORMULAR (neu/bearbeiten) ----------
@@ -228,7 +230,7 @@ if ($action === 'new' || $action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
         $offer = $stmt->fetch();
-        if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('angebote.php'); }
+        if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('modules/warenwirtschaft/angebote.php'); }
         $itemStmt = $pdo->prepare('SELECT * FROM offer_items WHERE offer_id=? ORDER BY position');
         $itemStmt->execute([$offer['id']]);
         $items = $itemStmt->fetchAll();
@@ -243,8 +245,8 @@ if ($action === 'new' || $action === 'edit') {
     $statuses = ['entwurf','versendet','angenommen','abgelehnt'];
     $saveUrl = 'angebote.php?action=save';
     $formTitle = $action === 'new' ? 'Neues Angebot' : 'Angebot bearbeiten';
-    include __DIR__ . '/includes/document_form.php';
-    require_once __DIR__ . '/includes/footer.php';
+    include __DIR__ . '/../includes/document_form.php';
+    require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
 
@@ -276,4 +278,4 @@ $offers = $stmt->fetchAll();
   </tbody>
 </table>
 </div>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

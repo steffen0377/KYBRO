@@ -1,7 +1,9 @@
 <?php
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/license.php';
 require_login();
+require_module_license('warenwirtschaft');
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 require_permission('auftraege', in_array($action, ['status', 'to_invoice', 'delete'], true) ? 'write' : 'read');
@@ -12,7 +14,7 @@ if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare('UPDATE orders SET status=? WHERE id=?');
     $stmt->execute([$_POST['status'], (int)$_POST['id']]);
     flash('success', 'Status aktualisiert.');
-    redirect('auftraege.php?action=view&id=' . (int)$_POST['id']);
+    redirect('modules/warenwirtschaft/auftraege.php?action=view&id=' . (int)$_POST['id']);
 }
 
 // ---------- IN RECHNUNG UMWANDELN ----------
@@ -20,7 +22,7 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
     $stmt = $pdo->prepare('SELECT * FROM orders WHERE id=?');
     $stmt->execute([(int)$_GET['id']]);
     $order = $stmt->fetch();
-    if (!$order) { flash('danger','Auftrag nicht gefunden.'); redirect('auftraege.php'); }
+    if (!$order) { flash('danger','Auftrag nicht gefunden.'); redirect('modules/warenwirtschaft/auftraege.php'); }
 
     $pdo->beginTransaction();
     try {
@@ -29,14 +31,14 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
         $pdo->commit();
         if ($result['needs_serial_assignment']) {
             flash('success', "Rechnung {$result['invoice_number']} wurde erstellt. Bitte jetzt die Seriennummern der verkauften Geräte zuordnen.");
-            redirect('rechnungen.php?action=assign_serials&id=' . $result['invoice_id']);
+            redirect('modules/warenwirtschaft/rechnungen.php?action=assign_serials&id=' . $result['invoice_id']);
         }
         flash('success', "Rechnung {$result['invoice_number']} wurde erstellt (Lagerbestand wurde reduziert).");
-        redirect('rechnungen.php?action=view&id=' . $result['invoice_id']);
+        redirect('modules/warenwirtschaft/rechnungen.php?action=view&id=' . $result['invoice_id']);
     } catch (Exception $e) {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
-        redirect('auftraege.php?action=view&id=' . $order['id']);
+        redirect('modules/warenwirtschaft/auftraege.php?action=view&id=' . $order['id']);
     }
 }
 
@@ -44,19 +46,19 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
 if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
     $pdo->prepare('DELETE FROM orders WHERE id=?')->execute([(int)$_GET['id']]);
     flash('success', 'Auftrag gelöscht.');
-    redirect('auftraege.php');
+    redirect('modules/warenwirtschaft/auftraege.php');
 }
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Aufträge';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 
 // ---------- ANSICHT ----------
 if ($action === 'view') {
     $stmt = $pdo->prepare('SELECT o.*, c.company, c.first_name, c.last_name, c.street, c.zip, c.city FROM orders o JOIN customers c ON c.id=o.customer_id WHERE o.id=?');
     $stmt->execute([(int)$_GET['id']]);
     $order = $stmt->fetch();
-    if (!$order) { flash('danger','Auftrag nicht gefunden.'); redirect('auftraege.php'); }
+    if (!$order) { flash('danger','Auftrag nicht gefunden.'); redirect('modules/warenwirtschaft/auftraege.php'); }
     $items = $pdo->prepare('SELECT * FROM order_items WHERE order_id=? ORDER BY position');
     $items->execute([$order['id']]);
     $items = $items->fetchAll();
@@ -131,7 +133,7 @@ if ($action === 'view') {
         <button class="btn btn-app-outline-primary" type="submit">Status ändern</button>
       </div>
     </form>
-    <?php require_once __DIR__ . '/includes/footer.php'; exit;
+    <?php require_once __DIR__ . '/../includes/footer.php'; exit;
 }
 
 // ---------- LISTE ----------
@@ -160,4 +162,4 @@ $orders = $stmt->fetchAll();
   </tbody>
 </table>
 </div>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

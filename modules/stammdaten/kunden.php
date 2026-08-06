@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -78,7 +78,7 @@ if ($action === 'mark_invoice_paid' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Kunden';
 if (!$isAjax) {
-    require_once __DIR__ . '/includes/header.php';
+    require_once __DIR__ . '/../includes/header.php';
 }
 
 if ($action === 'new' || $action === 'edit') {
@@ -194,12 +194,12 @@ if ($action === 'new' || $action === 'edit') {
               <tbody>
                 <?php foreach ($offers as $o): ?>
                 <tr>
-                  <td><a href="angebote.php?action=view&id=<?= $o['id'] ?>"><?= e($o['offer_number']) ?></a></td>
+                  <td><a href="<?= APP_URL ?>/modules/warenwirtschaft/angebote.php?action=view&id=<?= $o['id'] ?>"><?= e($o['offer_number']) ?></a></td>
                   <td><?= date('d.m.Y', strtotime($o['offer_date'])) ?></td>
                   <td class="text-end"><?= money($o['total_net']) ?></td>
                   <td class="text-end"><?= money($o['total_gross']) ?></td>
                   <td class="text-end">
-                    <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
+                    <a href="<?= APP_URL ?>/modules/warenwirtschaft/angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
                   </td>
                 </tr>
                 <?php endforeach; ?>
@@ -220,7 +220,7 @@ if ($action === 'new' || $action === 'edit') {
                   $rowClass = $isPaid ? 'row-paid' : ($isDueSoon ? 'row-due' : 'row-unpaid');
                 ?>
                 <tr class="<?= $rowClass ?>">
-                  <td><a href="rechnungen.php?action=view&id=<?= $inv['id'] ?>"><?= e($inv['invoice_number']) ?></a></td>
+                  <td><a href="<?= APP_URL ?>/modules/warenwirtschaft/rechnungen.php?action=view&id=<?= $inv['id'] ?>"><?= e($inv['invoice_number']) ?></a></td>
                   <td><?= date('d.m.Y', strtotime($inv['invoice_date'])) ?></td>
                   <td><?= $inv['due_date'] ? date('d.m.Y', strtotime($inv['due_date'])) : '–' ?></td>
                   <td class="text-end"><?= money($inv['total_gross']) ?></td>
@@ -269,7 +269,7 @@ if ($action === 'new' || $action === 'edit') {
     document.querySelectorAll('#contactTable tbody tr').forEach(bindContactRow);
     </script>
     <?php
-    require_once __DIR__ . '/includes/footer.php'; exit;
+    require_once __DIR__ . '/../includes/footer.php'; exit;
 }
 
 $search = trim($_GET['q'] ?? '');
@@ -371,4 +371,4 @@ if ($isAjax) {
   });
 })();
 </script>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

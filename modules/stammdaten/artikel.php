@@ -5,8 +5,8 @@ $pageTitle = 'Artikel';
 // können, BEVOR includes/header.php irgendwelches HTML ausgibt. Sonst
 // schlägt header('Location: ...') fehl ("headers already sent") und die
 // Seite bleibt nach dem Speichern leer.
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_login();
 $isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
 $pdo = db();
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             if ($offerItem) {
                 $pdo->prepare('UPDATE offer_items SET article_id=? WHERE id=?')->execute([$newId, $fromOfferItem]);
                 flash('success', 'Artikel wurde zusätzlich mit der Angebotsposition verknüpft.');
-                redirect('angebote.php?action=view&id=' . $offerItem['offer_id']);
+                redirect('modules/warenwirtschaft/angebote.php?action=view&id=' . $offerItem['offer_id']);
             }
         }
     }
@@ -103,7 +103,7 @@ if ($action === 'delete' && isset($_GET['id'])) {
 // Ab hier wird tatsächlich HTML ausgegeben - Seitenlayout jetzt laden
 // (bei AJAX-Live-Suche wird bewusst kein komplettes Layout gerendert).
 if (!$isAjax) {
-    require_once __DIR__ . '/includes/header.php';
+    require_once __DIR__ . '/../includes/header.php';
 }
 
 // ---------- FORMULAR (neu/bearbeiten) ----------
@@ -279,7 +279,7 @@ if ($action === 'new' || $action === 'edit') {
     document.querySelectorAll('#supplierTable tbody tr').forEach(bindSupplierRow);
     </script>
     <?php
-    require_once __DIR__ . '/includes/footer.php';
+    require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
 
@@ -454,4 +454,4 @@ if ($selectedFilterCategory) {
   });
 })();
 </script>
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
