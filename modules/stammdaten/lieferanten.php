@@ -3,11 +3,11 @@ $pageTitle = 'Lieferanten';
 $isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
 if ($isAjax) {
     // Live-Suche: nur Auth/Funktionen laden, kein komplettes Seitenlayout
-    require_once __DIR__ . '/../includes/auth.php';
-    require_once __DIR__ . '/../includes/functions.php';
+    require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
+    require_once ROOT_PATH . '/includes/functions.php';
     require_login();
 } else {
-    require_once __DIR__ . '/../includes/header.php';
+    require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/header.php';
 }
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -192,4 +192,4 @@ if ($isAjax) {
   });
 })();
 </script>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once ROOT_PATH . '/includes/footer.php'; ?>

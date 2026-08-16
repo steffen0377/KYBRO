@@ -5,8 +5,8 @@ $pageTitle = 'Artikel';
 // können, BEVOR includes/header.php irgendwelches HTML ausgibt. Sonst
 // schlägt header('Location: ...') fehl ("headers already sent") und die
 // Seite bleibt nach dem Speichern leer.
-require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/functions.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
+require_once ROOT_PATH . '/includes/functions.php';
 require_login();
 $isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
 $pdo = db();
@@ -103,7 +103,7 @@ if ($action === 'delete' && isset($_GET['id'])) {
 // Ab hier wird tatsächlich HTML ausgegeben - Seitenlayout jetzt laden
 // (bei AJAX-Live-Suche wird bewusst kein komplettes Layout gerendert).
 if (!$isAjax) {
-    require_once __DIR__ . '/../includes/header.php';
+    require_once ROOT_PATH . '/includes/header.php';
 }
 
 // ---------- FORMULAR (neu/bearbeiten) ----------
@@ -454,4 +454,4 @@ if ($selectedFilterCategory) {
   });
 })();
 </script>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once ROOT_PATH . '/includes/footer.php'; ?>

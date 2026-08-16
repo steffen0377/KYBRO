@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/license.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
+require_once ROOT_PATH . '/includes/functions.php';
+require_once ROOT_PATH . '/includes/license.php';
 require_login();
 require_module_license('warenwirtschaft');
 $pdo = db();
@@ -174,7 +174,7 @@ if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GE
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Rechnungen';
-require_once __DIR__ . '/../includes/header.php';
+require_once ROOT_PATH . '/includes/header.php';
 
 if ($action === 'assign_serials') {
     $stmt = $pdo->prepare('SELECT invoice_number FROM invoices WHERE id=?');
@@ -213,7 +213,7 @@ if ($action === 'assign_serials') {
       <button class="btn btn-app-primary" type="submit">Zuordnen und Bestand buchen</button>
     </form>
     <?php endif; ?>
-    <?php require_once __DIR__ . '/../includes/footer.php'; exit;
+    <?php require_once ROOT_PATH . '/includes/footer.php'; exit;
 }
 
 // ---------- ANSICHT ----------
@@ -296,7 +296,7 @@ if ($action === 'view') {
         <button class="btn btn-app-outline-primary" type="submit">Status ändern</button>
       </div>
     </form>
-    <?php require_once __DIR__ . '/../includes/footer.php'; exit;
+    <?php require_once ROOT_PATH . '/includes/footer.php'; exit;
 }
 
 // ---------- FORMULAR (neu/bearbeiten) ----------
@@ -323,8 +323,8 @@ if ($action === 'new' || $action === 'edit') {
     $statuses = ['entwurf','versendet','bezahlt','ueberfaellig','storniert'];
     $saveUrl = 'rechnungen.php?action=save';
     $formTitle = $action === 'new' ? 'Neue Rechnung' : 'Rechnung bearbeiten';
-    include __DIR__ . '/../includes/document_form.php';
-    require_once __DIR__ . '/../includes/footer.php';
+    include ROOT_PATH . '/includes/document_form.php';
+    require_once ROOT_PATH . '/includes/footer.php';
     exit;
 }
 
@@ -357,4 +357,4 @@ $invoices = $stmt->fetchAll();
   </tbody>
 </table>
 </div>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once ROOT_PATH . '/includes/footer.php'; ?>

@@ -1,10 +1,10 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/license.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
+require_once ROOT_PATH . '/includes/functions.php';
+require_once ROOT_PATH . '/includes/license.php';
 require_login();
 require_module_license('warenwirtschaft');
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once ROOT_PATH . '/vendor/autoload.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;

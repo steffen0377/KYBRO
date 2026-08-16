@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/license.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
+require_once ROOT_PATH . '/includes/functions.php';
+require_once ROOT_PATH . '/includes/license.php';
 require_login();
 require_module_license('warenwirtschaft');
 $pdo = db();
@@ -51,7 +51,7 @@ if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GE
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Aufträge';
-require_once __DIR__ . '/../includes/header.php';
+require_once ROOT_PATH . '/includes/header.php';
 
 // ---------- ANSICHT ----------
 if ($action === 'view') {
@@ -133,7 +133,7 @@ if ($action === 'view') {
         <button class="btn btn-app-outline-primary" type="submit">Status ändern</button>
       </div>
     </form>
-    <?php require_once __DIR__ . '/../includes/footer.php'; exit;
+    <?php require_once ROOT_PATH . '/includes/footer.php'; exit;
 }
 
 // ---------- LISTE ----------
@@ -162,4 +162,4 @@ $orders = $stmt->fetchAll();
   </tbody>
 </table>
 </div>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once ROOT_PATH . '/includes/footer.php'; ?>

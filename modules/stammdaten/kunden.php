@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/functions.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
+require_once ROOT_PATH . '/includes/functions.php';
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -78,7 +78,7 @@ if ($action === 'mark_invoice_paid' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Kunden';
 if (!$isAjax) {
-    require_once __DIR__ . '/../includes/header.php';
+    require_once ROOT_PATH . '/includes/header.php';
 }
 
 if ($action === 'new' || $action === 'edit') {
@@ -371,4 +371,4 @@ if ($isAjax) {
   });
 })();
 </script>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once ROOT_PATH . '/includes/footer.php'; ?>
