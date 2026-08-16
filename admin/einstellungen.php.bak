@@ -1,6 +1,6 @@
 <?php
-require_once ROOT_PATH . '/includes/auth.php';
-require_once ROOT_PATH . '/includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_admin();
 $pdo = db();
 $action = $_GET['action'] ?? 'view';
@@ -185,7 +185,7 @@ if ($action === 'delete_group' && isset($_GET['id']) && hash_equals(csrf_token()
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
 $pageTitle = 'Einstellungen';
-require_once ROOT_PATH . '/includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 
 $activeTab = in_array($_GET['tab'] ?? '', ['firma', 'email', 'authentifizierung'], true) ? $_GET['tab'] : 'firma';
 $s = company_settings();
@@ -471,4 +471,4 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
 
   </div>
 </div>
-<?php require_once ROOT_PATH . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -1,7 +1,7 @@
 <?php
-require_once ROOT_PATH . '/includes/auth.php';
-require_once ROOT_PATH . '/includes/functions.php';
-require_once ROOT_PATH . '/includes/license.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/license.php';
 require_admin();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -60,7 +60,7 @@ if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GE
 }
 
 $pageTitle = 'Lizenzen';
-require_once ROOT_PATH . '/includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 
 $allModules = $pdo->query('SELECT * FROM modules ORDER BY name')->fetchAll();
 
@@ -124,7 +124,7 @@ if ($action === 'new' || $action === 'edit') {
         <a href="<?= APP_URL ?>/admin/lizenzen.php" class="btn btn-app-secondary">Abbrechen</a>
       </div>
     </form>
-    <?php require_once ROOT_PATH . '/includes/footer.php'; exit;
+    <?php require_once __DIR__ . '/../includes/footer.php'; exit;
 }
 
 $licenses = $pdo->query('SELECT * FROM licenses ORDER BY status = "active" DESC, valid_until IS NULL DESC, valid_until DESC, id DESC')->fetchAll();
@@ -166,4 +166,4 @@ $today = date('Y-m-d');
   </tbody>
 </table>
 </div>
-<?php require_once ROOT_PATH . '/includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
