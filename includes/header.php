@@ -31,7 +31,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
     foreach ($byParent[$parentId] as $cat) {
         $isActive = $selectedId === (int)$cat['id'];
         echo '<li class="nav-item">';
-        echo '<a class="nav-link text-white-50 ' . ($isActive ? 'active fw-bold' : '') . '" href="' . APP_URL . '/modules/stammdaten/artikel.php?category=' . $cat['id'] . '">' . htmlspecialchars($cat['name']) . '</a>';
+        echo '<a class="nav-link text-white-50 ' . ($isActive ? 'active fw-bold' : '') . '" href="' . module_url('artikel.php', 'category=' . $cat['id']) . '">' . htmlspecialchars($cat['name']) . '</a>';
         render_article_category_nav($byParent, (int)$cat['id'], $depth + 1, $selectedId);
         echo '</li>';
     }
@@ -53,7 +53,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
 
   <nav class="sidebar sidebar-bg text-white p-3 d-none d-md-block" id="sidebar">
     <div class="sidebar-brand text-center mb-4">
-      <a href="<?= APP_URL ?>/index.php" class="text-white text-decoration-none">
+      <a href="<?= module_url('index.php') ?>" class="text-white text-decoration-none">
         <?php if (!empty($company['logo_path'])): ?>
           <img src="<?= APP_URL ?>/<?= e($company['logo_path']) ?>" alt="Logo" class="sidebar-logo mb-2">
         <?php else: ?>
@@ -69,9 +69,9 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
       $hasWarenwirtschaftLicense = has_module_license('warenwirtschaft');
     ?>
     <ul class="nav nav-pills flex-column gap-1">
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('index.php') ?>" href="<?= APP_URL ?>/index.php"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('index.php') ?>" href="<?= module_url('index.php') ?>"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
       <li class="nav-item">
-        <a class="nav-link text-white d-flex align-items-center <?= nav_active('artikel.php') ?> <?= $currentScript === 'artikel.php' ? '' : 'collapsed' ?>" href="<?= APP_URL ?>/modules/stammdaten/artikel.php">
+        <a class="nav-link text-white d-flex align-items-center <?= nav_active('artikel.php') ?> <?= $currentScript === 'artikel.php' ? '' : 'collapsed' ?>" href="<?= module_url('artikel.php') ?>">
           <i class="bi bi-box-seam me-2"></i>Artikel
           <i class="bi bi-chevron-down ms-auto small nav-chevron"></i>
         </a>
@@ -79,8 +79,8 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
           <?php render_article_category_nav($navCategoriesByParent, 0, 0, $navSelectedCategory); ?>
         <?php endif; ?>
       </li>
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('lager.php') ?>" href="<?= APP_URL ?>/modules/stammdaten/lager.php"><i class="bi bi-archive me-2"></i>Lager</a></li>
-      <li class="nav-item"><a class="nav-link text-white <?= nav_active('kunden.php') ?>" href="<?= APP_URL ?>/modules/stammdaten/kunden.php"><i class="bi bi-people me-2"></i>Kunden</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('lager.php') ?>" href="<?= module_url('lager.php') ?>"><i class="bi bi-archive me-2"></i>Lager</a></li>
+      <li class="nav-item"><a class="nav-link text-white <?= nav_active('kunden.php') ?>" href="<?= module_url('kunden.php') ?>"><i class="bi bi-people me-2"></i>Kunden</a></li>
 
       <?php if ($hasWarenwirtschaftLicense): ?>
       <li class="nav-item">
@@ -90,15 +90,15 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
         </a>
         <div class="collapse <?= $verkaufActive ? 'show' : '' ?>" id="navVerkauf">
           <ul class="nav flex-column ms-3">
-            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('angebote.php') ?>" href="<?= APP_URL ?>/modules/warenwirtschaft/angebote.php"><i class="bi bi-file-earmark-text me-2"></i>Angebote</a></li>
-            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('auftraege.php') ?>" href="<?= APP_URL ?>/modules/warenwirtschaft/auftraege.php"><i class="bi bi-clipboard-check me-2"></i>Aufträge</a></li>
-            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('rechnungen.php') ?>" href="<?= APP_URL ?>/modules/warenwirtschaft/rechnungen.php"><i class="bi bi-receipt me-2"></i>Rechnungen</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('angebote.php') ?>" href="<?= module_url('angebote.php') ?>"><i class="bi bi-file-earmark-text me-2"></i>Angebote</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('auftraege.php') ?>" href="<?= module_url('auftraege.php') ?>"><i class="bi bi-clipboard-check me-2"></i>Aufträge</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('rechnungen.php') ?>" href="<?= module_url('rechnungen.php') ?>"><i class="bi bi-receipt me-2"></i>Rechnungen</a></li>
           </ul>
         </div>
       </li>
       <?php elseif ($u['role'] === 'admin'): ?>
       <li class="nav-item">
-        <a class="nav-link text-white-50 d-flex align-items-center" href="<?= APP_URL ?>/admin/lizenzen.php" title="Fuer dieses Modul liegt keine gueltige Lizenz vor">
+        <a class="nav-link text-white-50 d-flex align-items-center" href="<?= module_url('lizenzen.php') ?>" title="Fuer dieses Modul liegt keine gueltige Lizenz vor">
           <i class="bi bi-cart me-2"></i>Verkauf <span class="badge bg-app-secondary ms-2">Lizenz erforderlich</span>
         </a>
       </li>
@@ -111,7 +111,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
         </a>
         <div class="collapse <?= $einkaufActive ? 'show' : '' ?>" id="navEinkauf">
           <ul class="nav flex-column ms-3">
-            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('lieferanten.php') ?>" href="<?= APP_URL ?>/modules/stammdaten/lieferanten.php"><i class="bi bi-truck me-2"></i>Lieferanten</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('lieferanten.php') ?>" href="<?= module_url('lieferanten.php') ?>"><i class="bi bi-truck me-2"></i>Lieferanten</a></li>
           </ul>
         </div>
       </li>
@@ -125,9 +125,9 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
         </a>
         <div class="collapse <?= $einstellungenActive ? 'show' : '' ?>" id="navEinstellungen">
           <ul class="nav flex-column ms-3">
-            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('einstellungen.php') ?>" href="<?= APP_URL ?>/admin/einstellungen.php"><i class="bi bi-building me-2"></i>Firmeneinstellungen</a></li>
-            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('kategorien.php') ?>" href="<?= APP_URL ?>/modules/stammdaten/kategorien.php"><i class="bi bi-tags me-2"></i>Kategorien</a></li>
-            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('lizenzen.php') ?>" href="<?= APP_URL ?>/admin/lizenzen.php"><i class="bi bi-key me-2"></i>Lizenzen</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('einstellungen.php') ?>" href="<?= module_url('einstellungen.php') ?>"><i class="bi bi-building me-2"></i>Firmeneinstellungen</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('kategorien.php') ?>" href="<?= module_url('kategorien.php') ?>"><i class="bi bi-tags me-2"></i>Kategorien</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('lizenzen.php') ?>" href="<?= module_url('lizenzen.php') ?>"><i class="bi bi-key me-2"></i>Lizenzen</a></li>
           </ul>
         </div>
       </li>

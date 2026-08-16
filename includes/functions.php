@@ -27,6 +27,52 @@ function redirect(string $path): void {
     exit;
 }
 
+/**
+ * Zentrale Zuordnung: Dateiname (basename) -> Modulverzeichnis relativ zur
+ * Projektwurzel. EINZIGE Stelle, die bei einer erneuten Verzeichnis-
+ * Restrukturierung angepasst werden muss - Sidebar (includes/header.php)
+ * und alle anderen absoluten Links nutzen ausschließlich module_url(),
+ * statt Pfade hart zu kodieren.
+ */
+function module_directory_map(): array {
+    return [
+        'index.php' => '',
+        'login.php' => '',
+        'logout.php' => '',
+        'artikel.php' => 'modules/stammdaten',
+        'lager.php' => 'modules/stammdaten',
+        'kunden.php' => 'modules/stammdaten',
+        'lieferanten.php' => 'modules/stammdaten',
+        'kategorien.php' => 'modules/stammdaten',
+        'angebote.php' => 'modules/warenwirtschaft',
+        'angebot_pdf.php' => 'modules/warenwirtschaft',
+        'auftraege.php' => 'modules/warenwirtschaft',
+        'auftrag_pdf.php' => 'modules/warenwirtschaft',
+        'rechnungen.php' => 'modules/warenwirtschaft',
+        'rechnung_pdf.php' => 'modules/warenwirtschaft',
+        'einstellungen.php' => 'admin',
+        'lizenzen.php' => 'admin',
+        'benutzer.php' => 'admin',
+    ];
+}
+
+/**
+ * Liefert die absolute URL (inkl. APP_URL) zu einer Modul-Datei anhand
+ * ihres Dateinamens, z.B. module_url('artikel.php', 'category=5').
+ * Wirft eine Exception bei unbekannten Dateien, damit ein vergessener
+ * Map-Eintrag sofort aus fällt statt eine tote Navigation zu erzeugen.
+ */
+function module_url(string $filename, string $queryString = ''): string {
+    $map = module_directory_map();
+    if (!array_key_exists($filename, $map)) {
+        throw new InvalidArgumentException("module_url(): unbekannte Datei '$filename' - bitte in module_directory_map() ergänzen.");
+    }
+    $dir = $map[$filename];
+    $path = $dir === '' ? $filename : $dir . '/' . $filename;
+    $url = APP_URL . '/' . $path;
+    return $queryString !== '' ? $url . '?' . $queryString : $url;
+}
+
 // Nächste Angebots-/Rechnungsnummer holen und Zähler erhöhen.
 // WICHTIG: Diese Funktion wird immer innerhalb einer bereits laufenden
 // Transaktion der aufrufenden Seite (angebote.php/rechnungen.php) aufgerufen
