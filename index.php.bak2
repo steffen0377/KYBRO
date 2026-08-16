@@ -1,6 +1,6 @@
 <?php
 $pageTitle = 'Dashboard';
-require_once __DIR__ . '/includes/header.php';
+require_once ROOT_PATH . '/includes/header.php';
 
 $pdo = db();
 $articleCount = $pdo->query('SELECT COUNT(*) c FROM articles WHERE active=1')->fetch()['c'];
@@ -64,4 +64,4 @@ $recentInvoices = $pdo->query('SELECT i.*, c.company, c.first_name, c.last_name 
   </div>
 </div>
 
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
+<?php require_once ROOT_PATH . '/includes/footer.php'; ?>
