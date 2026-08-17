@@ -2,6 +2,7 @@
 $pageTitle = 'Lager';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
+$self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -25,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'korrektur') {
     } elseif ($current) {
         flash('danger', 'Für Artikel mit Seriennummern bitte über die Seriennummern-Verwaltung korrigieren.');
     }
-    redirect('lager.php');
+    redirect($self);
 }
 
 // ---------- Wareneingang ohne Seriennummern ----------
@@ -43,7 +44,7 @@ if ($action === 'einlagern' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         adjust_stock($articleId, $qty, 'einlagerung', 'manual', null, $note);
         flash('success', 'Wareneingang gebucht.');
     }
-    redirect('lager.php');
+    redirect($self);
 }
 
 // ---------- Wareneingang MIT Seriennummern ----------
@@ -56,7 +57,7 @@ if ($action === 'einlagern_seriell' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$serials) {
         flash('danger', 'Bitte mindestens eine Seriennummer angeben (eine pro Zeile).');
-        redirect('lager.php');
+        redirect($self);
     }
 
     $pdo->beginTransaction();
@@ -87,7 +88,7 @@ if ($action === 'einlagern_seriell' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
     }
-    redirect('lager.php');
+    redirect($self);
 }
 
 // ---------- Einzelne Seriennummer als defekt markieren ----------
@@ -102,7 +103,7 @@ if ($action === 'seriennummer_defekt' && isset($_GET['id']) && hash_equals(csrf_
     } else {
         flash('danger', 'Seriennummer nicht gefunden oder bereits verkauft/defekt.');
     }
-    redirect('lager.php?view_serials=' . (int)($_GET['article_id'] ?? 0));
+    redirect($self . '?view_serials=' . (int)($_GET['article_id'] ?? 0));
 }
 
 // ---------- Fälschlich erfasste Seriennummer wieder entfernen ----------
@@ -117,7 +118,7 @@ if ($action === 'seriennummer_entfernen' && isset($_GET['id']) && hash_equals(cs
     } else {
         flash('danger', 'Seriennummer nicht gefunden oder bereits verkauft/defekt.');
     }
-    redirect('lager.php?view_serials=' . (int)($_GET['article_id'] ?? 0));
+    redirect($self . '?view_serials=' . (int)($_GET['article_id'] ?? 0));
 }
 
 $articles = $pdo->query('SELECT id, name, sku, stock_qty, min_stock, unit, track_serials FROM articles WHERE active=1 AND track_stock=1 ORDER BY name')->fetchAll();

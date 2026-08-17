@@ -1,6 +1,7 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
+$self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     ];
     if (!$data['company'] && !$data['last_name']) {
         flash('danger', 'Bitte Firma oder Nachname angeben.');
-        redirect('kunden.php?action=' . ($id ? "edit&id=$id" : 'new'));
+        redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
     }
     if ($id) {
         $stmt = $pdo->prepare('UPDATE customers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,vat_id=?,iban=?,bic=?,bank_name=?,notes=? WHERE id=?');
@@ -52,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $_POST['contact_phone'] ?? [],
         $_POST['contact_email'] ?? []
     );
-    redirect('kunden.php');
+    redirect($self);
 }
 
 if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
@@ -62,7 +63,7 @@ if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GE
     } catch (PDOException $e) {
         flash('danger', 'Kunde kann nicht gelöscht werden – es existieren bereits Angebote/Rechnungen.');
     }
-    redirect('kunden.php');
+    redirect($self);
 }
 
 // ---------- RECHNUNG ALS BEZAHLT MARKIEREN (aus der Buchhaltungs-Registerkarte) ----------
@@ -72,7 +73,7 @@ if ($action === 'mark_invoice_paid' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $customerId = (int)$_POST['customer_id'];
     $pdo->prepare("UPDATE invoices SET status='bezahlt' WHERE id=? AND customer_id=?")->execute([$invoiceId, $customerId]);
     flash('success', 'Rechnung als bezahlt markiert.');
-    redirect('kunden.php?action=edit&id=' . $customerId . '&tab=buchhaltung');
+    redirect($self . '?action=edit&id=' . $customerId . '&tab=buchhaltung');
 }
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
@@ -87,7 +88,7 @@ if ($action === 'new' || $action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM customers WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
         $c = $stmt->fetch();
-        if (!$c) { flash('danger','Kunde nicht gefunden.'); redirect('kunden.php'); }
+        if (!$c) { flash('danger','Kunde nicht gefunden.'); redirect($self); }
     }
 
     $contacts = [];

@@ -1,5 +1,6 @@
 <?php
 $pageTitle = 'Lieferanten';
+$self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 $isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
 if ($isAjax) {
     // Live-Suche: nur Auth/Funktionen laden, kein komplettes Seitenlayout
@@ -9,6 +10,7 @@ if ($isAjax) {
 } else {
     require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/header.php';
 }
+
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
 require_permission('lieferanten', in_array($action, ['save', 'delete', 'new', 'edit'], true) ? 'write' : 'read');
@@ -32,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     ];
     if (!$data['company'] && !$data['last_name']) {
         flash('danger', 'Bitte Firma oder Nachname angeben.');
-        redirect('lieferanten.php?action=' . ($id ? "edit&id=$id" : 'new'));
+        redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
     }
     if ($id) {
         $stmt = $pdo->prepare('UPDATE suppliers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,customer_number_at_supplier=?,notes=? WHERE id=?');
@@ -45,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $pdo->prepare('UPDATE suppliers SET supplier_number=? WHERE id=?')->execute(['L-' . str_pad($newId, 5, '0', STR_PAD_LEFT), $newId]);
         flash('success', 'Lieferant angelegt.');
     }
-    redirect('lieferanten.php');
+    redirect($self);
 }
 
 if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
@@ -55,7 +57,7 @@ if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GE
     } catch (PDOException $e) {
         flash('danger', 'Lieferant kann nicht gelöscht werden – es existieren noch verknüpfte Datensätze.');
     }
-    redirect('lieferanten.php');
+    redirect($self);
 }
 
 if ($action === 'new' || $action === 'edit') {
@@ -64,7 +66,7 @@ if ($action === 'new' || $action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM suppliers WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
         $s = $stmt->fetch();
-        if (!$s) { flash('danger','Lieferant nicht gefunden.'); redirect('lieferanten.php'); }
+        if (!$s) { flash('danger','Lieferant nicht gefunden.'); redirect($self); }
     }
     ?>
     <h4><?= $action === 'new' ? 'Neuer Lieferant' : e($s['company'] ?: trim($s['first_name'].' '.$s['last_name'])) ?></h4>

@@ -1,6 +1,7 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
+$self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 require_login();
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -14,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
 
     if (!$name) {
         flash('danger', 'Name ist Pflichtfeld.');
-        redirect('kategorien.php');
+        redirect($self);
     }
     if ($id && $parentId === $id) {
         flash('danger', 'Eine Kategorie kann nicht ihre eigene Übergeordnete sein.');
-        redirect('kategorien.php');
+        redirect($self);
     }
     // Zyklen verhindern: die neue Übergeordnete darf keine Unterkategorie
     // (auf beliebiger Ebene) der zu bearbeitenden Kategorie sein.
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $descendants = collect_descendant_ids($byParentTmp, $id);
         if (in_array($parentId, $descendants, true)) {
             flash('danger', 'Ungültig: Die gewählte Übergeordnete ist eine Unterkategorie dieser Kategorie.');
-            redirect('kategorien.php');
+            redirect($self');
         }
     }
     try {
@@ -43,13 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     } catch (PDOException $e) {
         flash('danger', 'Diese Kategorie existiert bereits.');
     }
-    redirect('kategorien.php');
+    redirect($self);
 }
 
 if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
     $pdo->prepare('DELETE FROM categories WHERE id=?')->execute([(int)$_GET['id']]);
     flash('success', 'Kategorie gelöscht. Etwaige Unterkategorien wurden zu Hauptkategorien, Artikel-Zuordnungen wurden entfernt.');
-    redirect('kategorien.php');
+    redirect($self);
 }
 
 // Alle Nachfahren-IDs (Kinder, Kindeskinder, ...) einer Kategorie einsammeln

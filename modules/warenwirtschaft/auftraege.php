@@ -2,6 +2,7 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
 require_once ROOT_PATH . '/includes/license.php';
+$self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 require_login();
 require_module_license('warenwirtschaft');
 $pdo = db();
@@ -14,7 +15,7 @@ if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare('UPDATE orders SET status=? WHERE id=?');
     $stmt->execute([$_POST['status'], (int)$_POST['id']]);
     flash('success', 'Status aktualisiert.');
-    redirect('modules/warenwirtschaft/auftraege.php?action=view&id=' . (int)$_POST['id']);
+    redirect($self .'?action=view&id=' . (int)$_POST['id']);
 }
 
 // ---------- IN RECHNUNG UMWANDELN ----------
@@ -22,7 +23,7 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
     $stmt = $pdo->prepare('SELECT * FROM orders WHERE id=?');
     $stmt->execute([(int)$_GET['id']]);
     $order = $stmt->fetch();
-    if (!$order) { flash('danger','Auftrag nicht gefunden.'); redirect('modules/warenwirtschaft/auftraege.php'); }
+    if (!$order) { flash('danger','Auftrag nicht gefunden.'); redirect($self); }
 
     $pdo->beginTransaction();
     try {
@@ -38,7 +39,7 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
     } catch (Exception $e) {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
-        redirect('modules/warenwirtschaft/auftraege.php?action=view&id=' . $order['id']);
+        redirect($self .'?action=view&id=' . $order['id']);
     }
 }
 
@@ -46,7 +47,7 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
 if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
     $pdo->prepare('DELETE FROM orders WHERE id=?')->execute([(int)$_GET['id']]);
     flash('success', 'Auftrag gelöscht.');
-    redirect('modules/warenwirtschaft/auftraege.php');
+    redirect($self);
 }
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
@@ -58,7 +59,7 @@ if ($action === 'view') {
     $stmt = $pdo->prepare('SELECT o.*, c.company, c.first_name, c.last_name, c.street, c.zip, c.city FROM orders o JOIN customers c ON c.id=o.customer_id WHERE o.id=?');
     $stmt->execute([(int)$_GET['id']]);
     $order = $stmt->fetch();
-    if (!$order) { flash('danger','Auftrag nicht gefunden.'); redirect('modules/warenwirtschaft/auftraege.php'); }
+    if (!$order) { flash('danger','Auftrag nicht gefunden.'); redirect($self); }
     $items = $pdo->prepare('SELECT * FROM order_items WHERE order_id=? ORDER BY position');
     $items->execute([$order['id']]);
     $items = $items->fetchAll();

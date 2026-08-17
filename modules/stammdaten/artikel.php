@@ -7,6 +7,7 @@ $pageTitle = 'Artikel';
 // Seite bleibt nach dem Speichern leer.
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
+$self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 require_login();
 $isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
 $pdo = db();
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     ];
     if (!$data['name']) {
         flash('danger', 'Name ist Pflichtfeld.');
-        redirect('artikel.php?action=' . ($id ? "edit&id=$id" : 'new'));
+        redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
     }
     if ($id) {
         // Artikelnummer wird nach Vergabe nicht mehr verändert.
@@ -60,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         } catch (Exception $e) {
             $pdo->rollBack();
             flash('danger', 'Fehler beim Anlegen: ' . $e->getMessage());
-            redirect('artikel.php?action=new');
+            redirect($self . '?action=new');
         }
         // Anfangsbestand nur automatisch verbuchen, wenn keine Seriennummern-Pflicht besteht
         // (bei Seriennummern-Artikeln erfolgt die Einbuchung gezielt über das Lager-Modul).
@@ -83,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             }
         }
     }
-    redirect('artikel.php');
+    redirect($self);
 }
 
 // ---------- LÖSCHEN ----------
@@ -97,7 +98,7 @@ if ($action === 'delete' && isset($_GET['id'])) {
     } else {
         flash('danger', 'Ungültiger Vorgang.');
     }
-    redirect('artikel.php');
+    redirect($self);
 }
 
 // Ab hier wird tatsächlich HTML ausgegeben - Seitenlayout jetzt laden
@@ -127,7 +128,7 @@ if ($action === 'new' || $action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM articles WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
         $article = $stmt->fetch();
-        if (!$article) { flash('danger','Artikel nicht gefunden.'); redirect('artikel.php'); }
+        if (!$article) { flash('danger','Artikel nicht gefunden.'); redirect($self); }
     }
     $allCategories = $pdo->query('SELECT * FROM categories ORDER BY name')->fetchAll();
     $selectedCategoryIds = [];

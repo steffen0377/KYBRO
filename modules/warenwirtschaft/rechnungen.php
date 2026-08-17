@@ -2,6 +2,7 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
 require_once ROOT_PATH . '/includes/license.php';
+$self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 require_login();
 require_module_license('warenwirtschaft');
 $pdo = db();
@@ -57,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
 
     if (!$customerId || !array_filter($descriptions, fn($d)=>trim($d)!=='')) {
         flash('danger', 'Bitte Kunde und mindestens eine Position angeben.');
-        redirect('modules/warenwirtschaft/rechnungen.php?action=' . ($id ? "edit&id=$id" : 'new'));
+        redirect($self .'?action=' . ($id ? "edit&id=$id" : 'new'));
     }
 
     [$net, $tax, $gross] = calc_totals_inv($descriptions, $quantities, $prices, $taxRates);
@@ -110,15 +111,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $pdo->commit();
         if ($needsSerialAssignment) {
             flash('success', 'Rechnung gespeichert. Bitte jetzt die Seriennummern der verkauften Geräte zuordnen.');
-            redirect('modules/warenwirtschaft/rechnungen.php?action=assign_serials&id=' . $invoiceId);
+            redirect($self .'?action=assign_serials&id=' . $invoiceId);
         }
         flash('success', 'Rechnung gespeichert.' . ($isNew ? ' Lagerbestand wurde reduziert.' : ' Hinweis: Lagerbestand wird bei Bearbeitung bestehender Rechnungen nicht automatisch angepasst.'));
     } catch (Exception $e) {
         $pdo->rollBack();
         flash('danger', 'Fehler beim Speichern: ' . $e->getMessage());
-        redirect('modules/warenwirtschaft/rechnungen.php');
+        redirect($self);
     }
-    redirect('modules/warenwirtschaft/rechnungen.php?action=view&id=' . $invoiceId);
+    redirect($self .'?action=view&id=' . $invoiceId);
 }
 
 // ---------- SERIENNUMMERN ZUORDNEN ----------
@@ -145,14 +146,14 @@ if ($action === 'assign_serials' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $remaining = pending_serial_items($pdo, $invoiceId);
         if ($remaining) {
             flash('danger', 'Es fehlen noch Seriennummern für: ' . implode(', ', array_map(fn($i)=>$i['article_name'].' ('.$i['remaining'].'x)', $remaining)));
-            redirect('modules/warenwirtschaft/rechnungen.php?action=assign_serials&id=' . $invoiceId);
+            redirect($self .'?action=assign_serials&id=' . $invoiceId);
         }
         flash('success', 'Seriennummern zugeordnet, Lagerbestand aktualisiert.');
     } catch (Exception $e) {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
     }
-    redirect('modules/warenwirtschaft/rechnungen.php?action=view&id=' . $invoiceId);
+    redirect($self .'?action=view&id=' . $invoiceId);
 }
 
 // ---------- STATUS ÄNDERN ----------
@@ -161,7 +162,7 @@ if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare('UPDATE invoices SET status=? WHERE id=?');
     $stmt->execute([$_POST['status'], (int)$_POST['id']]);
     flash('success', 'Status aktualisiert.');
-    redirect('modules/warenwirtschaft/rechnungen.php?action=view&id=' . (int)$_POST['id']);
+    redirect($self .'?action=view&id=' . (int)$_POST['id']);
 }
 
 // ---------- LÖSCHEN (nur Entwürfe) ----------
@@ -169,7 +170,7 @@ if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GE
     $stmt = $pdo->prepare("DELETE FROM invoices WHERE id=? AND status='entwurf'");
     $stmt->execute([(int)$_GET['id']]);
     flash('success', 'Rechnung gelöscht (nur Entwürfe können gelöscht werden).');
-    redirect('modules/warenwirtschaft/rechnungen.php');
+    redirect($self);
 }
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
@@ -180,7 +181,7 @@ if ($action === 'assign_serials') {
     $stmt = $pdo->prepare('SELECT invoice_number FROM invoices WHERE id=?');
     $stmt->execute([(int)$_GET['id']]);
     $inv = $stmt->fetch();
-    if (!$inv) { flash('danger','Rechnung nicht gefunden.'); redirect('modules/warenwirtschaft/rechnungen.php'); }
+    if (!$inv) { flash('danger','Rechnung nicht gefunden.'); redirect($self); }
     $pending = pending_serial_items($pdo, (int)$_GET['id']);
     ?>
     <h4>Seriennummern zuordnen – Rechnung <?= e($inv['invoice_number']) ?></h4>
@@ -221,7 +222,7 @@ if ($action === 'view') {
     $stmt = $pdo->prepare('SELECT i.*, c.company, c.first_name, c.last_name, c.street, c.zip, c.city FROM invoices i JOIN customers c ON c.id=i.customer_id WHERE i.id=?');
     $stmt->execute([(int)$_GET['id']]);
     $invoice = $stmt->fetch();
-    if (!$invoice) { flash('danger','Rechnung nicht gefunden.'); redirect('modules/warenwirtschaft/rechnungen.php'); }
+    if (!$invoice) { flash('danger','Rechnung nicht gefunden.'); redirect($self); }
     $items = $pdo->prepare('SELECT * FROM invoice_items WHERE invoice_id=? ORDER BY position');
     $items->execute([$invoice['id']]);
     $items = $items->fetchAll();
@@ -307,8 +308,8 @@ if ($action === 'new' || $action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM invoices WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
         $invoice = $stmt->fetch();
-        if (!$invoice) { flash('danger','Rechnung nicht gefunden.'); redirect('modules/warenwirtschaft/rechnungen.php'); }
-        if ($invoice['status'] !== 'entwurf') { flash('danger','Nur Entwürfe können bearbeitet werden.'); redirect('modules/warenwirtschaft/rechnungen.php?action=view&id='.$invoice['id']); }
+        if (!$invoice) { flash('danger','Rechnung nicht gefunden.'); redirect($self); }
+        if ($invoice['status'] !== 'entwurf') { flash('danger','Nur Entwürfe können bearbeitet werden.'); redirect($self .'?action=view&id='.$invoice['id']); }
         $itemStmt = $pdo->prepare('SELECT * FROM invoice_items WHERE invoice_id=? ORDER BY position');
         $itemStmt->execute([$invoice['id']]);
         $items = $itemStmt->fetchAll();

@@ -2,6 +2,7 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
 require_once ROOT_PATH . '/includes/license.php';
+$self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 require_login();
 require_module_license('warenwirtschaft');
 $pdo = db();
@@ -35,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
 
     if (!$customerId || !array_filter($descriptions, fn($d)=>trim($d)!=='')) {
         flash('danger', 'Bitte Kunde und mindestens eine Position angeben.');
-        redirect('modules/warenwirtschaft/angebote.php?action=' . ($id ? "edit&id=$id" : 'new'));
+        redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
     }
 
     [$net, $tax, $gross] = calc_totals($descriptions, $quantities, $prices, $taxRates);
@@ -73,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $pdo->rollBack();
         flash('danger', 'Fehler beim Speichern: ' . $e->getMessage());
     }
-    redirect('modules/warenwirtschaft/angebote.php?action=view&id=' . $offerId);
+    redirect($self . '?action=view&id=' . $offerId);
 }
 
 // ---------- STATUS ÄNDERN ----------
@@ -86,7 +87,7 @@ if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
     $stmt->execute([$offerId]);
     $offer = $stmt->fetch();
-    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('modules/warenwirtschaft/angebote.php'); }
+    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect($self); }
 
     $pdo->beginTransaction();
     try {
@@ -103,7 +104,7 @@ if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
     }
-    redirect('modules/warenwirtschaft/angebote.php?action=view&id=' . $offerId);
+    redirect($self . '?action=view&id=' . $offerId);
 }
 
 // ---------- IN RECHNUNG UMWANDELN ----------
@@ -114,7 +115,7 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
     $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
     $stmt->execute([(int)$_GET['id']]);
     $offer = $stmt->fetch();
-    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('modules/warenwirtschaft/angebote.php'); }
+    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect($self); }
 
     $pdo->beginTransaction();
     try {
@@ -132,7 +133,7 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
     } catch (Exception $e) {
         $pdo->rollBack();
         flash('danger', 'Fehler: ' . $e->getMessage());
-        redirect('modules/warenwirtschaft/angebote.php?action=view&id=' . $offer['id']);
+        redirect($self . '?action=view&id=' . $offer['id']);
     }
 }
 
@@ -140,7 +141,7 @@ if ($action === 'to_invoice' && isset($_GET['id']) && hash_equals(csrf_token(), 
 if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
     $pdo->prepare('DELETE FROM offers WHERE id=?')->execute([(int)$_GET['id']]);
     flash('success', 'Angebot gelöscht.');
-    redirect('modules/warenwirtschaft/angebote.php');
+    redirect($self);
 }
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
@@ -152,7 +153,7 @@ if ($action === 'view') {
     $stmt = $pdo->prepare('SELECT o.*, c.company, c.first_name, c.last_name, c.street, c.zip, c.city FROM offers o JOIN customers c ON c.id=o.customer_id WHERE o.id=?');
     $stmt->execute([(int)$_GET['id']]);
     $offer = $stmt->fetch();
-    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('modules/warenwirtschaft/angebote.php'); }
+    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect($self); }
     $items = $pdo->prepare('SELECT * FROM offer_items WHERE offer_id=? ORDER BY position');
     $items->execute([$offer['id']]);
     $items = $items->fetchAll();
@@ -230,7 +231,7 @@ if ($action === 'new' || $action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
         $offer = $stmt->fetch();
-        if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect('modules/warenwirtschaft/angebote.php'); }
+        if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect($self); }
         $itemStmt = $pdo->prepare('SELECT * FROM offer_items WHERE offer_id=? ORDER BY position');
         $itemStmt->execute([$offer['id']]);
         $items = $itemStmt->fetchAll();
