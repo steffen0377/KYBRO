@@ -2,14 +2,9 @@
 $pageTitle = 'Lieferanten';
 $self = preg_replace('/^' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', __DIR__) . '/' .basename($_SERVER['SCRIPT_NAME']);
 $isAjax = isset($_GET['ajax']) && ($_GET['action'] ?? 'list') === 'list';
-if ($isAjax) {
-    // Live-Suche: nur Auth/Funktionen laden, kein komplettes Seitenlayout
-    require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
-    require_once ROOT_PATH . '/includes/functions.php';
-    require_login();
-} else {
-    require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/header.php';
-}
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
+require_once ROOT_PATH . '/includes/functions.php';
+require_login();
 
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
@@ -58,6 +53,12 @@ if ($action === 'delete' && isset($_GET['id']) && hash_equals(csrf_token(), $_GE
         flash('danger', 'Lieferant kann nicht gelöscht werden – es existieren noch verknüpfte Datensätze.');
     }
     redirect($self);
+}
+
+// Ab hier wird tatsächlich HTML ausgegeben - Seitenlayout jetzt laden
+// (bei AJAX-Live-Suche wird bewusst kein komplettes Layout gerendert).
+if (!$isAjax) {
+    require_once ROOT_PATH . '/includes/header.php';
 }
 
 if ($action === 'new' || $action === 'edit') {
