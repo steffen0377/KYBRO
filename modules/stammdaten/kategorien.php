@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $descendants = collect_descendant_ids($byParentTmp, $id);
         if (in_array($parentId, $descendants, true)) {
             flash('danger', 'Ungültig: Die gewählte Übergeordnete ist eine Unterkategorie dieser Kategorie.');
-            redirect($self');
+            redirect($self);
         }
     }
     try {
