@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_company') {
     }
 
     flash('success', 'Firmeneinstellungen gespeichert.');
-    redirect('einstellungen.php?tab=firma');
+    redirect($self . '?tab=firma');
 }
 
 // ---------- E-MAIL-/SMTP-EINSTELLUNGEN SPEICHERN ----------
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_email') {
         $pdo->prepare('UPDATE company_settings SET smtp_password=? WHERE id=1')->execute([trim($_POST['smtp_password'])]);
     }
     flash('success', 'E-Mail-Einstellungen gespeichert.');
-    redirect('einstellungen.php?tab=email');
+    redirect($self . '?tab=email');
 }
 
 // ---------- LDAP-EINSTELLUNGEN SPEICHERN ----------
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_ldap') {
         $pdo->prepare('UPDATE ldap_settings SET bind_password=? WHERE id=1')->execute([trim($_POST['bind_password'])]);
     }
     flash('success', 'LDAP-Einstellungen gespeichert.');
-    redirect('einstellungen.php?tab=authentifizierung');
+    redirect($self . '?tab=authentifizierung');
 }
 
 // ---------- AUTHENTIFIZIERUNGS-REIHENFOLGE SPEICHERN ----------
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_auth_mode') {
     $mode = in_array($_POST['auth_mode'] ?? '', $allowedModes, true) ? $_POST['auth_mode'] : 'local';
     $pdo->prepare('UPDATE auth_config SET auth_mode=? WHERE id=1')->execute([$mode]);
     flash('success', 'Authentifizierungs-Reihenfolge gespeichert.');
-    redirect('einstellungen.php?tab=authentifizierung');
+    redirect($self . '?tab=authentifizierung');
 }
 
 // ---------- BENUTZER ANLEGEN/BEARBEITEN ----------
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_user') {
 
     if ($username === '' || $fullName === '') {
         flash('danger', 'Bitte Benutzername und Name angeben.');
-        redirect('einstellungen.php?tab=authentifizierung');
+        redirect($self . '?tab=authentifizierung');
     }
 
     if ($id) {
@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_user') {
     } else {
         if ($password === '') {
             flash('danger', 'Bitte ein Passwort für den neuen Benutzer vergeben.');
-            redirect('einstellungen.php?tab=authentifizierung');
+            redirect($self . '?tab=authentifizierung');
         }
         try {
             $stmt = $pdo->prepare('INSERT INTO users (username, password_hash, full_name, role, group_id, active) VALUES (?,?,?,?,?,?)');
@@ -145,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_user') {
             flash('danger', 'Benutzername bereits vergeben.');
         }
     }
-    redirect('einstellungen.php?tab=authentifizierung');
+    redirect($self . '?tab=authentifizierung');
 }
 
 // ---------- BENUTZER LÖSCHEN ----------
@@ -157,7 +157,7 @@ if ($action === 'delete_user' && isset($_GET['id']) && hash_equals(csrf_token(),
         $pdo->prepare('DELETE FROM users WHERE id=?')->execute([$id]);
         flash('success', 'Benutzer gelöscht.');
     }
-    redirect('einstellungen.php?tab=authentifizierung');
+    redirect($self . '?tab=authentifizierung');
 }
 
 // ---------- GRUPPE ANLEGEN/BEARBEITEN INKL. BERECHTIGUNGEN ----------
@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_group') {
     $description = trim($_POST['description'] ?? '');
     if ($name === '') {
         flash('danger', 'Bitte einen Gruppennamen angeben.');
-        redirect('einstellungen.php?tab=authentifizierung');
+        redirect($self . '?tab=authentifizierung');
     }
 
     if ($id) {
@@ -190,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_group') {
         }
     }
     flash('success', 'Gruppe gespeichert.');
-    redirect('einstellungen.php?tab=authentifizierung');
+    redirect($self . '?tab=authentifizierung');
 }
 
 // ---------- GRUPPE LÖSCHEN ----------
@@ -202,7 +202,7 @@ if ($action === 'delete_group' && isset($_GET['id']) && hash_equals(csrf_token()
         $pdo->prepare('DELETE FROM `groups` WHERE id=?')->execute([$id]);
         flash('success', 'Gruppe gelöscht.');
     }
-    redirect('einstellungen.php?tab=authentifizierung');
+    redirect($self . '?tab=authentifizierung');
 }
 
 // ---------- AB HIER BEGINNT DIE HTML-AUSGABE ----------
