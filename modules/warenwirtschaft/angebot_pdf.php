@@ -2,6 +2,7 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
 require_once ROOT_PATH . '/includes/license.php';
+require_once ROOT_PATH . '/includes/letterhead_builder.php';
 require_login();
 require_module_license('warenwirtschaft');
 require_once ROOT_PATH . '/vendor/autoload.php';
@@ -33,4 +34,10 @@ $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
-$dompdf->stream($doc['offer_number'] . '.pdf', ['Attachment' => false]);
+
+$pdfContent = apply_company_letterhead($dompdf->output(), $company);
+
+header('Content-Type: application/pdf');
+header('Content-Disposition: inline; filename="' . $doc['offer_number'] . '.pdf"');
+header('Content-Length: ' . strlen($pdfContent));
+echo $pdfContent;

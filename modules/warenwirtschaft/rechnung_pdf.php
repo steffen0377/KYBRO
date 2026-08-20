@@ -2,6 +2,7 @@
 require_once $_SERVER['DOCUMENT_ROOT'] . '/../includes/auth.php';
 require_once ROOT_PATH . '/includes/functions.php';
 require_once ROOT_PATH . '/includes/license.php';
+require_once ROOT_PATH . '/includes/letterhead_builder.php';
 require_login();
 require_module_license('warenwirtschaft');
 require_once ROOT_PATH . '/vendor/autoload.php';
@@ -34,10 +35,19 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
+// Briefbogen (falls hinterlegt) VOR dem ZUGFeRD-Einbetten auf jede Seite legen,
+// damit die ZUGFeRD-XML anschliessend in das bereits fertig zusammengesetzte
+// PDF eingebettet wird (siehe includes/letterhead_builder.php für den Hinweis
+// zur PDF/A-3-Konformitaet bei PDF-Briefboegen).
+$pdfContent = apply_company_letterhead($dompdf->output(), $company);
+
 $wantsZugferd = isset($_GET['zugferd']) && $_GET['zugferd'] === '1';
 
 if (!$wantsZugferd) {
-    $dompdf->stream($doc['invoice_number'] . '.pdf', ['Attachment' => false]);
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="' . $doc['invoice_number'] . '.pdf"');
+    header('Content-Length: ' . strlen($pdfContent));
+    echo $pdfContent;
     exit;
 }
 
@@ -45,7 +55,7 @@ if (!$wantsZugferd) {
 require_once ROOT_PATH . '/includes/zugferd_builder.php';
 
 $zugferdDocument = build_zugferd_document($doc, $items, $company);
-$pdfContent = embed_zugferd_into_pdf($zugferdDocument, $dompdf->output());
+$pdfContent = embed_zugferd_into_pdf($zugferdDocument, $pdfContent);
 
 header('Content-Type: application/pdf');
 header('Content-Disposition: attachment; filename="' . $doc['invoice_number'] . '_zugferd.pdf"');

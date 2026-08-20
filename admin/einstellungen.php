@@ -39,6 +39,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_company') {
         }
     }
 
+    if (!empty($_POST['remove_letterhead'])) {
+        $currentLetterhead = $pdo->query('SELECT letterhead_path FROM company_settings WHERE id=1')->fetch()['letterhead_path'];
+        if ($currentLetterhead) { @unlink(__DIR__ . '/../' . $currentLetterhead); }
+        $pdo->prepare('UPDATE company_settings SET letterhead_path=NULL WHERE id=1')->execute();
+    } elseif (!empty($_FILES['letterhead']['name']) && $_FILES['letterhead']['error'] === UPLOAD_ERR_OK) {
+        $allowedLetterhead = ['image/png' => 'png', 'image/jpeg' => 'jpg', 'application/pdf' => 'pdf'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $_FILES['letterhead']['tmp_name']);
+        finfo_close($finfo);
+        if (isset($allowedLetterhead[$mime]) && $_FILES['letterhead']['size'] <= 5 * 1024 * 1024) {
+            foreach (glob(__DIR__ . '/../uploads/letterhead.*') as $old) { @unlink($old); }
+            $target = 'uploads/letterhead.' . $allowedLetterhead[$mime];
+            if (move_uploaded_file($_FILES['letterhead']['tmp_name'], __DIR__ . '/../' . $target)) {
+                $pdo->prepare('UPDATE company_settings SET letterhead_path=? WHERE id=1')->execute([$target]);
+            } else {
+                flash('danger', 'Briefbogen konnte nicht gespeichert werden. Bitte Schreibrechte für den Ordner "uploads/" prüfen.');
+            }
+        } else {
+            flash('danger', 'Ungültiges Dateiformat oder Datei zu groß für den Briefbogen (max. 5 MB; erlaubt: PNG, JPG, PDF).');
+        }
+    }
+
     flash('success', 'Firmeneinstellungen gespeichert.');
     redirect('einstellungen.php?tab=firma');
 }
@@ -249,6 +271,24 @@ $editGroupPerms = $permsByGroup[$editGroup['id']] ?? [];
           <?php endif; ?>
           <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
           <div class="form-text">PNG, JPG, SVG oder WEBP, max. 2 MB. Wird links in der Seitenleiste angezeigt.</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Briefbogen (Hintergrund für PDFs)</label><br>
+          <?php if (!empty($s['letterhead_path'])): ?>
+            <?php if (str_ends_with($s['letterhead_path'], '.pdf')): ?>
+              <div class="mb-2"><a href="<?= APP_URL ?>/<?= e($s['letterhead_path']) ?>?v=<?= time() ?>" target="_blank">Aktuellen Briefbogen (PDF) ansehen</a></div>
+            <?php else: ?>
+              <img src="<?= APP_URL ?>/<?= e($s['letterhead_path']) ?>?v=<?= time() ?>" alt="Aktueller Briefbogen" style="max-height:120px; max-width:300px;" class="d-block mb-2 border rounded p-1">
+            <?php endif; ?>
+            <div class="form-check mb-2">
+              <input type="checkbox" name="remove_letterhead" value="1" class="form-check-input" id="remove_letterhead">
+              <label class="form-check-label" for="remove_letterhead">Aktuellen Briefbogen entfernen</label>
+            </div>
+          <?php else: ?>
+            <div class="text-muted mb-2">Kein Briefbogen hinterlegt – PDFs werden ohne Hintergrundvorlage erzeugt.</div>
+          <?php endif; ?>
+          <input type="file" name="letterhead" class="form-control" accept=".png,.jpg,.jpeg,.pdf">
+          <div class="form-text">PNG, JPG oder PDF, max. 5 MB. Wird als Hintergrund auf jede Seite der Angebots-, Auftrags- und Rechnungs-PDFs gelegt (bei PDF-Briefbogen wird nur dessen erste Seite verwendet).</div>
         </div>
         <div class="col-12"><label class="form-label">Firmenname / Anwendungsname</label><input type="text" name="company_name" class="form-control" value="<?= e($s['company_name']) ?>"></div>
         <div class="col-md-8"><label class="form-label">Straße & Nr.</label><input type="text" name="street" class="form-control" value="<?= e($s['street']) ?>"></div>
