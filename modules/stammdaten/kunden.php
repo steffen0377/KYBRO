@@ -270,7 +270,7 @@ if ($action === 'new' || $action === 'edit') {
     document.querySelectorAll('#contactTable tbody tr').forEach(bindContactRow);
     </script>
     <?php
-    require_once __DIR__ . '/../includes/footer.php'; exit;
+    require_once ROOT_PATH . '/includes/footer.php'; exit;
 }
 
 $search = trim($_GET['q'] ?? '');
