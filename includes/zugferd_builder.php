@@ -93,15 +93,28 @@ function build_zugferd_document(array $doc, array $items, array $company): Zugfe
         );
     }
     if (!empty($company['iban'])) {
+        // BT-81: Zahlungsmittel-Typ. 58 = SEPA-Überweisung.
+        // Muss gesetzt sein, damit die IBAN (BT-84) korrekt referenziert wird
+        // (sonst CII-SR-470: "Es ist entweder die IBAN oder eine firmeneigene
+        // Kennung (BT-84) zu verwenden").
+        // Hinweis: Je nach installierter horstoeko/zugferd-Version heißt die
+        // Methode setDocumentPaymentMean() oder setDocumentPaymentMeans()
+        // (Singular/Plural). Falls ein "Call to undefined method"-Fehler
+        // auftritt, im README des installierten Pakets bzw. mit
+        // `grep -r "PaymentMean" vendor/horstoeko/zugferd/src/` nachsehen.
+        $documentBuilder->setDocumentPaymentMean(
+            '58',
+            'SEPA-Überweisung'
+        );
+
+        $accountHolder = !empty($company['account_holder'])
+            ? $company['account_holder']
+            : $company['company_name'];
+
         $documentBuilder->addDocumentPaymentMeanToCreditTransfer(
-            $company['iban'],          // IBAN des Verkäufers (Pflichtfeld)
-            /*
-            $company['accountName'],   // Kontoinhaber (Optional, kann null sein)
-            /*/
-            'media business line GmbH',  //Kontoinhaber, noch fest eingetragen. Später gegen Variable in $company ersetzen!
-            //*/
-            $company['bic'],           // BIC der Bank (Optional, kann null sein)
-            $doc['invoice_number']  // Eigene ID / Verwendungszweck (Optional, kann null sein)
+            $company['iban'],   // IBAN des Verkäufers (Pflichtfeld, BT-84)
+            $accountHolder,     // Kontoinhaber (Optional)
+            $company['bic']     // BIC der Bank (Optional)
         );
     }
 
