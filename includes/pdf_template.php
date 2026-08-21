@@ -21,7 +21,10 @@ ob_start();
 
 <div class="header">
   <div>
-    <div><?= e($company['company_name'] . ' | ' . $company['street'] . ' | ' $company['zip'] . ' ' . $company['city']) ?></div>
+    <div class="company-name"><?= e($company['company_name']) ?></div>
+    <div><?= e($company['street']) ?></div>
+    <div><?= e($company['zip'] . ' ' . $company['city']) ?></div>
+    <div><?= e($company['country']) ?></div>
   </div>
   <div style="text-align:right;">
     <?php if ($company['email']): ?><div>E-Mail: <?= e($company['email']) ?></div><?php endif; ?>
