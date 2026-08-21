@@ -93,16 +93,13 @@ function build_zugferd_document(array $doc, array $items, array $company): Zugfe
         );
     }
     if (!empty($company['iban'])) {
-        // BT-81: Zahlungsmittel-Typ. 58 = SEPA-Überweisung.
-        // Muss gesetzt sein, damit die IBAN (BT-84) korrekt referenziert wird
-        // (sonst CII-SR-470: "Es ist entweder die IBAN oder eine firmeneigene
-        // Kennung (BT-84) zu verwenden").
-        // Korrekte Methode laut vendor/horstoeko/zugferd/src/ZugferdDocumentBuilder.php:
-        // addDocumentPaymentMean(string $typeCode, ?string $information = null, ...)
-        $documentBuilder->addDocumentPaymentMean(
-            '58',
-            'SEPA-Überweisung'
-        );
+        // Hinweis: addDocumentPaymentMeanToCreditTransfer() unten setzt den
+        // Typ-Code 58 (SEPA-Überweisung) bereits intern selbst
+        // (ZugferdPaymentMeans::UNTDID_4461_58). Ein zusätzlicher separater
+        // Aufruf von addDocumentPaymentMean('58', ...) hier würde einen
+        // ZWEITEN, leeren PaymentMeans-Block (ohne IBAN) erzeugen - das war
+        // die Ursache für BR-61 ("Zahlungskonto BT-84 fehlt" bei Typ 58).
+        // Daher bewusst NICHT extra aufrufen.
 
         $accountHolder = !empty($company['account_holder'])
             ? $company['account_holder']
