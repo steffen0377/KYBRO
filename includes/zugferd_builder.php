@@ -97,12 +97,9 @@ function build_zugferd_document(array $doc, array $items, array $company): Zugfe
         // Muss gesetzt sein, damit die IBAN (BT-84) korrekt referenziert wird
         // (sonst CII-SR-470: "Es ist entweder die IBAN oder eine firmeneigene
         // Kennung (BT-84) zu verwenden").
-        // Hinweis: Je nach installierter horstoeko/zugferd-Version heißt die
-        // Methode setDocumentPaymentMean() oder setDocumentPaymentMeans()
-        // (Singular/Plural). Falls ein "Call to undefined method"-Fehler
-        // auftritt, im README des installierten Pakets bzw. mit
-        // `grep -r "PaymentMean" vendor/horstoeko/zugferd/src/` nachsehen.
-        $documentBuilder->setDocumentPaymentMean(
+        // Korrekte Methode laut vendor/horstoeko/zugferd/src/ZugferdDocumentBuilder.php:
+        // addDocumentPaymentMean(string $typeCode, ?string $information = null, ...)
+        $documentBuilder->addDocumentPaymentMean(
             '58',
             'SEPA-Überweisung'
         );
@@ -111,10 +108,21 @@ function build_zugferd_document(array $doc, array $items, array $company): Zugfe
             ? $company['account_holder']
             : $company['company_name'];
 
+        // Signatur laut Quellcode:
+        // addDocumentPaymentMeanToCreditTransfer(
+        //     string $payeeIban,
+        //     ?string $payeeAccountName = null,
+        //     ?string $payeePropId = null,   // <- KEIN BIC! (bankfremde Kennung)
+        //     ?string $payeeBic = null,      // <- BIC gehört hierher
+        //     ?string $paymentReference = null
+        // )
+        // Bisher wurde der BIC fälschlich an Position 3 (payeePropId) statt
+        // Position 4 (payeeBic) übergeben, wodurch er im XML nie ankam.
         $documentBuilder->addDocumentPaymentMeanToCreditTransfer(
             $company['iban'],   // IBAN des Verkäufers (Pflichtfeld, BT-84)
             $accountHolder,     // Kontoinhaber (Optional)
-            $company['bic']     // BIC der Bank (Optional)
+            null,               // payeePropId (bankfremde Kennung) - nicht verwendet
+            $company['bic']     // BIC der Bank (Optional, jetzt an korrekter Position)
         );
     }
 
