@@ -7,9 +7,12 @@
  * Problem an der FPDI-Merge-Logik selbst liegt oder an etwas anderem
  * (z.B. abweichende FPDI-Version, defekte Briefbogen-Datei, o.ae.).
  *
- * Aufruf (im ROOT_PATH des Projekts, z.B. /var/www/KYBRO):
+ * Aufruf mit Dummy-Testinhalt (kurzer, generierter Testtext):
  *   php tools/diagnose_letterhead.php /pfad/zum/briefbogen.pdf
- *   php tools/diagnose_letterhead.php /pfad/zum/briefbogen.png
+ *
+ * Aufruf mit einer ECHTEN Rechnung aus der Datenbank (empfohlen, um
+ * Probleme zu finden, die nur bei echtem/mehrseitigem Inhalt auftreten):
+ *   php tools/diagnose_letterhead.php /pfad/zum/briefbogen.pdf --invoice=123
  *
  * Erzeugt eine Test-PDF-Datei tools/diagnose_output.pdf, die man sich
  * direkt anschauen kann, und gibt ausfuehrliche Diagnosewerte auf der
@@ -19,14 +22,22 @@
 
 define('ROOT_PATH', dirname(__DIR__));
 require_once ROOT_PATH . '/vendor/autoload.php';
+require_once ROOT_PATH . '/includes/functions.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use setasign\Fpdi\Fpdi;
 
 if ($argc < 2) {
-    fwrite(STDERR, "Nutzung: php tools/diagnose_letterhead.php /pfad/zum/briefbogen.(pdf|png|jpg)\n");
+    fwrite(STDERR, "Nutzung: php tools/diagnose_letterhead.php /pfad/zum/briefbogen.(pdf|png|jpg) [--invoice=123]\n");
     exit(1);
+}
+
+$invoiceId = null;
+foreach ($argv as $arg) {
+    if (preg_match('/^--invoice=(\d+)$/', $arg, $m)) {
+        $invoiceId = (int)$m[1];
+    }
 }
 
 $letterheadPath = realpath($argv[1]);
@@ -52,12 +63,39 @@ if (is_file($installedJsonPath)) {
     echo "(vendor/composer/installed.json nicht gefunden - Versionsermittlung uebersprungen)\n";
 }
 
-echo "\n=== Schritt 1: Test-Inhalt per Dompdf erzeugen ===\n";
-$html = '<html><body style="font-family: sans-serif;">
+echo "\n=== Schritt 1: Testinhalt per Dompdf erzeugen ===\n";
+
+if ($invoiceId !== null) {
+    echo "Modus: ECHTE Rechnung aus der Datenbank (id=$invoiceId)\n";
+    $pdo = db();
+    $stmt = $pdo->prepare('SELECT i.*, c.company, c.first_name, c.last_name, c.street, c.zip, c.city FROM invoices i JOIN customers c ON c.id=i.customer_id WHERE i.id=?');
+    $stmt->execute([$invoiceId]);
+    $doc = $stmt->fetch();
+    if (!$doc) {
+        fwrite(STDERR, "FEHLER: Rechnung mit id=$invoiceId nicht gefunden.\n");
+        exit(1);
+    }
+    $itemStmt = $pdo->prepare('SELECT * FROM invoice_items WHERE invoice_id=? ORDER BY position');
+    $itemStmt->execute([$doc['id']]);
+    $items = $itemStmt->fetchAll();
+
+    $company = company_settings();
+    $docLabel = 'Rechnung';
+    $docNumberField = 'invoice_number';
+    $dateField = 'invoice_date'; $dateLabel = 'Rechnungsdatum';
+    $secondDateField = 'due_date'; $secondDateLabel = 'Fällig bis';
+
+    $html = include ROOT_PATH . '/includes/pdf_template.php';
+    echo "Positionen: " . count($items) . "\n";
+} else {
+    echo "Modus: Dummy-Testinhalt (kurzer generierter Text - fuer eine echte\n";
+    echo "Rechnung stattdessen mit --invoice=<ID> aufrufen)\n";
+    $html = '<html><body style="font-family: sans-serif;">
 <h1>Diagnose-Testinhalt</h1>
 <p>Position 1: Testartikel &nbsp; 10,00 EUR</p>
 <table border="1" cellpadding="5"><tr><th>Beschreibung</th><th>Preis</th></tr><tr><td>Testartikel</td><td>10,00 EUR</td></tr></table>
 </body></html>';
+}
 
 $options = new Options();
 $options->set('isRemoteEnabled', false);
