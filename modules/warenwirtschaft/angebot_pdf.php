@@ -26,7 +26,7 @@ $docNumberField = 'offer_number';
 $dateField = 'offer_date'; $dateLabel = 'Angebotsdatum';
 $secondDateField = 'valid_until'; $secondDateLabel = 'Gültig bis';
 
-$html = include __DIR__ . '/../includes/pdf_template.php';
+$html = include ROOT_PATH . '/includes/pdf_template.php';
 
 $options = new Options();
 $options->set('isRemoteEnabled', false);

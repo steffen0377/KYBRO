@@ -26,7 +26,7 @@ $docNumberField = 'invoice_number';
 $dateField = 'invoice_date'; $dateLabel = 'Rechnungsdatum';
 $secondDateField = 'due_date'; $secondDateLabel = 'Fällig bis';
 
-$html = include __DIR__ . '/../includes/pdf_template.php';
+$html = include ROOT_PATH . '/includes/pdf_template.php';
 
 $options = new Options();
 $options->set('isRemoteEnabled', false);
