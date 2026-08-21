@@ -65,7 +65,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
     <?php
       $verkaufActive = nav_group_active(['angebote.php', 'auftraege.php', 'rechnungen.php']);
       $einkaufActive = nav_group_active(['lieferanten.php']);
-      $einstellungenActive = nav_group_active(['einstellungen.php', 'kategorien.php', 'lizenzen.php']);
+      $einstellungenActive = nav_group_active(['einstellungen.php', 'formulareinstellungen.php', 'kategorien.php', 'lizenzen.php']);
       $hasWarenwirtschaftLicense = has_module_license('warenwirtschaft');
     ?>
     <ul class="nav nav-pills flex-column gap-1">
@@ -126,6 +126,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
         <div class="collapse <?= $einstellungenActive ? 'show' : '' ?>" id="navEinstellungen">
           <ul class="nav flex-column ms-3">
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('einstellungen.php') ?>" href="<?= module_url('einstellungen.php') ?>"><i class="bi bi-building me-2"></i>Firmeneinstellungen</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('formulareinstellungen.php') ?>" href="<?= module_url('formulareinstellungen.php') ?>"><i class="bi bi-file-earmark-ruled me-2"></i>Formulareinstellungen</a></li>
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('kategorien.php') ?>" href="<?= module_url('kategorien.php') ?>"><i class="bi bi-tags me-2"></i>Kategorien</a></li>
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('lizenzen.php') ?>" href="<?= module_url('lizenzen.php') ?>"><i class="bi bi-key me-2"></i>Lizenzen</a></li>
           </ul>
