@@ -21,6 +21,7 @@ $itemStmt->execute([$doc['id']]);
 $items = $itemStmt->fetchAll();
 
 $company = company_settings();
+$scope = 'rechnung';
 $docLabel = 'Rechnung';
 $docNumberField = 'invoice_number';
 $dateField = 'invoice_date'; $dateLabel = 'Rechnungsdatum';

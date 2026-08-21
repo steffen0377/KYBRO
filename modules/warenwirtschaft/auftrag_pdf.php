@@ -21,6 +21,7 @@ $itemStmt->execute([$doc['id']]);
 $items = $itemStmt->fetchAll();
 
 $company = company_settings();
+$scope = 'auftrag';
 $docLabel = 'Auftrag';
 $docNumberField = 'order_number';
 $dateField = 'order_date'; $dateLabel = 'Auftragsdatum';

@@ -21,6 +21,7 @@ $itemStmt->execute([$doc['id']]);
 $items = $itemStmt->fetchAll();
 
 $company = company_settings();
+$scope = 'angebot';
 $docLabel = 'Angebot';
 $docNumberField = 'offer_number';
 $dateField = 'offer_date'; $dateLabel = 'Angebotsdatum';
