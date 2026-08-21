@@ -38,13 +38,13 @@ function apply_company_letterhead(string $pdfContent, array $company): string {
     }
     $letterheadAbsolutePath = realpath(ROOT_PATH . '/' . $company['letterhead_path']);
     if (!$letterheadAbsolutePath || !is_readable($letterheadAbsolutePath)) {
-        error_log('[Briefbogen] Datei nicht gefunden oder nicht lesbar: ' . $company['letterhead_path']);
+        error_log('[Briefbogen] Datei nicht gefunden oder nicht lesbar: ' . $company['letterhead_path'] . ' (aufgeloest: ' . ROOT_PATH . '/' . $company['letterhead_path'] . ')');
         return $pdfContent;
     }
     try {
         return apply_letterhead_to_pdf($pdfContent, $letterheadAbsolutePath);
     } catch (Throwable $e) {
-        error_log('[Briefbogen] Einbettung fehlgeschlagen, PDF wird ohne Briefbogen ausgeliefert: ' . $e->getMessage());
+        error_log('[Briefbogen] Einbettung fehlgeschlagen, PDF wird ohne Briefbogen ausgeliefert: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
         return $pdfContent;
     }
 }
@@ -60,6 +60,12 @@ function apply_company_letterhead(string $pdfContent, array $company): string {
  */
 function apply_letterhead_to_pdf(string $pdfContent, string $letterheadPath): string {
     $isPdfLetterhead = strtolower(pathinfo($letterheadPath, PATHINFO_EXTENSION)) === 'pdf';
+    error_log(sprintf(
+        '[Briefbogen] Start: Typ=%s, Datei=%s, Inhaltsgroesse=%d Bytes',
+        $isPdfLetterhead ? 'PDF' : 'Bild',
+        $letterheadPath,
+        strlen($pdfContent)
+    ));
 
     $tmpContentFile = tempnam(sys_get_temp_dir(), 'kybro_pdf_');
     file_put_contents($tmpContentFile, $pdfContent);
@@ -70,6 +76,12 @@ function apply_letterhead_to_pdf(string $pdfContent, string $letterheadPath): st
         // Seiten des eigentlichen Dokuments (Angebot/Auftrag/Rechnung) als
         // Vorlagen importieren, bevor ggf. die Quelldatei gewechselt wird.
         $pageCount = $pdf->setSourceFile($tmpContentFile);
+        error_log('[Briefbogen] Seitenzahl Inhalt: ' . $pageCount);
+        if ($pageCount < 1) {
+            error_log('[Briefbogen] WARNUNG: Inhalts-PDF hat 0 Seiten laut FPDI - Original wird durchgereicht.');
+            return $pdfContent;
+        }
+
         $contentTemplateIds = [];
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             $contentTemplateIds[$pageNo] = $pdf->importPage($pageNo);
@@ -85,6 +97,14 @@ function apply_letterhead_to_pdf(string $pdfContent, string $letterheadPath): st
 
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             $size = $pdf->getTemplateSize($contentTemplateIds[$pageNo]);
+            error_log(sprintf(
+                '[Briefbogen] Seite %d: Breite=%.2f Hoehe=%.2f Ausrichtung=%s',
+                $pageNo, $size['width'], $size['height'], $size['orientation']
+            ));
+            if ($size['width'] < 1 || $size['height'] < 1) {
+                error_log('[Briefbogen] WARNUNG: Ungueltige Seitengroesse fuer Seite ' . $pageNo . ' - moegliches Parser-Problem mit dem Inhalts-PDF.');
+            }
+
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
 
             // 1. Briefbogen als Hintergrund
@@ -98,7 +118,9 @@ function apply_letterhead_to_pdf(string $pdfContent, string $letterheadPath): st
             $pdf->useTemplate($contentTemplateIds[$pageNo], 0, 0, $size['width'], $size['height']);
         }
 
-        return $pdf->Output('S');
+        $result = $pdf->Output('S');
+        error_log('[Briefbogen] Fertig: Ausgabegroesse=' . strlen($result) . ' Bytes');
+        return $result;
     } finally {
         @unlink($tmpContentFile);
     }
