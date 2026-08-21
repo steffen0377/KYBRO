@@ -51,6 +51,7 @@ function module_directory_map(): array {
         'rechnungen.php' => 'modules/warenwirtschaft',
         'rechnung_pdf.php' => 'modules/warenwirtschaft',
         'einstellungen.php' => 'admin',
+        'formulareinstellungen.php' => 'admin',
         'lizenzen.php' => 'admin',
         'benutzer.php' => 'admin',
     ];
@@ -222,6 +223,118 @@ function save_customer_contacts(PDO $pdo, int $customerId, array $lastNames, arr
         }
         $stmt->execute([$customerId, $lastName, $firstName, $company, $phone, $email]);
     }
+}
+
+// Werkseinstellungen (Fallback-Werte) für die Formulareinstellungen, gruppiert
+// nach Scope. 'global' gilt für alle Formulare, sofern im jeweiligen Scope
+// kein eigener Wert hinterlegt ist. Neue Einstellungen können hier ergänzt
+// werden, ohne dass eine weitere Migration nötig ist (form_settings ist eine
+// Key-Value-Tabelle, siehe database/migrations/migration_019_form_settings.sql).
+function form_setting_defaults(): array {
+    return [
+        'global' => [
+            'font_family' => 'Helvetica',
+            'font_size' => '10',
+            'margin_top' => '20',
+            'margin_bottom' => '20',
+            'margin_left' => '20',
+            'margin_right' => '20',
+            'use_letterhead' => '1',
+            'logo_position' => 'links',
+            'logo_height' => '20',
+            'accent_color' => '#0d6efd',
+            'footer_text' => '',
+            'show_page_number' => '1',
+            'table_columns' => 'pos,artikelnr,bezeichnung,menge,einzelpreis,rabatt,gesamt',
+            'currency_format' => 'de_DE',
+            'date_format' => 'd.m.Y',
+            'decimal_separator' => ',',
+            'language' => 'de',
+        ],
+        'angebot' => [
+            'document_title' => 'Angebot',
+            'intro_text' => 'Vielen Dank für Ihre Anfrage. Wir unterbreiten Ihnen folgendes Angebot:',
+            'closing_text' => 'Wir freuen uns auf Ihren Auftrag.',
+            'term_label' => 'Gültig bis',
+            'term_days' => '30',
+            'columns_override' => '',
+            'show_discount_column' => '1',
+            'show_tax_breakdown' => '1',
+            'show_subtotal' => '1',
+        ],
+        'auftrag' => [
+            'document_title' => 'Auftragsbestätigung',
+            'intro_text' => 'Wir bestätigen Ihnen folgenden Auftrag:',
+            'closing_text' => 'Vielen Dank für Ihren Auftrag.',
+            'term_label' => 'Liefertermin',
+            'term_days' => '14',
+            'columns_override' => '',
+            'show_discount_column' => '1',
+            'show_tax_breakdown' => '1',
+            'show_subtotal' => '1',
+        ],
+        'rechnung' => [
+            'document_title' => 'Rechnung',
+            'intro_text' => 'Wir stellen Ihnen folgende Leistungen in Rechnung:',
+            'closing_text' => 'Vielen Dank für Ihr Vertrauen.',
+            'term_label' => 'Zahlungsziel',
+            'term_days' => '14',
+            'columns_override' => '',
+            'show_discount_column' => '1',
+            'show_tax_breakdown' => '1',
+            'show_subtotal' => '1',
+            'zugferd_profile' => 'BASIC',
+            'skonto_text' => '',
+        ],
+    ];
+}
+
+// Liest eine einzelne Formulareinstellung mit Fallback-Kette:
+// scope-spezifischer Wert -> globaler Wert -> hinterlegter Default.
+// Lädt alle gespeicherten Werte einmalig pro Request (static cache), da
+// diese Funktion typischerweise mehrfach pro PDF-Erzeugung aufgerufen wird.
+function get_form_setting(string $scope, string $key, $default = null) {
+    static $cache = null;
+    if ($cache === null) {
+        $cache = [];
+        $stmt = db()->query('SELECT scope, setting_key, setting_value FROM form_settings');
+        foreach ($stmt as $row) {
+            $cache[$row['scope']][$row['setting_key']] = $row['setting_value'];
+        }
+    }
+    if (isset($cache[$scope][$key]) && $cache[$scope][$key] !== '') {
+        return $cache[$scope][$key];
+    }
+    if ($scope !== 'global' && isset($cache['global'][$key]) && $cache['global'][$key] !== '') {
+        return $cache['global'][$key];
+    }
+    $defaults = form_setting_defaults();
+    if (isset($defaults[$scope][$key])) {
+        return $defaults[$scope][$key];
+    }
+    if (isset($defaults['global'][$key])) {
+        return $defaults['global'][$key];
+    }
+    return $default;
+}
+
+// Liefert alle Einstellungen eines Scopes (inkl. Fallback global -> Default)
+// als assoziatives Array - genutzt zur Vorbelegung der Einstellungsseite.
+function get_form_settings_for_scope(string $scope): array {
+    $defaults = form_setting_defaults();
+    $result = [];
+    foreach (array_keys($defaults[$scope] ?? []) as $key) {
+        $result[$key] = get_form_setting($scope, $key);
+    }
+    return $result;
+}
+
+// Speichert eine einzelne Formulareinstellung (Insert-or-Update via
+// ON DUPLICATE KEY, passend zum UNIQUE-Index auf (scope, setting_key)).
+function save_form_setting(string $scope, string $key, string $value): void {
+    $stmt = db()->prepare('INSERT INTO form_settings (scope, setting_key, setting_value) VALUES (?,?,?)
+        ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
+    $stmt->execute([$scope, $key, $value]);
 }
 
 function company_settings(): array {
