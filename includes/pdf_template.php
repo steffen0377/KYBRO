@@ -80,7 +80,7 @@ ob_start();
 
 <div class="header">
   <div>
-    <div class="company-name"><?= e($company['company_name']) ?></div>
+    <div class="company-name"><?= e($company['company_name'] . ' | ' . $company['street']) ?></div>
     <div><?= e($company['street']) ?></div>
     <div><?= e($company['zip'] . ' ' . $company['city']) ?></div>
     <div><?= e($company['country']) ?></div>
