@@ -63,7 +63,7 @@ ob_start();
   @page { margin: <?= $marginTop ?>mm <?= $marginRight ?>mm <?= $marginBottom ?>mm <?= $marginLeft ?>mm; }
   body { font-family: <?= $fontFamily ?>; font-size: <?= $fontSize ?>px; color: #222; }
   .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
-  .company-name { font-size: 16px; font-weight: bold; }
+  .company-addressline { font-size: 8px; font-weight: bold; }
   h1 { font-size: 20px; margin-bottom: 0; color: <?= e($accentColor) ?>; }
   table { width: 100%; border-collapse: collapse; margin-top: 15px; }
   th { background: #eee; text-align: left; padding: 6px; border-bottom: 2px solid <?= e($accentColor) ?>; }
@@ -80,7 +80,7 @@ ob_start();
 
 <div class="header">
   <div>
-    <div class="company-name"><?= e($company['company_name'] . ' | ' . $company['street'] . ' | ' . $company['zip'] . ' ' . $company['city']) ?></div>
+    <div class="company-addressline"><?= e($company['company_name'] . ' | ' . $company['street'] . ' | ' . $company['zip'] . ' ' . $company['city']) ?></div>
   </div>
   <div style="text-align:right;">
     <?php if ($company['email']): ?><div>E-Mail: <?= e($company['email']) ?></div><?php endif; ?>
