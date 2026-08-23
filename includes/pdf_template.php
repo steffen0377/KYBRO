@@ -62,9 +62,20 @@ ob_start();
 <style>
   @page { margin: <?= $marginTop ?>mm <?= $marginRight ?>mm <?= $marginBottom ?>mm <?= $marginLeft ?>mm; }
   body { font-family: <?= $fontFamily ?>; font-size: <?= $fontSize ?>px; color: #222; }
-  .header { position: absolute; top: 45mm; left: 20mm; width: 170mm; height: 45mm; margin-bottom: 30px; }
-  .header-company { position: absolute; top: 0; left: 0; width: 85mm; }
-  .header-recipient { position: absolute; top: 0; left: 95mm; width: 75mm; }
+  /* Beide Blöcke sind seitenabsolut (dompdf unterstützt keine zuverlässige
+     Verschachtelung von position:absolute-Containern), daher werden ihre
+     top/left-Werte direkt von der Seitenkante aus angegeben - nicht relativ
+     zueinander. Absenderzeile (schmal, für Fensterumschlag) oberhalb des
+     Empfängerfelds (DIN-5008-Standardmaß 85x45mm). */
+  .header-company { position: absolute; top: 20mm; left: 20mm; width: 170mm; }
+  .header-recipient { position: absolute; top: 45mm; left: 20mm; width: 85mm; height: 40mm; }
+  /* Da die Header-Blöcke aus dem normalen Fluss genommen sind, kennt der
+     nachfolgende Inhalt ihre Höhe nicht und würde sonst direkt unter dem
+     @page margin-top beginnen. Dieser Spacer im Fluss schiebt den Rest des
+     Dokuments manuell unter den Empfängerblock. 85mm = top+height von
+     .header-recipient; marginTop wird abgezogen, weil der normale Fluss
+     durch @page margin-top bereits um diesen Betrag versetzt beginnt. */
+  .header-spacer { height: calc(85mm - <?= $marginTop ?>mm); }
   .company-addressline { font-size: 8px; font-weight: bold; }
   h1 { font-size: 20px; margin-bottom: 0; color: <?= e($accentColor) ?>; }
   table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -80,20 +91,20 @@ ob_start();
   .page-number-total:before { content: counter(pages); }
 </style>
 
-<div class="header">
-  <div class="header-company">
-    <div class="company-addressline"><?= e($company['company_name'] . ' | ' . $company['street'] . ' | ' . $company['zip'] . ' ' . $company['city']) ?></div>
-    <?php if ($company['email']): ?><div>E-Mail: <?= e($company['email']) ?></div><?php endif; ?>
-    <?php if ($company['phone']): ?><div>Tel.: <?= e($company['phone']) ?></div><?php endif; ?>
-    <?php if ($company['tax_id']): ?><div>USt-IdNr.: <?= e($company['tax_id']) ?></div><?php endif; ?>
-  </div>
-
-  <div class="header-recipient">
-    <?= e($doc['company'] ?: trim($doc['first_name'].' '.$doc['last_name'])) ?><br>
-    <?= e($doc['street']) ?><br>
-    <?= e($doc['zip'] . ' ' . $doc['city']) ?>
-  </div>
+<div class="header-company">
+  <div class="company-addressline"><?= e($company['company_name'] . ' | ' . $company['street'] . ' | ' . $company['zip'] . ' ' . $company['city']) ?></div>
+  <?php if ($company['email']): ?><div>E-Mail: <?= e($company['email']) ?></div><?php endif; ?>
+  <?php if ($company['phone']): ?><div>Tel.: <?= e($company['phone']) ?></div><?php endif; ?>
+  <?php if ($company['tax_id']): ?><div>USt-IdNr.: <?= e($company['tax_id']) ?></div><?php endif; ?>
 </div>
+
+<div class="header-recipient">
+  <?= e($doc['company'] ?: trim($doc['first_name'].' '.$doc['last_name'])) ?><br>
+  <?= e($doc['street']) ?><br>
+  <?= e($doc['zip'] . ' ' . $doc['city']) ?>
+</div>
+
+<div class="header-spacer"></div>
 
 <h1><?= e($documentTitle) ?> <?= e($doc[$docNumberField]) ?></h1>
 
