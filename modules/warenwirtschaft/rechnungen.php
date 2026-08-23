@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             $stmt->execute([$number, $customerId, $_POST['invoice_date'], $_POST['due_date'] ?: null, $_POST['status'], trim($_POST['notes']), $net, $tax, $gross, current_user()['id']]);
             $invoiceId = $pdo->lastInsertId();
         }
-        $pos = 0;
+        $pos = 1;
         $needsSerialAssignment = false;
         $itemStmt = $pdo->prepare('INSERT INTO invoice_items (invoice_id,article_id,position,description,quantity,unit_price,tax_rate) VALUES (?,?,?,?,?,?,?)');
         foreach ($descriptions as $i => $desc) {

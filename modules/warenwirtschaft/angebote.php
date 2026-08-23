@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             $stmt->execute([$number, $customerId, $_POST['offer_date'], $_POST['valid_until'] ?: null, $_POST['status'], trim($_POST['notes']), $net, $tax, $gross, current_user()['id']]);
             $offerId = $pdo->lastInsertId();
         }
-        $pos = 0;
+        $pos = 1;
         $itemStmt = $pdo->prepare('INSERT INTO offer_items (offer_id,article_id,position,description,quantity,unit_price,tax_rate) VALUES (?,?,?,?,?,?,?)');
         foreach ($descriptions as $i => $desc) {
             if (trim($desc) === '') continue;
