@@ -325,7 +325,7 @@ if ($action === 'new' || $action === 'edit') {
         $itemStmt->execute([$invoice['id']]);
         $items = $itemStmt->fetchAll();
     }
-    $customers = $pdo->query('SELECT id, company, first_name, last_name FROM customers ORDER BY company, last_name')->fetchAll();
+    $customers = $pdo->query('SELECT id, company, first_name, last_name, tax_exempt FROM customers ORDER BY company, last_name')->fetchAll();
     $articles = $pdo->query('SELECT id, name, sale_price, tax_rate FROM articles WHERE active=1 ORDER BY name')->fetchAll();
 
     $doc = $invoice;

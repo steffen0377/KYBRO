@@ -12,10 +12,10 @@ if (empty($items)) {
   <div class="row g-3 mb-3">
     <div class="col-md-4">
       <label class="form-label">Kunde *</label>
-      <select name="customer_id" class="form-select" required>
+      <select name="customer_id" id="customerSelect" class="form-select" required>
         <option value="">Kunde wählen…</option>
         <?php foreach ($customers as $c): ?>
-          <option value="<?= $c['id'] ?>" <?= (int)$doc['customer_id']===(int)$c['id']?'selected':'' ?>>
+          <option value="<?= $c['id'] ?>" data-exempt="<?= !empty($c['tax_exempt']) ? '1' : '0' ?>" <?= (int)$doc['customer_id']===(int)$c['id']?'selected':'' ?>>
             <?= e($c['company'] ?: trim($c['first_name'].' '.$c['last_name'])) ?>
           </option>
         <?php endforeach; ?>
@@ -76,15 +76,39 @@ if (empty($items)) {
 </form>
 
 <script>
+function isCurrentCustomerTaxExempt() {
+  var sel = document.getElementById('customerSelect');
+  var opt = sel.options[sel.selectedIndex];
+  return !!(opt && opt.dataset.exempt === '1');
+}
+
+function applyTaxExemptToRow(row) {
+  var taxField = row.querySelector('.tax-field');
+  if (isCurrentCustomerTaxExempt()) {
+    taxField.value = '0,00';
+    taxField.readOnly = true;
+  } else {
+    taxField.readOnly = false;
+  }
+}
+
+function applyTaxExemptToAllRows() {
+  document.querySelectorAll('#itemsTable tbody tr').forEach(applyTaxExemptToRow);
+}
+
+document.getElementById('customerSelect').addEventListener('change', applyTaxExemptToAllRows);
+
 document.getElementById('addRow').addEventListener('click', function() {
   const tbody = document.querySelector('#itemsTable tbody');
   const row = tbody.rows[0].cloneNode(true);
   row.querySelectorAll('input').forEach(i => { if (i.type !== 'hidden') i.value = ''; else i.value=''; });
   row.querySelector('.article-select').value = '';
   row.querySelector('.qty-field').value = '1';
+  row.querySelector('.tax-field').readOnly = false;
   row.querySelector('.tax-field').value = '<?= num(company_settings()['default_tax_rate']) ?>';
   tbody.appendChild(row);
   bindRow(row);
+  applyTaxExemptToRow(row);
 });
 
 function bindRow(row) {
@@ -99,7 +123,9 @@ function bindRow(row) {
       row.querySelector('.price-field').value = opt.dataset.price;
       row.querySelector('.tax-field').value = opt.dataset.tax;
     }
+    applyTaxExemptToRow(row);
   });
 }
 document.querySelectorAll('#itemsTable tbody tr').forEach(bindRow);
+applyTaxExemptToAllRows();
 </script>
