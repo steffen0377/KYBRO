@@ -72,7 +72,7 @@ ob_start();
      Absenderzeile (schmal, für Fensterumschlag) oberhalb des Empfängerfelds
      (DIN-5008-Standardmaß 85x45mm). */
   .header-company { position: absolute; top: calc(53mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 170mm; text-decoration: underline; font-weight: bold; }
-  .header-recipient { position: absolute; top: calc(60mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 85mm; height: 40mm; }
+  .header-recipient { position: absolute; top: calc(60mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 85mm; height: 40mm; font-size: 12px; }
   /* Da die Header-Blöcke aus dem normalen Fluss genommen sind, kennt der
      nachfolgende Inhalt ihre Höhe nicht und würde sonst direkt unter dem
      @page margin-top beginnen. Dieser Spacer im Fluss schiebt den Rest des
@@ -81,7 +81,7 @@ ob_start();
      normale Fluss durch @page margin-top bereits um diesen Betrag versetzt
      beginnt. */
   .header-spacer { height: calc(85mm - <?= $marginTop ?>mm); }
-  .company-addressline { font-size: 8px; font-weight: bold; }
+  .company-addressline { font-size: 12px; font-weight: bold; }
   h1 { font-size: 20px; margin-bottom: 0; color: <?= e($accentColor) ?>; }
   table { width: 100%; border-collapse: collapse; margin-top: 15px; }
   th { background: #eee; text-align: left; padding: 6px; border-bottom: 2px solid <?= e($accentColor) ?>; }
