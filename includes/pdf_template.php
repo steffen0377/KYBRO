@@ -62,7 +62,7 @@ ob_start();
 <style>
   @page { margin: <?= $marginTop ?>mm <?= $marginRight ?>mm <?= $marginBottom ?>mm <?= $marginLeft ?>mm; }
   body { font-family: <?= $fontFamily ?>; font-size: <?= $fontSize ?>px; color: #222; }
-  .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+  .header { position: absolute; top: 45mm; left: 20mm; width: 85mm; height: 45mm; display: flex; justify-content: space-between; margin-bottom: 30px; }
   .company-addressline { font-size: 8px; font-weight: bold; }
   h1 { font-size: 20px; margin-bottom: 0; color: <?= e($accentColor) ?>; }
   table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -82,17 +82,20 @@ ob_start();
   <div>
     <div class="company-addressline"><?= e($company['company_name'] . ' | ' . $company['street'] . ' | ' . $company['zip'] . ' ' . $company['city']) ?></div>
   </div>
+  /*
   <div style="text-align:right;">
     <?php if ($company['email']): ?><div>E-Mail: <?= e($company['email']) ?></div><?php endif; ?>
     <?php if ($company['phone']): ?><div>Tel.: <?= e($company['phone']) ?></div><?php endif; ?>
     <?php if ($company['tax_id']): ?><div>USt-IdNr.: <?= e($company['tax_id']) ?></div><?php endif; ?>
   </div>
+ 
 </div>
-
-<div>
-  <?= e($doc['company'] ?: trim($doc['first_name'].' '.$doc['last_name'])) ?><br>
-  <?= e($doc['street']) ?><br>
-  <?= e($doc['zip'] . ' ' . $doc['city']) ?>
+*/
+  <div>
+    <?= e($doc['company'] ?: trim($doc['first_name'].' '.$doc['last_name'])) ?><br>
+    <?= e($doc['street']) ?><br>
+    <?= e($doc['zip'] . ' ' . $doc['city']) ?>
+  </div>
 </div>
 
 <h1><?= e($documentTitle) ?> <?= e($doc[$docNumberField]) ?></h1>
