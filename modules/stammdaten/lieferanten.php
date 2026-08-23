@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         'phone' => trim($_POST['phone']),
         'tax_id' => trim($_POST['tax_id']),
         'customer_number_at_supplier' => trim($_POST['customer_number_at_supplier'] ?? ''),
+        'payment_method' => in_array($_POST['payment_method'] ?? '', ['ueberweisung', 'lastschrift', 'zentralreguliert'], true) ? $_POST['payment_method'] : 'ueberweisung',
         'notes' => trim($_POST['notes']),
     ];
     if (!$data['company'] && !$data['last_name']) {
@@ -32,11 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
     }
     if ($id) {
-        $stmt = $pdo->prepare('UPDATE suppliers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,customer_number_at_supplier=?,notes=? WHERE id=?');
+        $stmt = $pdo->prepare('UPDATE suppliers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,customer_number_at_supplier=?,payment_method=?,notes=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
         flash('success', 'Lieferant aktualisiert.');
     } else {
-        $stmt = $pdo->prepare('INSERT INTO suppliers (company,first_name,last_name,street,zip,city,country,email,phone,tax_id,customer_number_at_supplier,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
+        $stmt = $pdo->prepare('INSERT INTO suppliers (company,first_name,last_name,street,zip,city,country,email,phone,tax_id,customer_number_at_supplier,payment_method,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)');
         $stmt->execute(array_values($data));
         $newId = $pdo->lastInsertId();
         $pdo->prepare('UPDATE suppliers SET supplier_number=? WHERE id=?')->execute(['L-' . str_pad($newId, 5, '0', STR_PAD_LEFT), $newId]);
@@ -62,7 +63,7 @@ if (!$isAjax) {
 }
 
 if ($action === 'new' || $action === 'edit') {
-    $s = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','customer_number_at_supplier'=>'','notes'=>''];
+    $s = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','customer_number_at_supplier'=>'','payment_method'=>'ueberweisung','notes'=>''];
     if ($action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM suppliers WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
@@ -86,6 +87,14 @@ if ($action === 'new' || $action === 'edit') {
         <div class="col-md-6"><label class="form-label">Telefon</label><input type="text" name="phone" class="form-control" value="<?= e($s['phone']) ?>"></div>
         <div class="col-md-6"><label class="form-label">USt-IdNr.</label><input type="text" name="tax_id" class="form-control" value="<?= e($s['tax_id']) ?>"></div>
         <div class="col-md-6"><label class="form-label">Unsere Kundennummer bei diesem Lieferanten</label><input type="text" name="customer_number_at_supplier" class="form-control" value="<?= e($s['customer_number_at_supplier']) ?>"></div>
+        <div class="col-md-6">
+          <label class="form-label">Zahlungsmethode</label>
+          <select name="payment_method" class="form-select">
+            <option value="ueberweisung" <?= $s['payment_method'] === 'ueberweisung' ? 'selected' : '' ?>>Überweisung</option>
+            <option value="lastschrift" <?= $s['payment_method'] === 'lastschrift' ? 'selected' : '' ?>>Lastschrift</option>
+            <option value="zentralreguliert" <?= $s['payment_method'] === 'zentralreguliert' ? 'selected' : '' ?>>Zentralreguliert</option>
+          </select>
+        </div>
         <div class="col-12"><label class="form-label">Notizen</label><textarea name="notes" class="form-control" rows="2"><?= e($s['notes']) ?></textarea></div>
       </div>
       <div class="mt-3">

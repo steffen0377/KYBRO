@@ -26,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         'iban' => trim($_POST['iban'] ?? ''),
         'bic' => trim($_POST['bic'] ?? ''),
         'bank_name' => trim($_POST['bank_name'] ?? ''),
+        'payment_method' => in_array($_POST['payment_method'] ?? '', ['ueberweisung', 'lastschrift'], true) ? $_POST['payment_method'] : 'ueberweisung',
+        'tax_exempt' => isset($_POST['tax_exempt']) ? 1 : 0,
         'notes' => trim($_POST['notes']),
     ];
     if (!$data['company'] && !$data['last_name']) {
@@ -33,12 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
     }
     if ($id) {
-        $stmt = $pdo->prepare('UPDATE customers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,vat_id=?,iban=?,bic=?,bank_name=?,notes=? WHERE id=?');
+        $stmt = $pdo->prepare('UPDATE customers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,vat_id=?,iban=?,bic=?,bank_name=?,payment_method=?,tax_exempt=?,notes=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
         $customerId = $id;
         flash('success', 'Kunde aktualisiert.');
     } else {
-        $stmt = $pdo->prepare('INSERT INTO customers (company,first_name,last_name,street,zip,city,country,email,phone,tax_id,vat_id,iban,bic,bank_name,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+        $stmt = $pdo->prepare('INSERT INTO customers (company,first_name,last_name,street,zip,city,country,email,phone,tax_id,vat_id,iban,bic,bank_name,payment_method,tax_exempt,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
         $stmt->execute(array_values($data));
         $customerId = (int)$pdo->lastInsertId();
         $pdo->prepare('UPDATE customers SET customer_number=? WHERE id=?')->execute(['K-' . str_pad($customerId, 5, '0', STR_PAD_LEFT), $customerId]);
@@ -83,7 +85,7 @@ if (!$isAjax) {
 }
 
 if ($action === 'new' || $action === 'edit') {
-    $c = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','vat_id'=>'','iban'=>'','bic'=>'','bank_name'=>'','notes'=>''];
+    $c = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','vat_id'=>'','iban'=>'','bic'=>'','bank_name'=>'','payment_method'=>'ueberweisung','tax_exempt'=>0,'notes'=>''];
     if ($action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM customers WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
@@ -146,6 +148,19 @@ if ($action === 'new' || $action === 'edit') {
             <div class="col-md-6"><label class="form-label">Telefon</label><input type="text" name="phone" class="form-control" value="<?= e($c['phone']) ?>"></div>
             <div class="col-md-6"><label class="form-label">Steuernummer</label><input type="text" name="tax_id" class="form-control" value="<?= e($c['tax_id']) ?>"></div>
             <div class="col-md-6"><label class="form-label">USt-IdNr.</label><input type="text" name="vat_id" class="form-control" value="<?= e($c['vat_id']) ?>" placeholder="z.B. DE123456789"></div>
+            <div class="col-md-6">
+              <label class="form-label">Zahlungsmethode</label>
+              <select name="payment_method" class="form-select">
+                <option value="ueberweisung" <?= $c['payment_method'] === 'ueberweisung' ? 'selected' : '' ?>>Überweisung</option>
+                <option value="lastschrift" <?= $c['payment_method'] === 'lastschrift' ? 'selected' : '' ?>>Lastschrift</option>
+              </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="form-check">
+                <input type="checkbox" name="tax_exempt" id="tax_exempt" class="form-check-input" value="1" <?= $c['tax_exempt'] ? 'checked' : '' ?>>
+                <label class="form-check-label" for="tax_exempt">Kunde ist steuerbefreit (0% MwSt.)</label>
+              </div>
+            </div>
             <div class="col-12"><label class="form-label">Notizen</label><textarea name="notes" class="form-control" rows="2"><?= e($c['notes']) ?></textarea></div>
           </div>
         </div>
