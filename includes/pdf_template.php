@@ -82,15 +82,15 @@ ob_start();
   <div>
     <div class="company-addressline"><?= e($company['company_name'] . ' | ' . $company['street'] . ' | ' . $company['zip'] . ' ' . $company['city']) ?></div>
   </div>
-  /*
-  <div style="text-align:right;">
-    <?php if ($company['email']): ?><div>E-Mail: <?= e($company['email']) ?></div><?php endif; ?>
-    <?php if ($company['phone']): ?><div>Tel.: <?= e($company['phone']) ?></div><?php endif; ?>
-    <?php if ($company['tax_id']): ?><div>USt-IdNr.: <?= e($company['tax_id']) ?></div><?php endif; ?>
-  </div>
- 
-</div>
-*/
+
+//  <div style="text-align:right;">
+//    <?php if ($company['email']): ?><div>E-Mail: <?= e($company['email']) ?></div><?php endif; ?>
+//    <?php if ($company['phone']): ?><div>Tel.: <?= e($company['phone']) ?></div><?php endif; ?>
+//    <?php if ($company['tax_id']): ?><div>USt-IdNr.: <?= e($company['tax_id']) ?></div><?php endif; ?>
+//  </div>
+
+//</div>
+
   <div>
     <?= e($doc['company'] ?: trim($doc['first_name'].' '.$doc['last_name'])) ?><br>
     <?= e($doc['street']) ?><br>
