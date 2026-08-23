@@ -63,18 +63,23 @@ ob_start();
   @page { margin: <?= $marginTop ?>mm <?= $marginRight ?>mm <?= $marginBottom ?>mm <?= $marginLeft ?>mm; }
   body { font-family: <?= $fontFamily ?>; font-size: <?= $fontSize ?>px; color: #222; }
   /* Beide Blöcke sind seitenabsolut (dompdf unterstützt keine zuverlässige
-     Verschachtelung von position:absolute-Containern), daher werden ihre
-     top/left-Werte direkt von der Seitenkante aus angegeben - nicht relativ
-     zueinander. Absenderzeile (schmal, für Fensterumschlag) oberhalb des
-     Empfängerfelds (DIN-5008-Standardmaß 85x45mm). */
-  .header-company { position: absolute; top: 20mm; left: 20mm; width: 170mm; }
-  .header-recipient { position: absolute; top: 45mm; left: 20mm; width: 85mm; height: 40mm; }
+     Verschachtelung von position:absolute-Containern). dompdf positioniert
+     absolute Elemente ohne positionierten Vorfahren relativ zur Content-Box
+     innerhalb von @page margin, nicht relativ zur physischen Seitenkante -
+     d.h. top:20mm würde real bei marginTop+20mm landen. Deshalb wird der
+     bereits durch @page margin verursachte Versatz per calc() abgezogen,
+     damit die Werte absolut ab Seitenkante stimmen.
+     Absenderzeile (schmal, für Fensterumschlag) oberhalb des Empfängerfelds
+     (DIN-5008-Standardmaß 85x45mm). */
+  .header-company { position: absolute; top: calc(20mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 170mm; }
+  .header-recipient { position: absolute; top: calc(45mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 85mm; height: 40mm; }
   /* Da die Header-Blöcke aus dem normalen Fluss genommen sind, kennt der
      nachfolgende Inhalt ihre Höhe nicht und würde sonst direkt unter dem
      @page margin-top beginnen. Dieser Spacer im Fluss schiebt den Rest des
      Dokuments manuell unter den Empfängerblock. 85mm = top+height von
-     .header-recipient; marginTop wird abgezogen, weil der normale Fluss
-     durch @page margin-top bereits um diesen Betrag versetzt beginnt. */
+     .header-recipient (ab Seitenkante); marginTop wird abgezogen, weil der
+     normale Fluss durch @page margin-top bereits um diesen Betrag versetzt
+     beginnt. */
   .header-spacer { height: calc(85mm - <?= $marginTop ?>mm); }
   .company-addressline { font-size: 8px; font-weight: bold; }
   h1 { font-size: 20px; margin-bottom: 0; color: <?= e($accentColor) ?>; }
