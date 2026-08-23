@@ -34,6 +34,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     $taxRates = $_POST['tax_rate'] ?? [];
     $articleIds = $_POST['article_id'] ?? [];
 
+    // Steuerbefreite Kunden: MwSt. serverseitig immer auf 0% erzwingen,
+    // unabhängig davon, was das Formular gesendet hat (nicht umgehbar über
+    // manipulierte Requests). Order/Rechnung übernehmen die Position später
+    // 1:1 aus diesem Angebot, wodurch 0% automatisch weitergereicht wird.
+    if ($customerId) {
+        $custStmt = $pdo->prepare('SELECT tax_exempt FROM customers WHERE id=?');
+        $custStmt->execute([$customerId]);
+        if ((bool)($custStmt->fetch()['tax_exempt'] ?? false)) {
+            $taxRates = array_fill(0, count($taxRates), 0);
+        }
+    }
+
     if (!$customerId || !array_filter($descriptions, fn($d)=>trim($d)!=='')) {
         flash('danger', 'Bitte Kunde und mindestens eine Position angeben.');
         redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
