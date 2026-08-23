@@ -71,8 +71,8 @@ ob_start();
      damit die Werte absolut ab Seitenkante stimmen.
      Absenderzeile (schmal, für Fensterumschlag) oberhalb des Empfängerfelds
      (DIN-5008-Standardmaß 85x45mm). */
-  .header-company { position: absolute; top: calc(20mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 170mm; }
-  .header-recipient { position: absolute; top: calc(45mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 85mm; height: 40mm; }
+  .header-company { position: absolute; top: calc(53mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 170mm; text-decoration: underline; font-weight: bold; }
+  .header-recipient { position: absolute; top: calc(60mm - <?= $marginTop ?>mm); left: calc(20mm - <?= $marginLeft ?>mm); width: 85mm; height: 40mm; }
   /* Da die Header-Blöcke aus dem normalen Fluss genommen sind, kennt der
      nachfolgende Inhalt ihre Höhe nicht und würde sonst direkt unter dem
      @page margin-top beginnen. Dieser Spacer im Fluss schiebt den Rest des
@@ -98,9 +98,6 @@ ob_start();
 
 <div class="header-company">
   <div class="company-addressline"><?= e($company['company_name'] . ' | ' . $company['street'] . ' | ' . $company['zip'] . ' ' . $company['city']) ?></div>
-  <?php if ($company['email']): ?><div>E-Mail: <?= e($company['email']) ?></div><?php endif; ?>
-  <?php if ($company['phone']): ?><div>Tel.: <?= e($company['phone']) ?></div><?php endif; ?>
-  <?php if ($company['tax_id']): ?><div>USt-IdNr.: <?= e($company['tax_id']) ?></div><?php endif; ?>
 </div>
 
 <div class="header-recipient">
