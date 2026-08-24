@@ -14,6 +14,26 @@ $pdo = db();
 $action = $_GET['action'] ?? 'list';
 require_permission('artikel', in_array($action, ['save', 'delete', 'new', 'edit'], true) ? 'write' : 'read');
 
+// Speichert die kundenbezogenen Sonderpreise eines Artikels: bestehende Zeilen
+// werden gelöscht und aus den POST-Arrays neu eingefügt (gleiches Muster wie
+// save_article_suppliers). Leere/nicht ausgewählte Kundenzeilen werden ignoriert.
+function save_article_special_prices(PDO $pdo, int $articleId, array $customerIds, array $priceTypes, array $values, array $activeFlags): void {
+    $pdo->prepare('DELETE FROM article_special_prices WHERE article_id=?')->execute([$articleId]);
+    $stmt = $pdo->prepare('INSERT INTO article_special_prices (article_id, customer_id, price_type, price_value, active) VALUES (?,?,?,?,?)');
+    $seenCustomers = [];
+    foreach ($customerIds as $i => $cid) {
+        $cid = (int)$cid;
+        if (!$cid || isset($seenCustomers[$cid])) {
+            continue; // ungültige oder doppelte Kundenzeile (nur ein Sonderpreis pro Kunde)
+        }
+        $seenCustomers[$cid] = true;
+        $type = (($priceTypes[$i] ?? 'fixed') === 'percent') ? 'percent' : 'fixed';
+        $value = (float)str_replace(',', '.', $values[$i] ?? '0');
+        $active = (int)($activeFlags[$i] ?? 0) === 1 ? 1 : 0;
+        $stmt->execute([$articleId, $cid, $type, $value, $active]);
+    }
+}
+
 // ---------- SPEICHERN ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     csrf_check();
@@ -42,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         $stmt->execute([...array_values($data), $id]);
         save_article_categories($pdo, $id, $_POST['category_ids'] ?? []);
         save_article_suppliers($pdo, $id, $_POST['supplier_id'] ?? [], $_POST['supplier_article_number'] ?? [], $_POST['hek_price'] ?? []);
+        save_article_special_prices($pdo, $id, $_POST['sp_customer_id'] ?? [], $_POST['sp_price_type'] ?? [], $_POST['sp_value'] ?? [], $_POST['sp_active'] ?? []);
         flash('success', 'Artikel aktualisiert.');
     } else {
         $initialStock = $data['track_stock'] ? (float)str_replace(',', '.', $_POST['stock_qty'] ?? '0') : 0;
@@ -57,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             $pdo->prepare('UPDATE articles SET sku=? WHERE id=?')->execute([$sku, $newId]);
             save_article_categories($pdo, (int)$newId, $_POST['category_ids'] ?? []);
             save_article_suppliers($pdo, (int)$newId, $_POST['supplier_id'] ?? [], $_POST['supplier_article_number'] ?? [], $_POST['hek_price'] ?? []);
+            save_article_special_prices($pdo, (int)$newId, $_POST['sp_customer_id'] ?? [], $_POST['sp_price_type'] ?? [], $_POST['sp_value'] ?? [], $_POST['sp_active'] ?? []);
             $pdo->commit();
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -144,6 +166,13 @@ if ($action === 'new' || $action === 'edit') {
         $supStmt->execute([$article['id']]);
         $articleSuppliers = $supStmt->fetchAll();
     }
+    $allCustomers = $pdo->query('SELECT id, company, first_name, last_name FROM customers ORDER BY company, last_name')->fetchAll();
+    $articleSpecialPrices = [];
+    if ($article['id']) {
+        $spStmt = $pdo->prepare('SELECT * FROM article_special_prices WHERE article_id=?');
+        $spStmt->execute([$article['id']]);
+        $articleSpecialPrices = $spStmt->fetchAll();
+    }
     ?>
     <h4><?= $action === 'new' ? 'Neuer Artikel' : e($article['name']) ?></h4>
     <?php if ($fromOfferItem): ?>
@@ -160,6 +189,9 @@ if ($action === 'new' || $action === 'edit') {
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="tab-lieferanten-btn" data-bs-toggle="tab" data-bs-target="#tab-lieferanten" type="button" role="tab" aria-controls="tab-lieferanten" aria-selected="false">Lieferanten</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-sonderpreise-btn" data-bs-toggle="tab" data-bs-target="#tab-sonderpreise" type="button" role="tab" aria-controls="tab-sonderpreise" aria-selected="false">Sonderpreise</button>
         </li>
       </ul>
 
@@ -256,6 +288,46 @@ if ($action === 'new' || $action === 'edit') {
           </table>
           <button type="button" id="addSupplierRow" class="btn btn-sm btn-app-outline-primary">+ Lieferant hinzufügen</button>
         </div>
+
+        <div class="tab-pane fade" id="tab-sonderpreise" role="tabpanel" aria-labelledby="tab-sonderpreise-btn">
+          <?php if (!$allCustomers): ?>
+            <div class="form-text mb-3">Noch keine Kunden angelegt. <a href="kunden.php">Jetzt anlegen</a>.</div>
+          <?php endif; ?>
+          <div class="form-text mb-2">Pro Kunde kann ein Sonderpreis hinterlegt werden — entweder als fester Preis oder als Rabatt in % auf den Standard-Verkaufspreis. Inaktive Zeilen werden bei der Preisermittlung ignoriert.</div>
+          <table class="table" id="specialPriceTable">
+            <thead><tr><th style="width:30%">Kunde</th><th style="width:20%">Art</th><th style="width:20%">Wert</th><th style="width:15%">Status</th><th style="width:5%"></th></tr></thead>
+            <tbody>
+              <?php $specialPriceRows = $articleSpecialPrices ?: [['customer_id' => '', 'price_type' => 'fixed', 'price_value' => 0, 'active' => 1]]; ?>
+              <?php foreach ($specialPriceRows as $row): ?>
+              <tr>
+                <td>
+                  <select name="sp_customer_id[]" class="form-select">
+                    <option value="">— Kunde wählen —</option>
+                    <?php foreach ($allCustomers as $c): ?>
+                      <option value="<?= $c['id'] ?>" <?= (int)($row['customer_id'] ?? 0) === (int)$c['id'] ? 'selected' : '' ?>><?= e($c['company'] ?: trim($c['first_name'].' '.$c['last_name'])) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </td>
+                <td>
+                  <select name="sp_price_type[]" class="form-select">
+                    <option value="fixed" <?= ($row['price_type'] ?? 'fixed') === 'fixed' ? 'selected' : '' ?>>Fixpreis (€)</option>
+                    <option value="percent" <?= ($row['price_type'] ?? 'fixed') === 'percent' ? 'selected' : '' ?>>Rabatt (%)</option>
+                  </select>
+                </td>
+                <td><input type="text" name="sp_value[]" class="form-control" value="<?= num($row['price_value'] ?? 0) ?>"></td>
+                <td>
+                  <select name="sp_active[]" class="form-select">
+                    <option value="1" <?= (int)($row['active'] ?? 1) === 1 ? 'selected' : '' ?>>Aktiv</option>
+                    <option value="0" <?= (int)($row['active'] ?? 1) === 0 ? 'selected' : '' ?>>Inaktiv</option>
+                  </select>
+                </td>
+                <td><button type="button" class="btn btn-sm btn-app-outline-danger remove-specialprice-row">✕</button></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+          <button type="button" id="addSpecialPriceRow" class="btn btn-sm btn-app-outline-primary">+ Sonderpreis hinzufügen</button>
+        </div>
       </div>
 
       <div class="mt-3">
@@ -278,6 +350,23 @@ if ($action === 'new' || $action === 'edit') {
       });
     }
     document.querySelectorAll('#supplierTable tbody tr').forEach(bindSupplierRow);
+
+    document.getElementById('addSpecialPriceRow').addEventListener('click', function() {
+      const tbody = document.querySelector('#specialPriceTable tbody');
+      const row = tbody.rows[0].cloneNode(true);
+      row.querySelectorAll('input').forEach(i => i.value = '');
+      row.querySelector('select[name="sp_customer_id[]"]').value = '';
+      row.querySelector('select[name="sp_price_type[]"]').value = 'fixed';
+      row.querySelector('select[name="sp_active[]"]').value = '1';
+      tbody.appendChild(row);
+      bindSpecialPriceRow(row);
+    });
+    function bindSpecialPriceRow(row) {
+      row.querySelector('.remove-specialprice-row').addEventListener('click', function() {
+        if (document.querySelectorAll('#specialPriceTable tbody tr').length > 1) row.remove();
+      });
+    }
+    document.querySelectorAll('#specialPriceTable tbody tr').forEach(bindSpecialPriceRow);
     </script>
     <?php
     require_once __DIR__ . '/../includes/footer.php';
