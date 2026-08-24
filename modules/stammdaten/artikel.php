@@ -369,7 +369,7 @@ if ($action === 'new' || $action === 'edit') {
     document.querySelectorAll('#specialPriceTable tbody tr').forEach(bindSpecialPriceRow);
     </script>
     <?php
-    require_once __DIR__ . '/../includes/footer.php';
+    require_once ROOT_PATH . '/includes/footer.php';
     exit;
 }
 
