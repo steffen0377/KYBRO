@@ -36,6 +36,10 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
+if ($showPageNumber) {
+    render_pdf_page_number($dompdf, $marginBottom, $marginRight);
+}
+
 // Briefbogen (falls hinterlegt) VOR dem ZUGFeRD-Einbetten auf jede Seite legen,
 // damit die ZUGFeRD-XML anschliessend in das bereits fertig zusammengesetzte
 // PDF eingebettet wird (siehe includes/letterhead_builder.php für den Hinweis

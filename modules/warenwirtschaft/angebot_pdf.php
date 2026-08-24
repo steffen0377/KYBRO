@@ -36,6 +36,10 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
+if ($showPageNumber) {
+    render_pdf_page_number($dompdf, $marginBottom, $marginRight);
+}
+
 $pdfContent = apply_company_letterhead($dompdf->output(), $company);
 
 header('Content-Type: application/pdf');

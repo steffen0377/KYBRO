@@ -225,6 +225,33 @@ function save_customer_contacts(PDO $pdo, int $customerId, array $lastNames, arr
     }
 }
 
+// Zeichnet "Seite X von Y" per dompdf-Canvas-API direkt in das PDF.
+// WICHTIG: {PAGE_NUM}/{PAGE_COUNT} als reiner HTML-Text (z.B. in
+// pdf_template.php) wird von dompdf NICHT automatisch ersetzt - dieser
+// Platzhalter-Mechanismus funktioniert nur über die Canvas-Methode
+// page_text(), die aktiv nach dem Rendern aufgerufen werden muss (siehe
+// die *_pdf.php-Dateien: Aufruf direkt nach $dompdf->render()).
+// $marginBottom/$marginRight kommen aus den Formulareinstellungen (mm) und
+// sorgen dafür, dass die Seitenzahl - wie der übrige Fußzeilenbereich -
+// mit der Randeinstellung mitwandert statt an der physischen Seitenkante
+// zu kleben.
+function render_pdf_page_number(\Dompdf\Dompdf $dompdf, float $marginBottom, float $marginRight): void {
+    $mmToPt = 72 / 25.4;
+    $size = 9;
+    $canvas = $dompdf->getCanvas();
+    $fontMetrics = $dompdf->getFontMetrics();
+    $font = $fontMetrics->getFont('helvetica', 'normal');
+    // Breite wird anhand einer zweistelligen Beispielzahl geschätzt, da die
+    // Platzhalter zum Zeitpunkt der Messung noch nicht durch die tatsächliche
+    // Seitenzahl ersetzt sind (das übernimmt dompdf erst beim Ausgeben der
+    // fertigen PDF-Datei). Für mehr als 99 Seiten ist der rechte Rand daher
+    // nur noch näherungsweise korrekt.
+    $textWidth = $fontMetrics->getTextWidth('Seite 88 von 88', $font, $size);
+    $x = $canvas->get_width() - ($marginRight * $mmToPt) - $textWidth;
+    $y = $canvas->get_height() - (($marginBottom + 4) * $mmToPt);
+    $canvas->page_text($x, $y, 'Seite {PAGE_NUM} von {PAGE_COUNT}', $font, $size, [0.4, 0.4, 0.4]);
+}
+
 // Werkseinstellungen (Fallback-Werte) für die Formulareinstellungen, gruppiert
 // nach Scope. 'global' gilt für alle Formulare, sofern im jeweiligen Scope
 // kein eigener Wert hinterlegt ist. Neue Einstellungen können hier ergänzt

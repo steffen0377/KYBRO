@@ -93,20 +93,16 @@ ob_start();
   .meta { margin: 20px 0; }
   .intro, .closing { margin: 15px 0; }
   .footer { margin-top: 50px; font-size: 9px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }
-  /* Seitenzahl: dompdf's CSS counter(pages) liefert die Gesamtseitenzahl
-     erfahrungsgemäß unzuverlässig (häufig 0, unabhängig von position:fixed).
-     Stattdessen werden dompdf's eingebaute Text-Platzhalter {PAGE_NUM} und
-     {PAGE_COUNT} verwendet - diese werden von dompdf nach einem zweiten,
-     internen Render-Durchlauf automatisch im Text ersetzt und sind der von
-     dompdf empfohlene, zuverlässige Weg für Seite-X-von-Y-Angaben.
-     Positionierung: "bottom" wird HIER bewusst nicht wie bei den Header-
-     Blöcken um marginBottom korrigiert (kein calc()), denn dort sollte ein
-     randunabhängiges Fixmaß (DIN-5008) erreicht werden. Hier ist das
-     Gegenteil gewünscht: der Abstand soll sich auf den unteren Rand
-     beziehen, damit die Seitenzahl innerhalb der Randeinstellung (also
-     oberhalb des Briefpapier-/Rand-Bereichs) erscheint und mit wachsendem
-     margin_bottom automatisch mitwandert. */
-  .page-number-fixed { position: fixed; bottom: 4mm; right: 0; font-size: 9px; color: #666; }
+  /* Die Seitenzahl ("Seite X von Y") wird NICHT mehr hier im HTML-Fluss
+     gerendert. HTML-Text mit {PAGE_NUM}/{PAGE_COUNT} wird von dompdf nicht
+     automatisch ersetzt, und CSS counter(pages) lieferte unzuverlässig 0.
+     Stattdessen zeichnet render_pdf_page_number() (includes/functions.php)
+     die Seitenzahl direkt über die dompdf-Canvas-API nach dem Rendern -
+     siehe Aufruf in den *_pdf.php-Dateien nach $dompdf->render(). Die
+     Variablen $showPageNumber/$marginBottom/$marginRight aus diesem Include
+     werden dafür im Scope der aufrufenden Datei benötigt (PHP-include teilt
+     sich den Variablen-Scope mit dem Aufrufer, daher hier keine zusätzliche
+     Rückgabe nötig). */
 </style>
 
 <div class="header-company">
@@ -192,10 +188,6 @@ ob_start();
   <?php endif; ?>
   <?php if ($footerText !== ''): ?><?= $showFooterCompanyBlock ? '<br>' : '' ?><?= nl2br(e($footerText)) ?><?php endif; ?>
 </div>
-<?php endif; ?>
-
-<?php if ($showPageNumber): ?>
-<div class="page-number-fixed">Seite {PAGE_NUM} von {PAGE_COUNT}</div>
 <?php endif; ?>
 <?php
 return ob_get_clean();
