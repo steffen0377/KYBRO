@@ -3,14 +3,14 @@
 -- entweder als Fixpreis (€, netto) oder als Rabatt in % auf den Standard-VK-Preis.
 
 CREATE TABLE IF NOT EXISTS article_special_prices (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    article_id INT UNSIGNED NOT NULL,
-    customer_id INT UNSIGNED NOT NULL,
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    article_id INT(11) NOT NULL,
+    customer_id INT(11) NOT NULL,
     price_type ENUM('fixed','percent') NOT NULL DEFAULT 'fixed',
     price_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     active TINYINT(1) NOT NULL DEFAULT 1,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_article_customer (article_id, customer_id),
     KEY idx_customer (customer_id),
