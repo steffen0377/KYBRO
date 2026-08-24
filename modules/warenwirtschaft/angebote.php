@@ -280,6 +280,11 @@ if ($action === 'new' || $action === 'edit') {
     }
     $customers = $pdo->query('SELECT id, company, first_name, last_name, tax_exempt FROM customers ORDER BY company, last_name')->fetchAll();
     $articles = $pdo->query('SELECT id, name, sale_price, tax_rate FROM articles WHERE active=1 ORDER BY name')->fetchAll();
+    $specialPrices = [];
+    $spStmt = $pdo->query('SELECT article_id, customer_id, price_type, price_value FROM article_special_prices WHERE active=1');
+    foreach ($spStmt->fetchAll() as $sp) {
+        $specialPrices[$sp['customer_id']][$sp['article_id']] = ['type' => $sp['price_type'], 'value' => (float)$sp['price_value']];
+    }
 
     $doc = $offer;
     $docType = 'offer';

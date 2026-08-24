@@ -1,8 +1,12 @@
 <?php
 // Erwartet: $doc, $docType, $items, $customers, $articles, $dateField, $dateLabel,
 //           $secondDateField, $secondDateLabel, $statuses, $saveUrl, $formTitle
+//           $specialPrices (optional): [customer_id => [article_id => ['type'=>'fixed'|'percent','value'=>float]]]
 if (empty($items)) {
     $items = [['article_id'=>'', 'description'=>'', 'quantity'=>1, 'unit_price'=>0, 'tax_rate'=>company_settings()['default_tax_rate']]];
+}
+if (!isset($specialPrices)) {
+    $specialPrices = [];
 }
 ?>
 <h4><?= e($formTitle) ?></h4>
@@ -76,6 +80,22 @@ if (empty($items)) {
 </form>
 
 <script>
+// Aktive kundenbezogene Sonderpreise, serverseitig geladen: {customerId: {articleId: {type, value}}}
+// type 'fixed' = fester Preis in €, type 'percent' = Rabatt in % auf den Artikel-Standardpreis (data-price).
+var specialPrices = <?= json_encode($specialPrices, JSON_NUMERIC_CHECK) ?>;
+
+function getSpecialPrice(customerId, articleId, basePrice) {
+  if (!customerId || !articleId) return null;
+  var forCustomer = specialPrices[customerId];
+  if (!forCustomer) return null;
+  var sp = forCustomer[articleId];
+  if (!sp) return null;
+  if (sp.type === 'percent') {
+    return Math.round(basePrice * (1 - sp.value / 100) * 100) / 100;
+  }
+  return sp.value;
+}
+
 function isCurrentCustomerTaxExempt() {
   var sel = document.getElementById('customerSelect');
   var opt = sel.options[sel.selectedIndex];
@@ -96,7 +116,30 @@ function applyTaxExemptToAllRows() {
   document.querySelectorAll('#itemsTable tbody tr').forEach(applyTaxExemptToRow);
 }
 
-document.getElementById('customerSelect').addEventListener('change', applyTaxExemptToAllRows);
+// Wendet für eine Zeile mit ausgewähltem Artikel den Sonderpreis des aktuell
+// gewählten Kunden an (falls vorhanden), sonst bleibt der zuletzt gesetzte
+// Preis (z.B. Standardpreis oder manuelle Eingabe) unverändert.
+function applySpecialPriceToRow(row) {
+  var articleId = row.querySelector('.article-id-field').value;
+  if (!articleId) return;
+  var articleSelect = row.querySelector('.article-select');
+  var opt = articleSelect.options[articleSelect.selectedIndex];
+  if (!opt || !opt.dataset.price) return;
+  var customerId = document.getElementById('customerSelect').value;
+  var basePrice = parseFloat(opt.dataset.price.replace(',', '.'));
+  var special = getSpecialPrice(customerId, articleId, basePrice);
+  var priceField = row.querySelector('.price-field');
+  priceField.value = (special !== null ? special : basePrice).toFixed(2).replace('.', ',');
+}
+
+function applySpecialPriceToAllRows() {
+  document.querySelectorAll('#itemsTable tbody tr').forEach(applySpecialPriceToRow);
+}
+
+document.getElementById('customerSelect').addEventListener('change', function() {
+  applyTaxExemptToAllRows();
+  applySpecialPriceToAllRows();
+});
 
 document.getElementById('addRow').addEventListener('click', function() {
   const tbody = document.querySelector('#itemsTable tbody');
@@ -124,6 +167,7 @@ function bindRow(row) {
       row.querySelector('.tax-field').value = opt.dataset.tax;
     }
     applyTaxExemptToRow(row);
+    applySpecialPriceToRow(row);
   });
 }
 document.querySelectorAll('#itemsTable tbody tr').forEach(bindRow);
