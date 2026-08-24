@@ -25,14 +25,24 @@ foreach ($navCategories as $c) {
 }
 $navSelectedCategory = ($currentScript === 'artikel.php') ? (int)($_GET['category'] ?? 0) : 0;
 
-function render_article_category_nav(array $byParent, int $parentId, int $depth, int $selectedId): void {
+function render_article_category_nav(array $byParent, int $parentId, int $depth, int $selectedId, array $ancestorIds = []): void {
     if (empty($byParent[$parentId])) return;
+    // Schutz vor Endlosrekursion: Falls die Kategorien-Tabelle durch einen Datenfehler
+    // einen Zyklus in der parent_id-Kette enthält (z.B. Kategorie A -> B -> A), würde
+    // diese Funktion sonst unbegrenzt rekursieren, bis PHP das Speicherlimit erreicht.
+    // Das führt zu einem Fatal Error MITTEN in der Seitenausgabe (Symptom: Seite bricht
+    // kurz vor </body> ab, Bootstrap-JS wird nie ausgeliefert, alle JS-Interaktionen tot).
+    // Zusätzlich begrenzen wir die Tiefe als zweite Absicherung.
+    if (in_array($parentId, $ancestorIds, true) || $depth > 20) {
+        return;
+    }
+    $ancestorIds[] = $parentId;
     echo '<ul class="nav flex-column" style="padding-left:' . (12 + $depth * 14) . 'px;">';
     foreach ($byParent[$parentId] as $cat) {
         $isActive = $selectedId === (int)$cat['id'];
         echo '<li class="nav-item">';
         echo '<a class="nav-link text-white-50 ' . ($isActive ? 'active fw-bold' : '') . '" href="' . module_url('artikel.php', 'category=' . $cat['id']) . '">' . htmlspecialchars($cat['name']) . '</a>';
-        render_article_category_nav($byParent, (int)$cat['id'], $depth + 1, $selectedId);
+        render_article_category_nav($byParent, (int)$cat['id'], $depth + 1, $selectedId, $ancestorIds);
         echo '</li>';
     }
     echo '</ul>';
