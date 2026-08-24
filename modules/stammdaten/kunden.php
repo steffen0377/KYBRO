@@ -28,19 +28,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         'bank_name' => trim($_POST['bank_name'] ?? ''),
         'payment_method' => in_array($_POST['payment_method'] ?? '', ['ueberweisung', 'lastschrift'], true) ? $_POST['payment_method'] : 'ueberweisung',
         'tax_exempt' => isset($_POST['tax_exempt']) ? 1 : 0,
+        'tax_exemption_reason' => trim($_POST['tax_exemption_reason'] ?? ''),
         'notes' => trim($_POST['notes']),
     ];
     if (!$data['company'] && !$data['last_name']) {
         flash('danger', 'Bitte Firma oder Nachname angeben.');
         redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
     }
+    if ($data['tax_exempt'] && $data['tax_exemption_reason'] === '') {
+        flash('danger', 'Bitte bei Steuerbefreiung den Befreiungsgrund angeben (z.B. §4 Nr. 21a UStG).');
+        redirect($self . '?action=' . ($id ? "edit&id=$id" : 'new'));
+    }
     if ($id) {
-        $stmt = $pdo->prepare('UPDATE customers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,vat_id=?,iban=?,bic=?,bank_name=?,payment_method=?,tax_exempt=?,notes=? WHERE id=?');
+        $stmt = $pdo->prepare('UPDATE customers SET company=?,first_name=?,last_name=?,street=?,zip=?,city=?,country=?,email=?,phone=?,tax_id=?,vat_id=?,iban=?,bic=?,bank_name=?,payment_method=?,tax_exempt=?,tax_exemption_reason=?,notes=? WHERE id=?');
         $stmt->execute([...array_values($data), $id]);
         $customerId = $id;
         flash('success', 'Kunde aktualisiert.');
     } else {
-        $stmt = $pdo->prepare('INSERT INTO customers (company,first_name,last_name,street,zip,city,country,email,phone,tax_id,vat_id,iban,bic,bank_name,payment_method,tax_exempt,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+        $stmt = $pdo->prepare('INSERT INTO customers (company,first_name,last_name,street,zip,city,country,email,phone,tax_id,vat_id,iban,bic,bank_name,payment_method,tax_exempt,tax_exemption_reason,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
         $stmt->execute(array_values($data));
         $customerId = (int)$pdo->lastInsertId();
         $pdo->prepare('UPDATE customers SET customer_number=? WHERE id=?')->execute(['K-' . str_pad($customerId, 5, '0', STR_PAD_LEFT), $customerId]);
@@ -85,7 +90,7 @@ if (!$isAjax) {
 }
 
 if ($action === 'new' || $action === 'edit') {
-    $c = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','vat_id'=>'','iban'=>'','bic'=>'','bank_name'=>'','payment_method'=>'ueberweisung','tax_exempt'=>0,'notes'=>''];
+    $c = ['id'=>0,'company'=>'','first_name'=>'','last_name'=>'','street'=>'','zip'=>'','city'=>'','country'=>'Deutschland','email'=>'','phone'=>'','tax_id'=>'','vat_id'=>'','iban'=>'','bic'=>'','bank_name'=>'','payment_method'=>'ueberweisung','tax_exempt'=>0,'tax_exemption_reason'=>'','notes'=>''];
     if ($action === 'edit') {
         $stmt = $pdo->prepare('SELECT * FROM customers WHERE id=?');
         $stmt->execute([(int)$_GET['id']]);
@@ -157,9 +162,14 @@ if ($action === 'new' || $action === 'edit') {
             </div>
             <div class="col-md-6 d-flex align-items-end">
               <div class="form-check">
-                <input type="checkbox" name="tax_exempt" id="tax_exempt" class="form-check-input" value="1" <?= $c['tax_exempt'] ? 'checked' : '' ?>>
+                <input type="checkbox" name="tax_exempt" id="tax_exempt" class="form-check-input" value="1" <?= $c['tax_exempt'] ? 'checked' : '' ?> onchange="document.getElementById('tax_exemption_reason_wrap').style.display = this.checked ? '' : 'none';">
                 <label class="form-check-label" for="tax_exempt">Kunde ist steuerbefreit (0% MwSt.)</label>
               </div>
+            </div>
+            <div class="col-md-6" id="tax_exemption_reason_wrap" style="<?= $c['tax_exempt'] ? '' : 'display:none;' ?>">
+              <label class="form-label">Befreiungsgrund</label>
+              <input type="text" name="tax_exemption_reason" class="form-control" value="<?= e($c['tax_exemption_reason']) ?>" placeholder="z.B. Steuerfrei gemäß §4 Nr. 21a UStG">
+              <div class="form-text">Pflichtangabe für ZUGFeRD (BT-120), wenn steuerbefreit.</div>
             </div>
             <div class="col-12"><label class="form-label">Notizen</label><textarea name="notes" class="form-control" rows="2"><?= e($c['notes']) ?></textarea></div>
           </div>

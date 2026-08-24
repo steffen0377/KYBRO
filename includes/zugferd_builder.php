@@ -124,6 +124,17 @@ function build_zugferd_document(array $doc, array $items, array $company): Zugfe
     }
 
     // ---------- Positionen ----------
+    // Hinweis (BR-S-05): Die Kategorie "S" (Standard) verlangt zwingend
+    // einen Steuersatz > 0. Bei 0%-Positionen wegen echter Steuerbefreiung
+    // (z.B. §4 Nr. 21a UStG) muss stattdessen Kategorie "E" (Exempt from
+    // tax) inkl. Befreiungsgrund (BT-120) gesetzt werden. Die Kategorie
+    // wird daher pro Zeile anhand des tatsächlichen Steuersatzes bestimmt,
+    // nicht pauschal auf "S" gesetzt.
+    $exemptionReason = trim((string)($doc['tax_exemption_reason'] ?? ''));
+    if ($exemptionReason === '') {
+        $exemptionReason = 'Steuerfrei gemäß §4 Nr. 21a UStG';
+    }
+
     $lineId = 1;
     $taxSummary = []; // rate => ['basis' => x, 'tax' => y]
 
@@ -133,33 +144,52 @@ function build_zugferd_document(array $doc, array $items, array $company): Zugfe
         $taxRate = (float)$item['tax_rate'];
         $lineTotal = round($qty * $unitPrice, 2);
 
+        $categoryCode = $taxRate > 0 ? 'S' : 'E';
+
         $documentBuilder->addNewPosition((string)$lineId);
         $documentBuilder
             ->setDocumentPositionProductDetails($item['description'])
             ->setDocumentPositionNetPrice($unitPrice)
-            ->setDocumentPositionQuantity($qty, 'C62')
-            ->addDocumentPositionTax('S', 'VAT', $taxRate)
-            ->setDocumentPositionLineSummation($lineTotal);
+            ->setDocumentPositionQuantity($qty, 'C62');
+
+        if ($categoryCode === 'E') {
+            $documentBuilder->addDocumentPositionTax('E', 'VAT', $taxRate, null, $exemptionReason);
+        } else {
+            $documentBuilder->addDocumentPositionTax('S', 'VAT', $taxRate);
+        }
+
+        $documentBuilder->setDocumentPositionLineSummation($lineTotal);
 
         $lineId++;
 
-        $key = number_format($taxRate, 2, '.', '');
+        $key = $categoryCode . '|' . number_format($taxRate, 2, '.', '');
         if (!isset($taxSummary[$key])) {
-            $taxSummary[$key] = ['basis' => 0.0, 'tax' => 0.0];
+            $taxSummary[$key] = ['category' => $categoryCode, 'rate' => $taxRate, 'basis' => 0.0, 'tax' => 0.0];
         }
         $taxSummary[$key]['basis'] += $lineTotal;
         $taxSummary[$key]['tax'] += round($lineTotal * $taxRate / 100, 2);
     }
 
     // ---------- Steueraufschlüsselung ----------
-    foreach ($taxSummary as $rate => $sums) {
-        $documentBuilder->addDocumentTax(
-            'S',
-            'VAT',
-            round($sums['basis'], 2),
-            round($sums['tax'], 2),
-            (float)$rate
-        );
+    foreach ($taxSummary as $sums) {
+        if ($sums['category'] === 'E') {
+            $documentBuilder->addDocumentTax(
+                'E',
+                'VAT',
+                round($sums['basis'], 2),
+                round($sums['tax'], 2),
+                (float)$sums['rate'],
+                $exemptionReason
+            );
+        } else {
+            $documentBuilder->addDocumentTax(
+                'S',
+                'VAT',
+                round($sums['basis'], 2),
+                round($sums['tax'], 2),
+                (float)$sums['rate']
+            );
+        }
     }
 
     // ---------- Summen ----------
