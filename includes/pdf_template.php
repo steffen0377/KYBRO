@@ -93,16 +93,20 @@ ob_start();
   .meta { margin: 20px 0; }
   .intro, .closing { margin: 15px 0; }
   .footer { margin-top: 50px; font-size: 9px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }
-  .page-number:before { content: counter(page); }
-  .page-number-total:before { content: counter(pages); }
-  /* dompdf berechnet counter(pages) (Gesamtseitenzahl) nur zuverlässig für
-     Elemente mit position:fixed - im normalen Dokumentfluss (wie .footer
-     oben) liefert der Zähler stattdessen 0 ("Seite 1 von 0"). Die Seitenzahl
-     wird deshalb in einem eigenen fixed-Block platziert. "right: 0" landet
-     dabei (wie bei den Header-Blöcken oben per calc() beschrieben) exakt auf
-     dem rechten Rand der Content-Box, also bündig mit dem rechten Rand von
-     Tabelle & Summenblock. */
-  .page-number-fixed { position: fixed; bottom: calc(6mm - <?= $marginBottom ?>mm); right: 0; font-size: 9px; color: #666; }
+  /* Seitenzahl: dompdf's CSS counter(pages) liefert die Gesamtseitenzahl
+     erfahrungsgemäß unzuverlässig (häufig 0, unabhängig von position:fixed).
+     Stattdessen werden dompdf's eingebaute Text-Platzhalter {PAGE_NUM} und
+     {PAGE_COUNT} verwendet - diese werden von dompdf nach einem zweiten,
+     internen Render-Durchlauf automatisch im Text ersetzt und sind der von
+     dompdf empfohlene, zuverlässige Weg für Seite-X-von-Y-Angaben.
+     Positionierung: "bottom" wird HIER bewusst nicht wie bei den Header-
+     Blöcken um marginBottom korrigiert (kein calc()), denn dort sollte ein
+     randunabhängiges Fixmaß (DIN-5008) erreicht werden. Hier ist das
+     Gegenteil gewünscht: der Abstand soll sich auf den unteren Rand
+     beziehen, damit die Seitenzahl innerhalb der Randeinstellung (also
+     oberhalb des Briefpapier-/Rand-Bereichs) erscheint und mit wachsendem
+     margin_bottom automatisch mitwandert. */
+  .page-number-fixed { position: fixed; bottom: 4mm; right: 0; font-size: 9px; color: #666; }
 </style>
 
 <div class="header-company">
@@ -191,7 +195,7 @@ ob_start();
 <?php endif; ?>
 
 <?php if ($showPageNumber): ?>
-<div class="page-number-fixed">Seite <span class="page-number"></span> von <span class="page-number-total"></span></div>
+<div class="page-number-fixed">Seite {PAGE_NUM} von {PAGE_COUNT}</div>
 <?php endif; ?>
 <?php
 return ob_get_clean();
