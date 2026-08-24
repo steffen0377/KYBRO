@@ -7,7 +7,7 @@ require_login();
 require_module_license('warenwirtschaft');
 $pdo = db();
 $action = $_GET['action'] ?? 'list';
-require_permission('angebote', in_array($action, ['save', 'status', 'to_invoice', 'delete', 'new', 'edit'], true) ? 'write' : 'read');
+require_permission('angebote', in_array($action, ['save', 'status', 'to_order', 'to_invoice', 'delete', 'new', 'edit'], true) ? 'write' : 'read');
 
 function calc_totals(array $descriptions, array $quantities, array $prices, array $taxRates): array {
     $net = 0.0; $tax = 0.0;
@@ -119,6 +119,33 @@ if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect($self . '?action=view&id=' . $offerId);
 }
 
+// ---------- IN AUFTRAG UMWANDELN ----------
+// Erstellt (bzw. liefert, falls bereits vorhanden - get_or_create_order_from_offer
+// ist idempotent) nur den Auftrag, ohne bereits eine Rechnung zu erzeugen.
+// Für den direkten Weg Angebot -> Rechnung (inkl. automatischem Auftrag)
+// existiert weiterhin die Aktion 'to_invoice' weiter unten.
+if ($action === 'to_order' && isset($_GET['id']) && hash_equals(csrf_token(), $_GET['token'] ?? '')) {
+    $stmt = $pdo->prepare('SELECT * FROM offers WHERE id=?');
+    $stmt->execute([(int)$_GET['id']]);
+    $offer = $stmt->fetch();
+    if (!$offer) { flash('danger','Angebot nicht gefunden.'); redirect($self); }
+
+    $pdo->beginTransaction();
+    try {
+        $order = get_or_create_order_from_offer($pdo, $offer);
+        if ($offer['status'] !== 'angenommen') {
+            $pdo->prepare("UPDATE offers SET status='angenommen' WHERE id=?")->execute([$offer['id']]);
+        }
+        $pdo->commit();
+        flash('success', "Auftrag {$order['order_number']} wurde erstellt.");
+        redirect('auftraege.php?action=view&id=' . $order['id']);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        flash('danger', 'Fehler: ' . $e->getMessage());
+        redirect($self . '?action=view&id=' . $offer['id']);
+    }
+}
+
 // ---------- IN RECHNUNG UMWANDELN ----------
 // Erzeugt im Hintergrund zuerst den Auftrag (falls noch nicht vorhanden) und
 // daraus dann die Rechnung, damit die Prozesskette Angebot -> Auftrag ->
@@ -178,6 +205,9 @@ if ($action === 'view') {
       <div>
         <a href="angebot_pdf.php?id=<?= $offer['id'] ?>" class="btn btn-app-outline-primary" target="_blank">PDF ansehen</a>
         <a href="angebote.php?action=edit&id=<?= $offer['id'] ?>" class="btn btn-app-outline-secondary">Bearbeiten</a>
+        <?php if (!$relatedOrder): ?>
+        <a href="angebote.php?action=to_order&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-app-outline-success" onclick="return confirm('Auftrag aus diesem Angebot erstellen?')">In Auftrag übernehmen</a>
+        <?php endif; ?>
         <a href="angebote.php?action=to_invoice&id=<?= $offer['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-app-success" onclick="return confirm('Auftrag anlegen (falls noch nicht vorhanden) und Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
       </div>
     </div>
@@ -283,8 +313,9 @@ $offers = $stmt->fetchAll();
       <td class="text-end"><?= money($o['total_gross']) ?></td>
       <td><?= status_badge($o['status']) ?></td>
       <td class="text-end">
-        <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-success" onclick="return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
-        <a href="angebote.php?action=delete&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="return confirm('Angebot wirklich löschen?')">Löschen</a>
+        <a href="angebote.php?action=to_order&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-success" onclick="event.stopPropagation(); return confirm('Auftrag aus diesem Angebot erstellen?')">In Auftrag übernehmen</a>
+        <a href="angebote.php?action=to_invoice&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-success" onclick="event.stopPropagation(); return confirm('Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">Rechnung erstellen</a>
+        <a href="angebote.php?action=delete&id=<?= $o['id'] ?>&token=<?= e(csrf_token()) ?>" class="btn btn-sm btn-app-outline-danger" onclick="event.stopPropagation(); return confirm('Angebot wirklich löschen?')">Löschen</a>
       </td>
     </tr>
   <?php endforeach; ?>
