@@ -27,6 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_form_settings') {
 
     $defaults = form_setting_defaults();
     $checkboxKeys = ['use_letterhead', 'show_page_number', 'show_discount_column', 'show_tax_breakdown', 'show_subtotal'];
+    // Tri-State-Keys: aktiviert ('1') / deaktiviert ('0') / vererbt (kein
+    // Eintrag) - nur relevant in den Formulartyp-Tabs, da dort ein Scope
+    // existiert, von dem geerbt werden kann. Im Tab "Allgemein" gibt es keinen
+    // übergeordneten Scope, dort verhält sich der Key wie ein normales Boolean.
+    $triStateKeys = ['show_footer_company_block'];
 
     foreach (array_keys($defaults[$scope]) as $key) {
         if ($key === 'table_columns' || $key === 'columns_override') {
@@ -37,7 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save_form_settings') {
             $allowed = ['pos', 'artikelnr', 'bezeichnung', 'menge', 'einzelpreis', 'rabatt', 'gesamt'];
             $selected = array_values(array_intersect($allowed, $selected));
             save_form_setting($scope, $key, implode(',', $selected));
-        } elseif (in_array($key, $checkboxKeys, true)) {
+        } elseif ($scope !== 'global' && in_array($key, $triStateKeys, true)) {
+            $val = (string)($_POST[$key] ?? '');
+            save_form_setting($scope, $key, in_array($val, ['0', '1'], true) ? $val : '');
+        } elseif (in_array($key, array_merge($checkboxKeys, $triStateKeys), true)) {
             save_form_setting($scope, $key, !empty($_POST[$key]) ? '1' : '0');
         } else {
             save_form_setting($scope, $key, trim((string)($_POST[$key] ?? '')));
@@ -145,6 +153,13 @@ $tableColumnLabels = [
             <input type="checkbox" name="show_page_number" value="1" class="form-check-input" id="show_page_number" <?= $v['show_page_number'] === '1' ? 'checked' : '' ?>>
             <label class="form-check-label" for="show_page_number">Seitenzahl in der Fußzeile anzeigen</label>
           </div>
+        </div>
+        <div class="col-md-8 d-flex align-items-end">
+          <div class="form-check">
+            <input type="checkbox" name="show_footer_company_block" value="1" class="form-check-input" id="show_footer_company_block" <?= $v['show_footer_company_block'] === '1' ? 'checked' : '' ?>>
+            <label class="form-check-label" for="show_footer_company_block">Firmendaten (Name, Adresse, IBAN/BIC) in der Fußzeile anzeigen</label>
+          </div>
+          <div class="form-text ms-2">Deaktivieren, wenn diese Angaben bereits im Briefpapier enthalten sind. Kann je Formulartyp überschrieben werden.</div>
         </div>
         <div class="col-12">
           <label class="form-label">Standard-Fußzeilentext</label>
@@ -277,10 +292,70 @@ $tableColumnLabels = [
         </div>
       </div>
 
+      <h6 class="mb-3">Fußzeile</h6>
+      <div class="row g-3 mb-4">
+        <?php
+          $rawFooterBlock = get_raw_form_setting($scope, 'show_footer_company_block'); // '0'|'1'|null (null = vererbt)
+          $inheritedOn = get_form_setting('global', 'show_footer_company_block') === '1';
+          $triState = $rawFooterBlock === null ? 'inherit' : ($rawFooterBlock === '1' ? 'on' : 'off');
+          $inheritLabel = 'Vererbt (' . ($inheritedOn ? 'aktiviert' : 'deaktiviert') . ')';
+        ?>
+        <div class="col-md-6">
+          <label class="form-label d-block">Firmendaten-Fußzeile (Name, Adresse, IBAN/BIC)</label>
+          <button type="button"
+                  class="btn tristate-toggle tristate-<?= $triState ?>"
+                  data-state="<?= $triState ?>"
+                  data-inherit-label="<?= e($inheritLabel) ?>"
+                  data-target="footer_block_<?= $scope ?>">
+            <?= $triState === 'inherit' ? e($inheritLabel) : ($triState === 'on' ? 'Aktiviert' : 'Deaktiviert') ?>
+          </button>
+          <input type="hidden" name="show_footer_company_block" id="footer_block_<?= $scope ?>" value="<?= e($rawFooterBlock ?? '') ?>">
+          <div class="form-text">Deaktivieren, wenn diese Angaben bereits im Briefpapier enthalten sind. Ohne Klick bleibt der globale Wert (Tab "Allgemein") wirksam.</div>
+        </div>
+      </div>
+
       <button class="btn btn-app-primary mt-3" type="submit">Speichern</button>
     </form>
   </div>
   <?php endforeach; ?>
 
 </div>
+
+<style>
+  /* Tri-State-Steuerelement (aktiviert/deaktiviert/vererbt): "vererbt" wird
+     blassgrau dargestellt, um zu signalisieren, dass der Wert vom globalen
+     Tab übernommen wird; ein explizit gesetzter Wert (aktiviert/deaktiviert)
+     wird kräftig eingefärbt, damit die Überschreibung sofort auffällt. */
+  .tristate-toggle { min-width: 170px; text-align: left; }
+  .tristate-toggle.tristate-inherit { color: #6c757d; background: #f1f3f5; border: 1px dashed #adb5bd; }
+  .tristate-toggle.tristate-on { color: #fff; background: #198754; border: 1px solid #198754; font-weight: 600; }
+  .tristate-toggle.tristate-off { color: #fff; background: #dc3545; border: 1px solid #dc3545; font-weight: 600; }
+</style>
+<script>
+(function () {
+  // Zyklus per Klick: vererbt -> aktiviert -> deaktiviert -> vererbt.
+  // Der tatsächliche Wert wird im zugehörigen hidden input gespeichert
+  // ('' = vererbt, '1' = aktiviert, '0' = deaktiviert) und so mitgesendet.
+  var order = ['inherit', 'on', 'off'];
+  document.querySelectorAll('.tristate-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.dataset.target);
+      var next = order[(order.indexOf(btn.dataset.state) + 1) % order.length];
+      btn.dataset.state = next;
+      btn.classList.remove('tristate-inherit', 'tristate-on', 'tristate-off');
+      btn.classList.add('tristate-' + next);
+      if (next === 'inherit') {
+        input.value = '';
+        btn.textContent = btn.dataset.inheritLabel;
+      } else if (next === 'on') {
+        input.value = '1';
+        btn.textContent = 'Aktiviert';
+      } else {
+        input.value = '0';
+        btn.textContent = 'Deaktiviert';
+      }
+    });
+  });
+})();
+</script>
 <?php require_once ROOT_PATH . '/includes/footer.php'; ?>

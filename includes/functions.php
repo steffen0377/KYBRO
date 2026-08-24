@@ -245,6 +245,7 @@ function form_setting_defaults(): array {
             'accent_color' => '#0d6efd',
             'footer_text' => '',
             'show_page_number' => '1',
+            'show_footer_company_block' => '1',
             'table_columns' => 'pos,artikelnr,bezeichnung,menge,einzelpreis,rabatt,gesamt',
             'currency_format' => 'de_DE',
             'date_format' => 'd.m.Y',
@@ -261,6 +262,9 @@ function form_setting_defaults(): array {
             'show_discount_column' => '1',
             'show_tax_breakdown' => '1',
             'show_subtotal' => '1',
+            // Leer = vererbt (folgt dem globalen Wert bzw. dessen Default).
+            // Siehe get_raw_form_setting() für die Tri-State-Auflösung.
+            'show_footer_company_block' => '',
         ],
         'auftrag' => [
             'document_title' => 'Auftragsbestätigung',
@@ -272,6 +276,7 @@ function form_setting_defaults(): array {
             'show_discount_column' => '1',
             'show_tax_breakdown' => '1',
             'show_subtotal' => '1',
+            'show_footer_company_block' => '',
         ],
         'rechnung' => [
             'document_title' => 'Rechnung',
@@ -283,17 +288,18 @@ function form_setting_defaults(): array {
             'show_discount_column' => '1',
             'show_tax_breakdown' => '1',
             'show_subtotal' => '1',
+            'show_footer_company_block' => '',
             'zugferd_profile' => 'BASIC',
             'skonto_text' => '',
         ],
     ];
 }
 
-// Liest eine einzelne Formulareinstellung mit Fallback-Kette:
-// scope-spezifischer Wert -> globaler Wert -> hinterlegter Default.
-// Lädt alle gespeicherten Werte einmalig pro Request (static cache), da
-// diese Funktion typischerweise mehrfach pro PDF-Erzeugung aufgerufen wird.
-function get_form_setting(string $scope, string $key, $default = null) {
+// Lädt (einmalig pro Request, static cache) alle gespeicherten Formular-
+// einstellungen aus der Datenbank. Gemeinsam genutzt von get_form_setting()
+// (aufgelöster Wert inkl. Fallback-Kette) und get_raw_form_setting() (roher,
+// unaufgelöster Wert für Tri-State-Steuerelemente).
+function form_settings_cache(): array {
     static $cache = null;
     if ($cache === null) {
         $cache = [];
@@ -302,6 +308,13 @@ function get_form_setting(string $scope, string $key, $default = null) {
             $cache[$row['scope']][$row['setting_key']] = $row['setting_value'];
         }
     }
+    return $cache;
+}
+
+// Liest eine einzelne Formulareinstellung mit Fallback-Kette:
+// scope-spezifischer Wert -> globaler Wert -> hinterlegter Default.
+function get_form_setting(string $scope, string $key, $default = null) {
+    $cache = form_settings_cache();
     if (isset($cache[$scope][$key]) && $cache[$scope][$key] !== '') {
         return $cache[$scope][$key];
     }
@@ -316,6 +329,21 @@ function get_form_setting(string $scope, string $key, $default = null) {
         return $defaults['global'][$key];
     }
     return $default;
+}
+
+// Liefert den rohen, für genau diesen Scope explizit gespeicherten Wert -
+// ohne Fallback-Kette. Ein leerer String (bzw. gar kein Eintrag) bedeutet
+// "nicht überschrieben" und liefert null. Wird von Tri-State-Steuerelementen
+// (aktiviert/deaktiviert/vererbt) in den Formulareinstellungen benötigt, um
+// zwischen "explizit auf diesem Formulartyp gesetzt" und "geerbt" zu
+// unterscheiden - get_form_setting() liefert dafür bereits den aufgelösten
+// Wert und ist an dieser Stelle nicht geeignet.
+function get_raw_form_setting(string $scope, string $key): ?string {
+    $cache = form_settings_cache();
+    if (isset($cache[$scope][$key]) && $cache[$scope][$key] !== '') {
+        return $cache[$scope][$key];
+    }
+    return null;
 }
 
 // Liefert alle Einstellungen eines Scopes (inkl. Fallback global -> Default)

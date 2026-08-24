@@ -21,6 +21,7 @@ $marginLeft = (float)$fs('margin_left');
 $marginRight = (float)$fs('margin_right');
 $accentColor = $fs('accent_color');
 $showPageNumber = $fs('show_page_number') === '1';
+$showFooterCompanyBlock = $fs('show_footer_company_block') === '1';
 $footerText = $fs('footer_text');
 $decimalSeparator = $fs('decimal_separator');
 $dateFormat = $fs('date_format');
@@ -94,6 +95,14 @@ ob_start();
   .footer { margin-top: 50px; font-size: 9px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }
   .page-number:before { content: counter(page); }
   .page-number-total:before { content: counter(pages); }
+  /* dompdf berechnet counter(pages) (Gesamtseitenzahl) nur zuverlässig für
+     Elemente mit position:fixed - im normalen Dokumentfluss (wie .footer
+     oben) liefert der Zähler stattdessen 0 ("Seite 1 von 0"). Die Seitenzahl
+     wird deshalb in einem eigenen fixed-Block platziert. "right: 0" landet
+     dabei (wie bei den Header-Blöcken oben per calc() beschrieben) exakt auf
+     dem rechten Rand der Content-Box, also bündig mit dem rechten Rand von
+     Tabelle & Summenblock. */
+  .page-number-fixed { position: fixed; bottom: calc(6mm - <?= $marginBottom ?>mm); right: 0; font-size: 9px; color: #666; }
 </style>
 
 <div class="header-company">
@@ -170,12 +179,19 @@ ob_start();
   <div class="closing"><?= nl2br(e($closingText)) ?></div>
 <?php endif; ?>
 
+<?php if ($showFooterCompanyBlock || $footerText !== ''): ?>
 <div class="footer">
+  <?php if ($showFooterCompanyBlock): ?>
   <?= e($company['company_name']) ?> · <?= e($company['street']) ?>, <?= e($company['zip'].' '.$company['city']) ?>
   <?php if ($company['iban']): ?> · IBAN: <?= e($company['iban']) ?><?php endif; ?>
   <?php if ($company['bic']): ?> · BIC: <?= e($company['bic']) ?><?php endif; ?>
-  <?php if ($footerText !== ''): ?><br><?= nl2br(e($footerText)) ?><?php endif; ?>
-  <?php if ($showPageNumber): ?><div style="margin-top:4px;">Seite <span class="page-number"></span> von <span class="page-number-total"></span></div><?php endif; ?>
+  <?php endif; ?>
+  <?php if ($footerText !== ''): ?><?= $showFooterCompanyBlock ? '<br>' : '' ?><?= nl2br(e($footerText)) ?><?php endif; ?>
 </div>
+<?php endif; ?>
+
+<?php if ($showPageNumber): ?>
+<div class="page-number-fixed">Seite <span class="page-number"></span> von <span class="page-number-total"></span></div>
+<?php endif; ?>
 <?php
 return ob_get_clean();
