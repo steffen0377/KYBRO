@@ -33,6 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     $prices = $_POST['unit_price'] ?? [];
     $taxRates = $_POST['tax_rate'] ?? [];
     $articleIds = $_POST['article_id'] ?? [];
+    $billingTypes = $_POST['billing_type'] ?? [];
+    $pricingOptionIds = $_POST['pricing_option_id'] ?? [];
 
     // Steuerbefreite Kunden: MwSt. serverseitig immer auf 0% erzwingen,
     // unabhängig davon, was das Formular gesendet hat (nicht umgehbar über
@@ -67,9 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             $offerId = $pdo->lastInsertId();
         }
         $pos = 1;
-        $itemStmt = $pdo->prepare('INSERT INTO offer_items (offer_id,article_id,position,description,quantity,unit_price,tax_rate) VALUES (?,?,?,?,?,?,?)');
+        $itemStmt = $pdo->prepare('INSERT INTO offer_items (offer_id,article_id,position,description,quantity,unit_price,tax_rate,pricing_option_id,billing_type) VALUES (?,?,?,?,?,?,?,?,?)');
         foreach ($descriptions as $i => $desc) {
             if (trim($desc) === '') continue;
+            $billingType = in_array($billingTypes[$i] ?? 'einmalig', ['einmalig','monatlich','jaehrlich'], true) ? $billingTypes[$i] : 'einmalig';
             $itemStmt->execute([
                 $offerId,
                 $articleIds[$i] ?: null,
@@ -78,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
                 (float)str_replace(',', '.', $quantities[$i]),
                 (float)str_replace(',', '.', $prices[$i]),
                 (float)str_replace(',', '.', $taxRates[$i]),
+                $pricingOptionIds[$i] ?: null,
+                $billingType,
             ]);
         }
         $pdo->commit();
@@ -225,7 +230,7 @@ if ($action === 'view') {
     </div>
     <div class="card p-3 mb-3">
       <table class="table">
-        <thead><tr><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt</th><th></th></tr></thead>
+        <thead><tr><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt</th><th>Modell</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($items as $it): ?>
           <tr>
@@ -234,6 +239,7 @@ if ($action === 'view') {
             <td class="text-end"><?= money($it['unit_price']) ?></td>
             <td class="text-end"><?= num($it['tax_rate']) ?>%</td>
             <td class="text-end"><?= money($it['quantity']*$it['unit_price']) ?></td>
+            <td><?= ($it['billing_type'] ?? 'einmalig') !== 'einmalig' ? '<span class="badge text-bg-info">' . ($it['billing_type']==='jaehrlich'?'Jährlich':'Monatlich') . '</span>' : '' ?></td>
             <td class="text-end">
               <?php if (!$it['article_id']): ?>
                 <a href="../stammdaten/artikel.php?action=new&from_offer_item=<?= $it['id'] ?>" class="btn btn-sm btn-app-outline-success">Als Artikel anlegen</a>
@@ -243,9 +249,9 @@ if ($action === 'view') {
         <?php endforeach; ?>
         </tbody>
         <tfoot>
-          <tr><td colspan="4" class="text-end">Netto</td><td class="text-end"><?= money($offer['total_net']) ?></td><td></td></tr>
-          <tr><td colspan="4" class="text-end">MwSt.</td><td class="text-end"><?= money($offer['total_tax']) ?></td><td></td></tr>
-          <tr><td colspan="4" class="text-end fw-bold">Gesamt</td><td class="text-end fw-bold"><?= money($offer['total_gross']) ?></td><td></td></tr>
+          <tr><td colspan="4" class="text-end">Netto</td><td class="text-end"><?= money($offer['total_net']) ?></td><td colspan="2"></td></tr>
+          <tr><td colspan="4" class="text-end">MwSt.</td><td class="text-end"><?= money($offer['total_tax']) ?></td><td colspan="2"></td></tr>
+          <tr><td colspan="4" class="text-end fw-bold">Gesamt</td><td class="text-end fw-bold"><?= money($offer['total_gross']) ?></td><td colspan="2"></td></tr>
         </tfoot>
       </table>
       <?php if ($offer['notes']): ?><p class="text-muted"><?= nl2br(e($offer['notes'])) ?></p><?php endif; ?>
@@ -284,6 +290,11 @@ if ($action === 'new' || $action === 'edit') {
     $spStmt = $pdo->query('SELECT article_id, customer_id, price_type, price_value FROM article_special_prices WHERE active=1');
     foreach ($spStmt->fetchAll() as $sp) {
         $specialPrices[$sp['customer_id']][$sp['article_id']] = ['type' => $sp['price_type'], 'value' => (float)$sp['price_value']];
+    }
+    $pricingOptions = [];
+    $poStmt = $pdo->query('SELECT id, article_id, billing_type, price FROM article_pricing_options WHERE is_active=1 ORDER BY sort_order');
+    foreach ($poStmt->fetchAll() as $po) {
+        $pricingOptions[$po['article_id']][] = ['id' => $po['id'], 'billing_type' => $po['billing_type'], 'price' => (float)$po['price']];
     }
 
     $doc = $offer;

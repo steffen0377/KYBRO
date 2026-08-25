@@ -55,6 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     $prices = $_POST['unit_price'] ?? [];
     $taxRates = $_POST['tax_rate'] ?? [];
     $articleIds = $_POST['article_id'] ?? [];
+    $billingTypes = $_POST['billing_type'] ?? [];
+    $pricingOptionIds = $_POST['pricing_option_id'] ?? [];
 
     // Steuerbefreite Kunden: MwSt. serverseitig immer auf 0% erzwingen,
     // unabhängig davon, was das Formular gesendet hat (nicht umgehbar über
@@ -102,12 +104,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         }
         $pos = 1;
         $needsSerialAssignment = false;
-        $itemStmt = $pdo->prepare('INSERT INTO invoice_items (invoice_id,article_id,position,description,quantity,unit_price,tax_rate) VALUES (?,?,?,?,?,?,?)');
+        $itemStmt = $pdo->prepare('INSERT INTO invoice_items (invoice_id,article_id,position,description,quantity,unit_price,tax_rate,pricing_option_id,billing_type) VALUES (?,?,?,?,?,?,?,?,?)');
         foreach ($descriptions as $i => $desc) {
             if (trim($desc) === '') continue;
             $articleId = $articleIds[$i] ?: null;
             $qty = (float)str_replace(',', '.', $quantities[$i]);
-            $itemStmt->execute([$invoiceId, $articleId, $pos++, trim($desc), $qty, (float)str_replace(',', '.', $prices[$i]), (float)str_replace(',', '.', $taxRates[$i])]);
+            $billingType = in_array($billingTypes[$i] ?? 'einmalig', ['einmalig','monatlich','jaehrlich'], true) ? $billingTypes[$i] : 'einmalig';
+            $itemStmt->execute([$invoiceId, $articleId, $pos++, trim($desc), $qty, (float)str_replace(',', '.', $prices[$i]), (float)str_replace(',', '.', $taxRates[$i]), $pricingOptionIds[$i] ?: null, $billingType]);
             // Lagerbestand nur bei NEUEN, direkt angelegten Rechnungen automatisch reduzieren
             if ($isNew && $articleId) {
                 if (!empty($trackSerialsMap[$articleId])) {
@@ -118,6 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
                     adjust_stock((int)$articleId, -1 * $qty, 'verkauf', 'invoice', $invoiceId, 'Verkauf über Rechnung');
                 }
             }
+        }
+        // Abos werden nur für neu angelegte Rechnungen begründet, nicht beim
+        // nachträglichen Bearbeiten eines bestehenden Entwurfs (sonst würde
+        // bei jedem Speichern erneut ein Abo angelegt).
+        if ($isNew) {
+            create_subscriptions_from_invoice_items($pdo, $invoiceId, $customerId, null, $_POST['invoice_date']);
         }
         $pdo->commit();
         if ($needsSerialAssignment) {
@@ -168,12 +177,31 @@ if ($action === 'assign_serials' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ---------- STATUS ÄNDERN ----------
+// Verlässt eine automatisch erzeugte Abo-Entwurfsrechnung hier erstmals den
+// Entwurfsstatus (manuelle Freigabe), wird next_billing_date des Abos auf
+// den nächsten Zyklus fortgeschrieben.
 if ($action === 'status' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    $stmt = $pdo->prepare('UPDATE invoices SET status=? WHERE id=?');
-    $stmt->execute([$_POST['status'], (int)$_POST['id']]);
-    flash('success', 'Status aktualisiert.');
-    redirect($self .'?action=view&id=' . (int)$_POST['id']);
+    $invoiceId = (int)$_POST['id'];
+    $newStatus = $_POST['status'];
+    $stmt = $pdo->prepare('SELECT status, subscription_id FROM invoices WHERE id=?');
+    $stmt->execute([$invoiceId]);
+    $invoice = $stmt->fetch();
+    if (!$invoice) { flash('danger','Rechnung nicht gefunden.'); redirect($self); }
+
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('UPDATE invoices SET status=? WHERE id=?')->execute([$newStatus, $invoiceId]);
+        if ($invoice['status'] === 'entwurf' && $newStatus !== 'entwurf' && $invoice['subscription_id']) {
+            advance_subscription_billing_date($pdo, (int)$invoice['subscription_id']);
+        }
+        $pdo->commit();
+        flash('success', 'Status aktualisiert.');
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        flash('danger', 'Fehler: ' . $e->getMessage());
+    }
+    redirect($self .'?action=view&id=' . $invoiceId);
 }
 
 // ---------- LÖSCHEN (nur Entwürfe) ----------
@@ -263,6 +291,12 @@ if ($action === 'view') {
         <a href="rechnungen.php?action=assign_serials&id=<?= $invoice['id'] ?>" class="btn btn-sm btn-app-warning">Jetzt zuordnen</a>
       </div>
     <?php endif; ?>
+    <?php if ($invoice['subscription_id']): ?>
+      <div class="alert alert-app-info d-flex justify-content-between align-items-center">
+        <span>Automatisch erzeugte Abo-Rechnung<?php if ($invoice['period_start']): ?> für den Zeitraum <?= date('d.m.Y', strtotime($invoice['period_start'])) ?> – <?= date('d.m.Y', strtotime($invoice['period_end'])) ?><?php endif; ?><?= $invoice['status']==='entwurf' ? ' — bitte prüfen und freigeben.' : '' ?></span>
+        <a href="abos.php?action=view&id=<?= $invoice['subscription_id'] ?>" class="btn btn-sm btn-app-outline-primary">Abo ansehen</a>
+      </div>
+    <?php endif; ?>
     <div class="card p-3 mb-3">
       <strong>Kunde:</strong> <?= e($invoice['company'] ?: trim($invoice['first_name'].' '.$invoice['last_name'])) ?><br>
       <?= e($invoice['street']) ?>, <?= e($invoice['zip'].' '.$invoice['city']) ?><br>
@@ -271,7 +305,7 @@ if ($action === 'view') {
     </div>
     <div class="card p-3 mb-3">
       <table class="table">
-        <thead><tr><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt</th></tr></thead>
+        <thead><tr><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt</th><th>Modell</th></tr></thead>
         <tbody>
         <?php foreach ($items as $it): ?>
           <tr>
@@ -285,6 +319,7 @@ if ($action === 'view') {
             <td class="text-end"><?= money($it['unit_price']) ?></td>
             <td class="text-end"><?= num($it['tax_rate']) ?>%</td>
             <td class="text-end"><?= money($it['quantity']*$it['unit_price']) ?></td>
+            <td><?= ($it['billing_type'] ?? 'einmalig') !== 'einmalig' ? '<span class="badge text-bg-info">' . ($it['billing_type']==='jaehrlich'?'Jährlich':'Monatlich') . '</span>' : '' ?></td>
           </tr>
         <?php endforeach; ?>
         </tbody>
@@ -331,6 +366,11 @@ if ($action === 'new' || $action === 'edit') {
     $spStmt = $pdo->query('SELECT article_id, customer_id, price_type, price_value FROM article_special_prices WHERE active=1');
     foreach ($spStmt->fetchAll() as $sp) {
         $specialPrices[$sp['customer_id']][$sp['article_id']] = ['type' => $sp['price_type'], 'value' => (float)$sp['price_value']];
+    }
+    $pricingOptions = [];
+    $poStmt = $pdo->query('SELECT id, article_id, billing_type, price FROM article_pricing_options WHERE is_active=1 ORDER BY sort_order');
+    foreach ($poStmt->fetchAll() as $po) {
+        $pricingOptions[$po['article_id']][] = ['id' => $po['id'], 'billing_type' => $po['billing_type'], 'price' => (float)$po['price']];
     }
 
     $doc = $invoice;

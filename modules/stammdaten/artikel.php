@@ -34,6 +34,29 @@ function save_article_special_prices(PDO $pdo, int $articleId, array $customerId
     }
 }
 
+// Speichert die Verkaufsmodelle (Einmalkauf/monatlich/jährlich) eines
+// Artikels: bestehende Zeilen werden gelöscht und aus den POST-Arrays neu
+// eingefügt (gleiches Muster wie save_article_special_prices). Zeilen ohne
+// Preis werden ignoriert.
+function save_article_pricing_options(PDO $pdo, int $articleId, array $billingTypes, array $prices, array $minRuntimes, array $noticePeriods, array $activeFlags): void {
+    $pdo->prepare('DELETE FROM article_pricing_options WHERE article_id=?')->execute([$articleId]);
+    $stmt = $pdo->prepare('INSERT INTO article_pricing_options (article_id, billing_type, price, min_runtime_months, notice_period_days, is_active, sort_order) VALUES (?,?,?,?,?,?,?)');
+    $seenTypes = [];
+    $sort = 0;
+    foreach ($billingTypes as $i => $type) {
+        if (!in_array($type, ['einmalig', 'monatlich', 'jaehrlich'], true) || isset($seenTypes[$type])) {
+            continue; // ungültiges oder doppeltes Verkaufsmodell (nur eine Option je Modell)
+        }
+        $seenTypes[$type] = true;
+        $price = (float)str_replace(',', '.', $prices[$i] ?? '0');
+        $isRecurring = $type !== 'einmalig';
+        $minRuntime = $isRecurring && trim((string)($minRuntimes[$i] ?? '')) !== '' ? (int)$minRuntimes[$i] : null;
+        $noticeDays = $isRecurring && trim((string)($noticePeriods[$i] ?? '')) !== '' ? (int)$noticePeriods[$i] : null;
+        $active = (int)($activeFlags[$i] ?? 0) === 1 ? 1 : 0;
+        $stmt->execute([$articleId, $type, $price, $minRuntime, $noticeDays, $active, $sort++]);
+    }
+}
+
 // ---------- SPEICHERN ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
     csrf_check();
@@ -63,6 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
         save_article_categories($pdo, $id, $_POST['category_ids'] ?? []);
         save_article_suppliers($pdo, $id, $_POST['supplier_id'] ?? [], $_POST['supplier_article_number'] ?? [], $_POST['hek_price'] ?? []);
         save_article_special_prices($pdo, $id, $_POST['sp_customer_id'] ?? [], $_POST['sp_price_type'] ?? [], $_POST['sp_value'] ?? [], $_POST['sp_active'] ?? []);
+        save_article_pricing_options($pdo, $id, $_POST['pr_billing_type'] ?? [], $_POST['pr_price'] ?? [], $_POST['pr_min_runtime'] ?? [], $_POST['pr_notice_period'] ?? [], $_POST['pr_active'] ?? []);
         flash('success', 'Artikel aktualisiert.');
     } else {
         $initialStock = $data['track_stock'] ? (float)str_replace(',', '.', $_POST['stock_qty'] ?? '0') : 0;
@@ -79,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'save') {
             save_article_categories($pdo, (int)$newId, $_POST['category_ids'] ?? []);
             save_article_suppliers($pdo, (int)$newId, $_POST['supplier_id'] ?? [], $_POST['supplier_article_number'] ?? [], $_POST['hek_price'] ?? []);
             save_article_special_prices($pdo, (int)$newId, $_POST['sp_customer_id'] ?? [], $_POST['sp_price_type'] ?? [], $_POST['sp_value'] ?? [], $_POST['sp_active'] ?? []);
+            save_article_pricing_options($pdo, (int)$newId, $_POST['pr_billing_type'] ?? [], $_POST['pr_price'] ?? [], $_POST['pr_min_runtime'] ?? [], $_POST['pr_notice_period'] ?? [], $_POST['pr_active'] ?? []);
             $pdo->commit();
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -173,6 +198,12 @@ if ($action === 'new' || $action === 'edit') {
         $spStmt->execute([$article['id']]);
         $articleSpecialPrices = $spStmt->fetchAll();
     }
+    $articlePricingOptions = [];
+    if ($article['id']) {
+        $prStmt = $pdo->prepare('SELECT * FROM article_pricing_options WHERE article_id=? ORDER BY sort_order');
+        $prStmt->execute([$article['id']]);
+        $articlePricingOptions = $prStmt->fetchAll();
+    }
     ?>
     <h4><?= $action === 'new' ? 'Neuer Artikel' : e($article['name']) ?></h4>
     <?php if ($fromOfferItem): ?>
@@ -192,6 +223,9 @@ if ($action === 'new' || $action === 'edit') {
         </li>
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="tab-sonderpreise-btn" data-bs-toggle="tab" data-bs-target="#tab-sonderpreise" type="button" role="tab" aria-controls="tab-sonderpreise" aria-selected="false">Sonderpreise</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-aboPreise-btn" data-bs-toggle="tab" data-bs-target="#tab-aboPreise" type="button" role="tab" aria-controls="tab-aboPreise" aria-selected="false">Abo-Preise</button>
         </li>
       </ul>
 
@@ -328,6 +362,38 @@ if ($action === 'new' || $action === 'edit') {
           </table>
           <button type="button" id="addSpecialPriceRow" class="btn btn-sm btn-app-outline-primary">+ Sonderpreis hinzufügen</button>
         </div>
+
+        <div class="tab-pane fade" id="tab-aboPreise" role="tabpanel" aria-labelledby="tab-aboPreise-btn">
+          <div class="form-text mb-2">Verkaufsmodelle für diesen Artikel: Einmalkauf und/oder Abo (monatlich/jährlich). Pro Modell kann nur eine Zeile angelegt werden. Nur aktive Zeilen stehen bei Angebot/Auftrag/Rechnung zur Auswahl. Wird kein Modell hinterlegt, ist der Artikel weiterhin nur zum Standard-Verkaufspreis (Tab "Allgemein") als Einmalkauf verkäuflich.</div>
+          <table class="table" id="pricingOptionTable">
+            <thead><tr><th style="width:20%">Modell</th><th style="width:18%">Preis (€)</th><th style="width:18%">Mindestlaufzeit (Monate)</th><th style="width:18%">Kündigungsfrist (Tage)</th><th style="width:15%">Status</th><th style="width:5%"></th></tr></thead>
+            <tbody>
+              <?php $pricingRows = $articlePricingOptions ?: [['billing_type' => 'einmalig', 'price' => $article['sale_price'], 'min_runtime_months' => '', 'notice_period_days' => '', 'is_active' => 1]]; ?>
+              <?php foreach ($pricingRows as $row): ?>
+              <tr>
+                <td>
+                  <select name="pr_billing_type[]" class="form-select pr-billing-type">
+                    <option value="einmalig" <?= ($row['billing_type'] ?? 'einmalig') === 'einmalig' ? 'selected' : '' ?>>Einmalig</option>
+                    <option value="monatlich" <?= ($row['billing_type'] ?? '') === 'monatlich' ? 'selected' : '' ?>>Monatlich</option>
+                    <option value="jaehrlich" <?= ($row['billing_type'] ?? '') === 'jaehrlich' ? 'selected' : '' ?>>Jährlich</option>
+                  </select>
+                </td>
+                <td><input type="text" name="pr_price[]" class="form-control" value="<?= num($row['price'] ?? 0) ?>"></td>
+                <td><input type="text" name="pr_min_runtime[]" class="form-control pr-recurring-field" value="<?= e($row['min_runtime_months'] ?? '') ?>" placeholder="z.B. 12"></td>
+                <td><input type="text" name="pr_notice_period[]" class="form-control pr-recurring-field" value="<?= e($row['notice_period_days'] ?? '') ?>" placeholder="z.B. 30"></td>
+                <td>
+                  <select name="pr_active[]" class="form-select">
+                    <option value="1" <?= (int)($row['is_active'] ?? 1) === 1 ? 'selected' : '' ?>>Aktiv</option>
+                    <option value="0" <?= (int)($row['is_active'] ?? 1) === 0 ? 'selected' : '' ?>>Inaktiv</option>
+                  </select>
+                </td>
+                <td><button type="button" class="btn btn-sm btn-app-outline-danger remove-pricingoption-row">✕</button></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+          <button type="button" id="addPricingOptionRow" class="btn btn-sm btn-app-outline-primary">+ Verkaufsmodell hinzufügen</button>
+        </div>
       </div>
 
       <div class="mt-3">
@@ -367,6 +433,36 @@ if ($action === 'new' || $action === 'edit') {
       });
     }
     document.querySelectorAll('#specialPriceTable tbody tr').forEach(bindSpecialPriceRow);
+
+    document.getElementById('addPricingOptionRow').addEventListener('click', function() {
+      const tbody = document.querySelector('#pricingOptionTable tbody');
+      const row = tbody.rows[0].cloneNode(true);
+      row.querySelectorAll('input').forEach(i => i.value = '');
+      row.querySelector('select[name="pr_billing_type[]"]').value = 'einmalig';
+      row.querySelector('select[name="pr_active[]"]').value = '1';
+      tbody.appendChild(row);
+      bindPricingOptionRow(row);
+    });
+    function bindPricingOptionRow(row) {
+      row.querySelector('.remove-pricingoption-row').addEventListener('click', function() {
+        if (document.querySelectorAll('#pricingOptionTable tbody tr').length > 1) row.remove();
+      });
+      row.querySelector('.pr-billing-type').addEventListener('change', updatePricingOptionRowState.bind(null, row));
+      updatePricingOptionRowState(row);
+    }
+    // Mindestlaufzeit/Kündigungsfrist sind nur bei Abo-Modellen relevant.
+    // Bewusst readOnly statt disabled: disabled-Felder werden beim Submit
+    // nicht mitgesendet und würden die Array-Indizes der anderen pr_*[]
+    // Felder verschieben (serverseitig werden die Werte bei 'einmalig'
+    // ohnehin ignoriert, siehe save_article_pricing_options()).
+    function updatePricingOptionRowState(row) {
+      const isRecurring = row.querySelector('.pr-billing-type').value !== 'einmalig';
+      row.querySelectorAll('.pr-recurring-field').forEach(f => {
+        f.readOnly = !isRecurring;
+        f.classList.toggle('bg-body-secondary', !isRecurring);
+      });
+    }
+    document.querySelectorAll('#pricingOptionTable tbody tr').forEach(bindPricingOptionRow);
     </script>
     <?php
     require_once ROOT_PATH . '/includes/footer.php';

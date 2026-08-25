@@ -102,7 +102,7 @@ if ($action === 'view') {
     </div>
     <div class="card p-3 mb-3">
       <table class="table">
-        <thead><tr><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt</th></tr></thead>
+        <thead><tr><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt</th><th>Modell</th></tr></thead>
         <tbody>
         <?php foreach ($items as $it): ?>
           <tr>
@@ -111,6 +111,7 @@ if ($action === 'view') {
             <td class="text-end"><?= money($it['unit_price']) ?></td>
             <td class="text-end"><?= num($it['tax_rate']) ?>%</td>
             <td class="text-end"><?= money($it['quantity']*$it['unit_price']) ?></td>
+            <td><?= ($it['billing_type'] ?? 'einmalig') !== 'einmalig' ? '<span class="badge text-bg-info">' . ($it['billing_type']==='jaehrlich'?'Jährlich':'Monatlich') . '</span>' : '' ?></td>
           </tr>
         <?php endforeach; ?>
         </tbody>
