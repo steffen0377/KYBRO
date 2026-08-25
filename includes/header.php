@@ -73,7 +73,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
       </a>
     </div>
     <?php
-      $verkaufActive = nav_group_active(['angebote.php', 'auftraege.php', 'rechnungen.php']);
+      $verkaufActive = nav_group_active(['angebote.php', 'abos.php', 'auftraege.php', 'rechnungen.php']);
       $einkaufActive = nav_group_active(['lieferanten.php']);
       $einstellungenActive = nav_group_active(['einstellungen.php', 'formulareinstellungen.php', 'kategorien.php', 'lizenzen.php']);
       $hasWarenwirtschaftLicense = has_module_license('warenwirtschaft');
@@ -103,6 +103,7 @@ function render_article_category_nav(array $byParent, int $parentId, int $depth,
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('angebote.php') ?>" href="<?= module_url('angebote.php') ?>"><i class="bi bi-file-earmark-text me-2"></i>Angebote</a></li>
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('auftraege.php') ?>" href="<?= module_url('auftraege.php') ?>"><i class="bi bi-clipboard-check me-2"></i>Aufträge</a></li>
             <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('rechnungen.php') ?>" href="<?= module_url('rechnungen.php') ?>"><i class="bi bi-receipt me-2"></i>Rechnungen</a></li>
+            <li class="nav-item"><a class="nav-link text-white-50 <?= nav_active('abos.php') ?>" href="<?= module_url('abos.php') ?>"><i class="bi bi-repeat me-2"></i>Abonnements</a></li>
           </ul>
         </div>
       </li>
