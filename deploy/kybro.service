@@ -1,0 +1,21 @@
+# /etc/systemd/system/kybro.service
+# Anpassen: Pfade (/srv/kybro) und Benutzer. Danach:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now kybro
+[Unit]
+Description=KYBRO Warenwirtschaft (gunicorn)
+After=network.target mariadb.service
+
+[Service]
+User=kybro
+Group=kybro
+WorkingDirectory=/srv/kybro
+EnvironmentFile=/srv/kybro/.env
+ExecStart=/srv/kybro/venv/bin/gunicorn config.wsgi:application --bind 127.0.0.1:8000 --workers 3 --timeout 60
+Restart=on-failure
+# Nur das Nötigste darf geschrieben werden (Medien für Logo/Briefbogen/Unterschriften)
+ProtectSystem=full
+ReadWritePaths=/srv/kybro/media
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

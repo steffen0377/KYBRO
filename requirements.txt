@@ -1,6 +1,20 @@
 Django>=5.2,<5.3
 django-environ>=0.11
 gunicorn>=22.0
+
+# PDF-Erzeugung und E-Rechnung (ZUGFeRD / Factur-X)
+# WeasyPrint braucht unter Ubuntu: sudo apt install libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu fonts-liberation
+weasyprint>=68
+factur-x>=4.0
+pikepdf>=9.0
+lxml>=5.0
+Pillow>=10.0
+
+# Mobile API und LDAP-Anmeldung
+PyJWT>=2.8
+ldap3>=2.9
+cryptography>=42
+
 # Nur für den Betrieb mit MariaDB nötig. Voraussetzung auf Ubuntu:
 #   sudo apt install libmariadb-dev pkg-config build-essential python3-dev
 mysqlclient>=2.2

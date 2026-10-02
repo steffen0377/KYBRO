@@ -1,0 +1,96 @@
+# Betrieb von KYBRO (Ubuntu, MariaDB, Apache)
+
+Diese Anleitung beschreibt die Installation auf einem Ubuntu-Server mit MariaDB und Apache als
+Reverse-Proxy. Die Anwendung selbst läuft mit gunicorn als Systemdienst. Die Beispieldateien liegen
+im Ordner `deploy/`.
+
+## 1. Pakete
+
+```bash
+sudo apt install python3-venv python3-dev build-essential pkg-config libmariadb-dev \
+                 mariadb-server apache2 libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu fonts-liberation
+```
+
+## 2. Datenbank
+
+```sql
+CREATE DATABASE kybro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'kybro'@'localhost' IDENTIFIED BY 'ein-starkes-passwort';
+GRANT ALL PRIVILEGES ON kybro.* TO 'kybro'@'localhost';
+```
+
+## 3. Anwendung
+
+```bash
+sudo useradd --system --create-home --home-dir /srv/kybro --shell /usr/sbin/nologin kybro
+# Code per git nach /srv/kybro legen (git clone bzw. git am der Patch-Dateien)
+cd /srv/kybro
+sudo -u kybro python3 -m venv venv
+sudo -u kybro venv/bin/pip install -r requirements.txt
+sudo -u kybro cp .env.example .env     # danach bearbeiten (siehe unten)
+sudo chmod 600 .env
+sudo -u kybro mkdir -p media
+sudo -u kybro venv/bin/python manage.py migrate
+sudo -u kybro venv/bin/python manage.py collectstatic --noinput
+sudo -u kybro venv/bin/python manage.py createsuperuser
+```
+
+Pflichtwerte der `.env` im Produktivbetrieb: `DEBUG=False`, `SECRET_KEY` (zufällig, geheim halten und sichern –
+aus ihm werden auch die Verschlüsselung der gespeicherten Passwörter und die API-Tokens abgeleitet),
+`ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS=https://kybro.example.de`, `TRUST_PROXY_SSL_HEADER=True` und die
+`DB_*`-Werte.
+
+> **Wichtig:** Wird der `SECRET_KEY` geändert, lassen sich die in den Einstellungen gespeicherten Passwörter
+> (SMTP, LDAP-Bind) nicht mehr entschlüsseln und müssen neu eingegeben werden. Alle angemeldeten Sitzungen
+> und API-Tokens werden ungültig.
+
+## 4. Dienste
+
+```bash
+sudo cp deploy/kybro.service deploy/kybro-abos.service deploy/kybro-abos.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now kybro kybro-abos.timer
+sudo cp deploy/apache-kybro.conf /etc/apache2/sites-available/kybro.conf   # Servername und Zertifikat anpassen
+sudo a2enmod proxy proxy_http headers ssl rewrite && sudo a2ensite kybro && sudo systemctl reload apache2
+```
+
+Der Timer `kybro-abos` erzeugt täglich um 05:00 Uhr die Entwurfsrechnungen fälliger Abonnements
+(`manage.py abo_rechnungen_erzeugen`). Der Lauf ist wiederholbar, ohne Doppelrechnungen zu erzeugen.
+Die Entwürfe müssen anschließend in der Anwendung geprüft und freigegeben werden.
+
+## 5. Erste Einrichtung in der Anwendung
+
+1. Als Administrator anmelden.
+2. **Einstellungen › Lizenzen:** eine Lizenz mit dem Modul „Warenwirtschaft“ anlegen. Ohne gültige Lizenz sind
+   die Fachmodule gesperrt (Hinweis „Keine gültige Lizenz“).
+3. **Einstellungen › Firma:** Firmen- und Bankdaten, Logo, Briefbogen (PNG/JPG oder PDF), Präfixe, Zahlungsziel.
+   Die Firmendaten gehen in die PDFs und in die E-Rechnung (ZUGFeRD) ein.
+4. **Einstellungen › E-Mail:** SMTP-Zugang eintragen und mit „Testmail“ prüfen.
+5. **Einstellungen › Formulare:** Layout und Texte der PDFs.
+6. **Einstellungen › Anmeldung:** optional LDAP. „Nur LDAP“ lässt lokale Administratoren nur dann zu,
+   wenn der LDAP-Server nicht erreichbar ist (Notfallzugang, wird protokolliert).
+7. Benutzer und Gruppen anlegen (Menü „Benutzer“, „Gruppen und Rechte“).
+
+## 6. Sicherung und Aktualisierung
+
+* Sichern: Datenbank (`mysqldump --single-transaction kybro`), Ordner `media/` (Logo, Briefbogen, Unterschriften)
+  und die Datei `.env` (enthält den `SECRET_KEY`).
+* Aktualisieren:
+
+  ```bash
+  cd /srv/kybro
+  sudo -u kybro git am /tmp/*.patch            # bzw. git pull
+  sudo -u kybro venv/bin/pip install -r requirements.txt
+  sudo -u kybro venv/bin/python manage.py migrate
+  sudo -u kybro venv/bin/python manage.py collectstatic --noinput
+  sudo systemctl restart kybro
+  ```
+
+* Protokolle: `journalctl -u kybro` (Anwendung), `journalctl -u kybro-abos` (Abo-Lauf).
+
+## 7. Hinweise zur Sicherheit
+
+* Die Anwendung nur über HTTPS betreiben (Apache-Beispiel leitet um und setzt HSTS).
+* `/media` nicht veröffentlichen: Briefbogen und Unterschriften werden nur über die Anwendung ausgeliefert.
+* Die Mobile-API (`/api/v1/`) nutzt Token-Anmeldung mit Sperre nach 5 Fehlversuchen je Benutzer und IP-Adresse.
+  Beschreibung: `api/README.md`.

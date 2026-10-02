@@ -1,0 +1,12 @@
+# /etc/systemd/system/kybro-abos.timer
+#   sudo systemctl enable --now kybro-abos.timer
+#   Prüfen: systemctl list-timers kybro-abos.timer   |   Protokoll: journalctl -u kybro-abos.service
+[Unit]
+Description=KYBRO: Abo-Rechnungen täglich erzeugen
+
+[Timer]
+OnCalendar=*-*-* 05:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,13 @@
+# /etc/systemd/system/kybro-abos.service
+# Erzeugt täglich die Entwurfsrechnungen fälliger Abonnements (gesteuert durch kybro-abos.timer).
+[Unit]
+Description=KYBRO: Abo-Rechnungen erzeugen
+After=mariadb.service
+
+[Service]
+Type=oneshot
+User=kybro
+Group=kybro
+WorkingDirectory=/srv/kybro
+EnvironmentFile=/srv/kybro/.env
+ExecStart=/srv/kybro/venv/bin/python manage.py abo_rechnungen_erzeugen
