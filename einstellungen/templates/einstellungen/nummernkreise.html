@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Einstellungen</h4>
+{% include "einstellungen/_register.html" %}
+<form method="post" class="card p-4">
+  {% csrf_token %}
+  <h5>Nummernkreise</h5>
+  <p class="text-muted small">Belegnummern setzen sich aus Präfix, Jahr und laufender Nummer zusammen (z. B. {{ firma.praefix_rechnung }}{{ jahr }}-0001).
+    Der Zähler beginnt jedes Jahr bei 1. Präfixe ändern Sie unter „Firma“.</p>
+  {{ formset.management_form }}
+  <table class="table align-middle" style="max-width:520px;">
+    <thead><tr><th>Beleg</th><th>Jahr</th><th>Nächste Nummer</th></tr></thead>
+    <tbody>
+    {% for f in formset %}
+      <tr><td>{{ f.instance.get_art_display }}{{ f.id }}</td><td>{{ f.instance.jahr }}</td>
+        <td>{{ f.naechste_nummer }}{% for e in f.naechste_nummer.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}</td></tr>
+    {% empty %}<tr><td colspan="3" class="text-muted">Noch keine Nummern vergeben; der Kreis entsteht mit dem ersten Beleg des Jahres.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% if formset.forms %}<div><button class="btn btn-app-primary" type="submit">Speichern</button></div>{% endif %}
+</form>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Einstellungen</h4>
+{% include "einstellungen/_register.html" %}
+<form method="post" class="card p-4" {% if mehrteilig %}enctype="multipart/form-data"{% endif %}>
+  {% csrf_token %}
+  <h5 class="mb-3">{{ titel }}</h5>
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  <div class="row">
+    {% for feld in form %}<div class="col-md-6">{% include "core/feld.html" with feld=feld %}</div>{% endfor %}
+  </div>
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    {% if testknopf %}<button class="btn btn-app-outline-secondary" type="submit" name="test" value="1" formnovalidate>{{ testknopf }}</button>{% endif %}
+  </div>
+</form>
+{% endblock %}

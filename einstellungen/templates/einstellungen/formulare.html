@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Einstellungen</h4>
+{% include "einstellungen/_register.html" %}
+<form method="post" class="card p-4">
+  {% csrf_token %}
+  <h5>Formulare (PDF-Layout und Texte)</h5>
+  <p class="text-muted small">„Global“ gilt für alle Belege. Die Bereiche Angebot, Auftrag und Rechnung überschreiben nur, was dort ausgefüllt ist.</p>
+  <ul class="nav nav-pills mb-3">
+    {% for bereich, felder in form.bereiche %}
+      <li class="nav-item"><button type="button" class="nav-link {% if forloop.first %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#b-{{ bereich }}">{{ bereich|capfirst }}</button></li>
+    {% endfor %}
+  </ul>
+  <div class="tab-content">
+    {% for bereich, felder in form.bereiche %}
+      <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="b-{{ bereich }}">
+        <div class="row">
+          {% for name in felder %}
+            {% for feld in form %}{% if feld.name == name %}
+              <div class="col-md-{% if 'fusszeile' in name or 'einleitung' in name or 'schluss' in name %}12{% else %}4{% endif %}">{% include "core/feld.html" with feld=feld %}</div>
+            {% endif %}{% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <div><button class="btn btn-app-primary" type="submit">Speichern</button></div>
+</form>
+{% endblock %}

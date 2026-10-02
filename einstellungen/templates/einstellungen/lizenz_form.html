@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Einstellungen</h4>
+{% include "einstellungen/_register.html" %}
+<form method="post" class="card p-4" style="max-width:640px;">
+  {% csrf_token %}
+  <h5>Lizenz</h5>
+  {% for feld in form %}{% include "core/feld.html" with feld=feld %}{% endfor %}
+  <div><button class="btn btn-app-primary" type="submit">Speichern</button> <a href="{% url 'einstellungen:lizenzen' %}" class="btn btn-app-secondary">Abbrechen</a></div>
+</form>
+{% endblock %}

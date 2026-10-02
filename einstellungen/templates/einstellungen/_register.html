@@ -1,0 +1,5 @@
+<ul class="nav nav-tabs mb-3">
+  {% for name, label in register %}
+    <li class="nav-item"><a class="nav-link {% if name == aktives_register %}active{% endif %}" href="{% url 'einstellungen:'|add:name %}">{{ label }}</a></li>
+  {% endfor %}
+</ul>

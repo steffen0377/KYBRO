@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Einstellungen</h4>
+{% include "einstellungen/_register.html" %}
+<form method="post" class="card p-4">
+  {% csrf_token %}
+  <h5 class="mb-3">{{ titel }}</h5>
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  <div class="row">
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.modus %}</div>
+  </div>
+  <p class="text-muted small">Bei „Nur LDAP“ können sich lokale Administratoren nur anmelden, wenn der LDAP-Server nicht erreichbar ist (Notfallzugang).</p>
+  <hr>
+  <div class="row">
+    <div class="col-md-5">{% include "core/feld.html" with feld=form.ldap_host %}</div>
+    <div class="col-md-2">{% include "core/feld.html" with feld=form.ldap_port %}</div>
+    <div class="col-md-5">{% include "core/feld.html" with feld=form.ldap_verschluesselung %}</div>
+    <div class="col-md-12">{% include "core/feld.html" with feld=form.ldap_base_dn %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.ldap_bind_dn %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.ldap_bind_passwort %}</div>
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.ldap_benutzerfilter %}</div>
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.ldap_namensattribut %}</div>
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.ldap_mailattribut %}</div>
+  </div>
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <button class="btn btn-app-outline-secondary" type="submit" name="test" value="1" formnovalidate>Gespeicherte Verbindung testen</button>
+  </div>
+</form>
+{% endblock %}
