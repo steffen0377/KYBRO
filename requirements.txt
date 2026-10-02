@@ -1,0 +1,6 @@
+Django>=5.2,<5.3
+django-environ>=0.11
+gunicorn>=22.0
+# Nur für den Betrieb mit MariaDB nötig. Voraussetzung auf Ubuntu:
+#   sudo apt install libmariadb-dev pkg-config build-essential python3-dev
+mysqlclient>=2.2

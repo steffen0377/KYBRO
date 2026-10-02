@@ -1,0 +1,23 @@
+# Lokale, serverspezifische Konfiguration (enthält Geheimnisse) - NIE einchecken
+.env
+
+# Virtuelle Umgebung
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+
+# Django
+db.sqlite3
+/staticfiles/
+/media/*
+!/media/.gitkeep
+
+# Betriebssystem und Editor
+.DS_Store
+*.log
+.idea/
+.vscode/
