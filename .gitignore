@@ -21,3 +21,6 @@ db.sqlite3
 *.log
 .idea/
 .vscode/
+
+# Ausgabeordner von Claude (Patches)
+/Claude/
