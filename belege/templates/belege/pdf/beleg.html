@@ -1,0 +1,106 @@
+{% load pdf_filter %}<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>{{ titel }} {{ beleg.nummer }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: {{ e.rand_oben }}mm {{ e.rand_rechts }}mm {{ e.rand_unten }}mm {{ e.rand_links }}mm;
+    {% if briefbogen_bild %}background: url("{{ briefbogen_bild }}") no-repeat 0 0 / 210mm 297mm;{% endif %}
+    {% if e.seitenzahl == "1" %}
+    @bottom-right { content: "Seite " counter(page) " von " counter(pages); font-size: 8pt; color: #666; vertical-align: bottom; }
+    {% endif %}
+    @bottom-left { content: element(fusszeile); width: 80%; vertical-align: bottom; }
+  }
+  body { margin: 0; font-family: {{ schrift|safe }}; font-size: {{ e.schriftgroesse }}pt; color: #222; }
+  #fusszeile { position: running(fusszeile); font-size: 8pt; color: #666; line-height: 1.3; }
+  .logo { position: absolute; top: calc(8mm - {{ e.rand_oben }}mm); height: {{ e.logo_hoehe }}mm;
+          {% if e.logo_position == "rechts" %}right: 0;{% elif e.logo_position == "mitte" %}left: 50%; transform: translateX(-50%);{% else %}left: 0;{% endif %} }
+  .absender { position: absolute; top: calc(53mm - {{ e.rand_oben }}mm); left: 0; width: 85mm; font-size: 7pt; text-decoration: underline; }
+  .empfaenger { position: absolute; top: calc(60mm - {{ e.rand_oben }}mm); left: 0; width: 85mm; height: 40mm; font-size: 11pt; }
+  .abstand { height: calc(95mm - {{ e.rand_oben }}mm); }
+  h1 { font-size: 16pt; margin: 0 0 4mm; color: {{ e.akzentfarbe }}; }
+  .infos { margin-bottom: 5mm; }
+  .infos span { margin-right: 6mm; }
+  .text { margin: 4mm 0; white-space: pre-line; }
+  table { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+  th { background: #eee; text-align: left; padding: 1.5mm; border-bottom: 0.5mm solid {{ e.akzentfarbe }}; }
+  td { padding: 1.5mm; border-bottom: 0.2mm solid #ddd; vertical-align: top; }
+  tr { page-break-inside: avoid; }
+  .r { text-align: right; }
+  .summen { width: 80mm; margin-left: auto; page-break-inside: avoid; }
+  .summen td { border: none; padding: 0.8mm 1.5mm; }
+  .summen .gesamt td { font-weight: bold; font-size: 1.15em; border-top: 0.3mm solid #444; }
+  .hinweis { margin-top: 4mm; font-size: 9pt; }
+</style>
+</head>
+<body>
+{% if logo %}<img class="logo" src="{{ logo }}" alt="">{% endif %}
+<div class="absender">{{ firma.firmenname }} · {{ firma.strasse }} · {{ firma.plz }} {{ firma.ort }}</div>
+<div class="empfaenger">{% for z in empfaenger %}{{ z }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
+<div class="abstand"></div>
+
+<h1>{{ titel }} {{ beleg.nummer }}</h1>
+<div class="infos">{% for name, wert in infos %}<span><strong>{{ name }}:</strong> {{ wert }}</span>{% endfor %}</div>
+{% if e.einleitung %}<div class="text">{{ e.einleitung }}</div>{% endif %}
+
+<table>
+  <thead><tr>
+    {% for s in spalten %}
+      {% if s == "pos" %}<th>Pos.</th>
+      {% elif s == "artikelnr" %}<th>Art.-Nr.</th>
+      {% elif s == "bezeichnung" %}<th>Beschreibung</th>
+      {% elif s == "menge" %}<th class="r">Menge</th>
+      {% elif s == "einzelpreis" %}<th class="r">Einzelpreis</th>
+      {% elif s == "rabatt" %}<th class="r">Rabatt</th>
+      {% elif s == "gesamt" %}<th class="r">Gesamt (netto)</th>{% endif %}
+    {% endfor %}
+    <th class="r">MwSt.</th>
+  </tr></thead>
+  <tbody>
+  {% for p in positionen %}
+    <tr>
+    {% for s in spalten %}
+      {% if s == "pos" %}<td>{{ forloop.parentloop.counter }}</td>
+      {% elif s == "artikelnr" %}<td>{{ p.artikelnummer }}</td>
+      {% elif s == "bezeichnung" %}<td>{{ p.beschreibung|linebreaksbr }}</td>
+      {% elif s == "menge" %}<td class="r">{{ p.menge|menge_text }} {{ p.einheit }}</td>
+      {% elif s == "einzelpreis" %}<td class="r">{{ p.einzelpreis|geld }}</td>
+      {% elif s == "rabatt" %}<td class="r">{% if p.rabatt %}{{ p.rabatt|menge_text }} %{% endif %}</td>
+      {% elif s == "gesamt" %}<td class="r">{{ p.netto|geld }}</td>{% endif %}
+    {% endfor %}
+      <td class="r">{{ p.steuersatz|menge_text }} %</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<table class="summen">
+  {% if e.zwischensumme == "1" %}<tr><td>Netto-Summe</td><td class="r">{{ summen.netto|geld }}</td></tr>{% endif %}
+  {% if e.steueraufschluesselung == "1" and mehrere_steuersaetze %}
+    {% for satz, g in summen.gruppen.items %}
+      <tr><td>zzgl. {{ satz|menge_text }} % MwSt. (auf {{ g.netto|geld }})</td><td class="r">{{ g.steuer|geld }}</td></tr>
+    {% endfor %}
+  {% else %}
+    <tr><td>zzgl. MwSt.</td><td class="r">{{ summen.steuer|geld }}</td></tr>
+  {% endif %}
+  <tr class="gesamt"><td>Gesamtbetrag</td><td class="r">{{ summen.brutto|geld }}</td></tr>
+</table>
+
+{% if befreiung %}<div class="hinweis">Steuerfreie Leistung{% if befreiungsgrund %}: {{ befreiungsgrund }}{% endif %}.</div>{% endif %}
+{% if beleg.notizen %}<div class="text">{{ beleg.notizen }}</div>{% endif %}
+{% if e.schluss %}<div class="text">{{ e.schluss }}</div>{% endif %}
+
+{% if e.fusszeile_firmenblock == "1" or e.fusszeile %}
+<div id="fusszeile">
+  {% if e.fusszeile_firmenblock == "1" %}
+    {{ firma.firmenname }} · {{ firma.strasse }}, {{ firma.plz }} {{ firma.ort }}
+    {% if firma.ust_id %} · USt-IdNr.: {{ firma.ust_id }}{% endif %}
+    {% if firma.iban %} · IBAN: {{ firma.iban }}{% endif %}{% if firma.bic %} · BIC: {{ firma.bic }}{% endif %}
+  {% endif %}
+  {% if e.fusszeile %}{% if e.fusszeile_firmenblock == "1" %}<br>{% endif %}{{ e.fusszeile|linebreaksbr }}{% endif %}
+</div>
+{% endif %}
+</body>
+</html>

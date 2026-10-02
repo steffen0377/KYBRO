@@ -94,3 +94,23 @@ class Nummernkreis(models.Model):
 
     def __str__(self):
         return f"{self.get_art_display()} {self.jahr}: {self.naechste_nummer}"
+
+
+class Formulareinstellung(models.Model):
+    """Einzelner Layout-/Textwert für PDFs (Bereich ``global`` oder je Belegart).
+
+    Ein leerer Wert heißt "nicht überschrieben"; gelesen wird mit der Kette
+    Belegart -> global -> Vorgabe (siehe ``einstellungen.formulare``).
+    """
+
+    bereich = models.CharField("Bereich", max_length=20)
+    schluessel = models.CharField("Schlüssel", max_length=50)
+    wert = models.TextField("Wert", blank=True)
+
+    class Meta:
+        verbose_name = "Formulareinstellung"
+        verbose_name_plural = "Formulareinstellungen"
+        constraints = [models.UniqueConstraint(fields=["bereich", "schluessel"], name="eindeutig_formulareinstellung")]
+
+    def __str__(self):
+        return f"{self.bereich}.{self.schluessel}"

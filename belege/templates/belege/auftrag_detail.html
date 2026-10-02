@@ -4,7 +4,8 @@
 <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
   <h4>Auftrag {{ beleg.nummer }} <span class="badge bg-{{ badge }}">{{ beleg.get_status_display }}</span></h4>
   <div class="d-flex flex-wrap gap-1">
-    {% block pdf_knoepfe %}{% endblock %}
+    <a href="{% url 'belege:auftraege_pdf' beleg.pk %}" target="_blank" class="btn btn-sm btn-app-outline-primary">PDF ansehen</a>
+    <a href="{% url 'belege:auftraege_pdf' beleg.pk %}?download=1" class="btn btn-sm btn-app-outline-secondary">PDF laden</a>
     {% if darf_rechnung_schreiben and not rechnungen and beleg.status != "storniert" %}
       <form method="post" action="{% url 'belege:auftraege_zu_rechnung' beleg.pk %}" onsubmit="return confirm('Rechnung aus diesem Auftrag erstellen? Der Lagerbestand wird reduziert.')">{% csrf_token %}<button class="btn btn-app-success" type="submit">Rechnung erstellen</button></form>
     {% endif %}

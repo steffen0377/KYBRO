@@ -4,7 +4,8 @@
 <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
   <h4>Angebot {{ beleg.nummer }} <span class="badge bg-{{ badge }}">{{ beleg.get_status_display }}</span></h4>
   <div class="d-flex flex-wrap gap-1">
-    {% block pdf_knoepfe %}{% endblock %}
+    <a href="{% url 'belege:angebote_pdf' beleg.pk %}" target="_blank" class="btn btn-sm btn-app-outline-primary">PDF ansehen</a>
+    <a href="{% url 'belege:angebote_pdf' beleg.pk %}?download=1" class="btn btn-sm btn-app-outline-secondary">PDF laden</a>
     {% if darf_schreiben %}
       {% if beleg.bearbeitbar %}<a href="{% url 'belege:angebote_bearbeiten' beleg.pk %}" class="btn btn-app-outline-secondary">Bearbeiten</a>{% endif %}
       {% if not auftrag %}

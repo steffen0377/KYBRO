@@ -591,3 +591,41 @@ class RechnungSeriennummernView(ModulRechtMixin, TemplateView):
             return redirect("belege:rechnungen_seriennummern", pk=pk)
         messages.success(request, "Seriennummern zugeordnet, Lagerbestand aktualisiert.")
         return redirect("belege:rechnungen_ansehen", pk=pk)
+
+
+# ---------------------------------------------------------------------------
+# PDF
+# ---------------------------------------------------------------------------
+
+
+class BelegPdfView(ModulRechtMixin, View):
+    """Liefert das PDF eines Belegs (lesender Zugriff genügt)."""
+
+    model = None
+
+    def get(self, request, pk):
+        from django.http import HttpResponse
+
+        from . import pdf
+
+        beleg = get_object_or_404(self.model.objects.select_related("kunde"), pk=pk)
+        inhalt = pdf.beleg_pdf(beleg)
+        antwort = HttpResponse(inhalt, content_type="application/pdf")
+        art = "attachment" if request.GET.get("download") else "inline"
+        antwort["Content-Disposition"] = f'{art}; filename="{pdf.dateiname(beleg)}"'
+        return antwort
+
+
+class AngebotPdfView(BelegPdfView):
+    modul = "angebote"
+    model = Angebot
+
+
+class AuftragPdfView(BelegPdfView):
+    modul = "auftraege"
+    model = Auftrag
+
+
+class RechnungPdfView(BelegPdfView):
+    modul = "rechnungen"
+    model = Rechnung

@@ -5,7 +5,8 @@
   <h4>Rechnung {{ beleg.nummer }} <span class="badge bg-{{ badge }}">{{ beleg.get_status_display }}</span>
     {% if beleg.ist_ueberfaellig and beleg.status != "ueberfaellig" %}<span class="badge bg-danger">fällig überschritten</span>{% endif %}</h4>
   <div class="d-flex flex-wrap gap-1">
-    {% block pdf_knoepfe %}{% endblock %}
+    <a href="{% url 'belege:rechnungen_pdf' beleg.pk %}" target="_blank" class="btn btn-sm btn-app-outline-primary">PDF ansehen</a>
+    <a href="{% url 'belege:rechnungen_pdf' beleg.pk %}?download=1" class="btn btn-sm btn-app-outline-secondary">PDF laden</a>
     {% if darf_schreiben and beleg.ist_entwurf %}<a href="{% url 'belege:rechnungen_bearbeiten' beleg.pk %}" class="btn btn-app-outline-secondary">Bearbeiten</a>{% endif %}
   </div>
 </div>
