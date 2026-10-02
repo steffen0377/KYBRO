@@ -1,0 +1,9 @@
+{# Ein Formularfeld mit Beschriftung, Hilfetext und Fehlern. Aufruf: {% include "core/feld.html" with feld=form.name %} #}
+<div class="mb-3">
+  <label class="form-label" for="{{ feld.id_for_label }}">{{ feld.label }}</label>
+  {{ feld }}
+  {% if feld.help_text %}<div class="form-text">{{ feld.help_text }}</div>{% endif %}
+  {% for fehler in feld.errors %}
+    <div class="text-app-danger small">{{ fehler }}</div>
+  {% endfor %}
+</div>

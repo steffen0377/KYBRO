@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Benutzer</h4>
+  <a href="{% url 'accounts:benutzer_neu' %}" class="btn btn-app-primary">+ Neuer Benutzer</a>
+</div>
+<div class="card p-3">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr><th>Benutzername</th><th>Name</th><th>Rolle</th><th>Gruppen</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for b in benutzer %}
+        <tr class="{% if not b.is_active %}text-muted{% endif %}" style="cursor:pointer;" data-href="{% url 'accounts:benutzer_bearbeiten' b.pk %}">
+          <td><a href="{% url 'accounts:benutzer_bearbeiten' b.pk %}" class="text-reset text-decoration-none">{{ b.username }}</a></td>
+          <td>{{ b.get_full_name }}</td>
+          <td>{% if b.is_superuser %}Administrator{% else %}Benutzer{% endif %}</td>
+          <td>{% for g in b.groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</td>
+          <td>{% if b.is_active %}<span class="badge bg-app-success">Aktiv</span>{% else %}<span class="badge bg-app-secondary">Inaktiv</span>{% endif %}</td>
+          <td class="text-end">
+            {% if b.is_active and b.pk != user.pk %}
+              <form method="post" action="{% url 'accounts:benutzer_deaktivieren' b.pk %}" class="d-inline" onsubmit="return confirm('Benutzer deaktivieren?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-app-outline-danger">Deaktivieren</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

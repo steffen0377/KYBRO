@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>{% if object %}{{ object.anzeigename }}{% else %}Neuer Benutzer{% endif %}</h4>
+<form method="post" class="card p-4" style="max-width:560px;">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}
+    <div class="alert alert-app-danger">{{ fehler }}</div>
+  {% endfor %}
+
+  {% include "core/feld.html" with feld=form.username %}
+  <div class="row">
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.first_name %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.last_name %}</div>
+  </div>
+  {% include "core/feld.html" with feld=form.email %}
+  {% include "core/feld.html" with feld=form.password1 %}
+  {% include "core/feld.html" with feld=form.password2 %}
+  {% include "core/feld.html" with feld=form.rolle %}
+
+  <div class="mb-3">
+    <label class="form-label">{{ form.groups.label }}</label>
+    {% for gruppe in form.groups %}
+      <div class="form-check">
+        {{ gruppe.tag }}
+        <label class="form-check-label" for="{{ gruppe.id_for_label }}">{{ gruppe.choice_label }}</label>
+      </div>
+    {% empty %}
+      <div class="text-muted small">Es sind noch keine Gruppen angelegt.</div>
+    {% endfor %}
+    {% for fehler in form.groups.errors %}<div class="text-app-danger small">{{ fehler }}</div>{% endfor %}
+  </div>
+
+  <div class="form-check mb-3">
+    {{ form.is_active }}
+    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+    {% for fehler in form.is_active.errors %}<div class="text-app-danger small">{{ fehler }}</div>{% endfor %}
+  </div>
+
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% url 'accounts:benutzer_liste' %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

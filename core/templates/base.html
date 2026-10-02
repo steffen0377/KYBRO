@@ -87,6 +87,13 @@
       document.getElementById('sidebar').classList.toggle('d-none');
     });
   });
+  // Klick auf eine Tabellenzeile mit data-href öffnet das Ziel, außer bei Klicks auf Knöpfe und Links.
+  document.querySelectorAll('tr[data-href]').forEach(function (zeile) {
+    zeile.addEventListener('click', function (ereignis) {
+      if (ereignis.target.closest('a, button, form, input')) { return; }
+      window.location = zeile.dataset.href;
+    });
+  });
 </script>
 {% block extra_js %}{% endblock %}
 </body>

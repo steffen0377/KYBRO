@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>{% if object %}{{ object.name }}{% else %}Neue Gruppe{% endif %}</h4>
+<form method="post" class="card p-4" style="max-width:640px;">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}
+    <div class="alert alert-app-danger">{{ fehler }}</div>
+  {% endfor %}
+
+  {% include "core/feld.html" with feld=form.name %}
+
+  <label class="form-label">Zugriffsberechtigungen je Modul</label>
+  <div class="table-responsive mb-3">
+    <table class="table table-sm">
+      <thead>
+        <tr><th>Modul</th><th class="text-center">Lesen</th><th class="text-center">Schreiben</th></tr>
+      </thead>
+      <tbody>
+      {% for label, lesen, schreiben in form.rechte_zeilen %}
+        <tr>
+          <td>{{ label }}</td>
+          <td class="text-center">{{ lesen }}</td>
+          <td class="text-center">{{ schreiben }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="form-text">Schreiben schließt Lesen ein.</div>
+  </div>
+
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% url 'accounts:gruppe_liste' %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

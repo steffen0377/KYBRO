@@ -7,11 +7,12 @@ im Abschnitt "Projektstand".
 
 ## Projektstand
 
-Phase 1 (Grundgerüst) ist in Arbeit.
+Phase 1 (Grundgerüst) ist abgeschlossen: Anmeldung, Benutzerverwaltung sowie Gruppen
+mit Rechten je Modul funktionieren. Als Nächstes folgt Phase 2 (Stammdaten und Lager).
 
 | Phase | Inhalt | Stand |
 | --- | --- | --- |
-| 1 | Projekt, MariaDB, Login, Benutzer, Gruppen und Rechte | in Arbeit |
+| 1 | Projekt, MariaDB, Login, Benutzer, Gruppen und Rechte | fertig |
 | 2 | Stammdaten und Lager | offen |
 | 3 | Belege (Angebot, Auftrag, Rechnung) | offen |
 | 4 | PDF und E-Rechnung (ZUGFeRD) | offen |
@@ -49,6 +50,15 @@ python manage.py test
 | `config/` | Einstellungen, URL-Wurzel, WSGI/ASGI |
 | `accounts/` | Benutzer, Anmeldung, Gruppen und Modulrechte |
 | `core/` | Basis-Layout mit Seitenmenü, Dashboard, gemeinsame Styles und Bootstrap |
+
+## Benutzer und Gruppen
+
+Administratoren verwalten Benutzer und Gruppen im Menü unter "Einstellungen".
+Benutzer werden nicht gelöscht, sondern deaktiviert, damit Belege und
+Lagerbuchungen ihren Bearbeiter weiterhin nennen können. Ein Administrator kann
+sich weder selbst die Rolle entziehen noch das eigene Konto deaktivieren, sodass
+immer mindestens ein aktiver Administrator bleibt. Das erste Administratorkonto
+entsteht mit `python manage.py createsuperuser`.
 
 ## Layout und Menü
 
