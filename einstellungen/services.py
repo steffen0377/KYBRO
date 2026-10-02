@@ -1,6 +1,7 @@
 """Belegnummern: Präfix + Jahr + laufende Nummer, z. B. ``RE-2026-0001``."""
 
-from django.db import IntegrityError, transaction
+from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 
 from .models import Firma, Nummernkreis
@@ -23,14 +24,17 @@ def naechste_belegnummer(art: str, datum=None) -> str:
     """
     art = Nummernkreis.Art(art)
     jahr = (datum or timezone.localdate()).year
-    try:
-        with transaction.atomic():
-            Nummernkreis.objects.get_or_create(art=art, jahr=jahr)
-    except IntegrityError:  # gleichzeitig angelegt - die Zeile existiert jetzt
-        pass
-    kreis = Nummernkreis.objects.select_for_update().get(art=art, jahr=jahr)
-    nummer = kreis.naechste_nummer
-    kreis.naechste_nummer = nummer + 1
-    kreis.save(update_fields=["naechste_nummer"])
+    kreise = Nummernkreis.objects.filter(art=art, jahr=jahr)
+    # Vorhandene Zeile: sofort exklusiv hochzählen. Nur für den ersten Beleg eines Jahres
+    # wird der Kreis angelegt, und zwar unter der Sperre der Firmenzeile, damit gleichzeitige
+    # Anlagen nicht gegeneinander laufen (sonst Deadlocks unter MariaDB).
+    if not kreise.exists():
+        Firma.holen()
+        Firma.objects.select_for_update().get(pk=1)
+        # Sperrende Abfrage sieht auch das, was ein Wartender inzwischen angelegt hat.
+        if kreise.select_for_update().first() is None:
+            Nummernkreis.objects.create(art=art, jahr=jahr)
+    kreise.update(naechste_nummer=F("naechste_nummer") + 1)
+    nummer = kreise.get().naechste_nummer - 1
     praefix = getattr(Firma.holen(), PRAEFIX_FELD[art])
     return f"{praefix}{jahr}-{nummer:04d}"
