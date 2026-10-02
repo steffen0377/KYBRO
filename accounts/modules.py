@@ -45,3 +45,12 @@ def alle_rechte() -> list[tuple[str, str]]:
         rechte.append((recht_codename(modul, AKTION_LESEN), f"{label}: lesen"))
         rechte.append((recht_codename(modul, AKTION_SCHREIBEN), f"{label}: schreiben"))
     return rechte
+
+# Lizenzmodul, das für ein Rechtemodul freigeschaltet sein muss (siehe einstellungen.lizenzen).
+# Einstellungen und Benutzerverwaltung sind nicht lizenzpflichtig.
+LIZENZ_MODUL = {
+    modul: "warenwirtschaft"
+    for modul in (
+        "artikel", "lager", "kunden", "lieferanten", "angebote", "auftraege", "rechnungen", "abos", "kategorien",
+    )
+}

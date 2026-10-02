@@ -28,6 +28,9 @@ DEBUG = env.bool("DEBUG", default=False)
 
 RUNNING_TESTS = len(sys.argv) > 1 and sys.argv[1] == "test"
 
+# Lizenzprüfung für die Fachmodule; in automatischen Tests aus, damit sie die Tests nicht stört.
+LIZENZ_PRUEFUNG = env.bool("LIZENZ_PRUEFUNG", default=not RUNNING_TESTS)
+
 SECRET_KEY = env("SECRET_KEY", default="")
 if not SECRET_KEY:
     if DEBUG or RUNNING_TESTS:
@@ -125,6 +128,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ---------------------------------------------------------------------------
 
 AUTH_USER_MODEL = "accounts.User"
+
+AUTHENTICATION_BACKENDS = ["accounts.backends.AnmeldeBackend"]
 
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "core:dashboard"

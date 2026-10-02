@@ -26,6 +26,14 @@ class AnmeldeForm(AuthenticationForm):
         "inactive": "Dieses Konto ist deaktiviert.",
     }
 
+    def get_invalid_login_error(self):
+        if getattr(self.request, "ldap_nicht_erreichbar", False):
+            return ValidationError(
+                "Der LDAP-Server ist nicht erreichbar. Bitte wenden Sie sich an Ihren Administrator.",
+                code="ldap_unavailable",
+            )
+        return super().get_invalid_login_error()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["username"].label = "Benutzername"

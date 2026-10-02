@@ -114,3 +114,76 @@ class Formulareinstellung(models.Model):
 
     def __str__(self):
         return f"{self.bereich}.{self.schluessel}"
+
+
+# Module, die per Lizenz freigeschaltet werden. Weitere Module (CRM, Tickets, ...)
+# werden hier eingetragen; "core" (Benutzer, Einstellungen) ist immer frei.
+LIZENZ_MODULE = {
+    "warenwirtschaft": "Warenwirtschaft",
+}
+
+
+class Lizenz(models.Model):
+    class Status(models.TextChoices):
+        AKTIV = "active", "Aktiv"
+        ABGELAUFEN = "expired", "Abgelaufen"
+        WIDERRUFEN = "revoked", "Widerrufen"
+
+    referenz = models.CharField("Kunden-/Installationsreferenz", max_length=150)
+    gueltig_ab = models.DateField("Gültig ab")
+    gueltig_bis = models.DateField("Gültig bis", null=True, blank=True, help_text="Leer = unbefristet.")
+    status = models.CharField("Status", max_length=10, choices=Status.choices, default=Status.AKTIV)
+    module = models.JSONField("Module", default=list, blank=True)
+    erstellt = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Lizenz"
+        verbose_name_plural = "Lizenzen"
+        ordering = ["-gueltig_ab", "-pk"]
+
+    def __str__(self):
+        return self.referenz
+
+    @property
+    def modul_namen(self) -> str:
+        return ", ".join(LIZENZ_MODULE.get(m, m) for m in self.module)
+
+
+class Authentifizierung(models.Model):
+    """Anmeldeverfahren (Einzeleintrag): lokal und/oder LDAP."""
+
+    class Modus(models.TextChoices):
+        LOKAL = "local", "Nur lokale Datenbank"
+        LDAP = "ldap", "Nur LDAP (lokale Administratoren nur im Notfall)"
+        LDAP_DANN_LOKAL = "ldap_then_local", "LDAP vor lokaler Datenbank"
+        LOKAL_DANN_LDAP = "local_then_ldap", "Lokale Datenbank vor LDAP"
+
+    class Verschluesselung(models.TextChoices):
+        KEINE = "none", "Keine"
+        STARTTLS = "starttls", "StartTLS"
+        LDAPS = "ldaps", "LDAPS"
+
+    modus = models.CharField("Anmeldeverfahren", max_length=20, choices=Modus.choices, default=Modus.LOKAL)
+    ldap_host = models.CharField("LDAP-Server", max_length=150, blank=True)
+    ldap_port = models.PositiveIntegerField("Port", default=389)
+    ldap_verschluesselung = models.CharField(
+        "Verschlüsselung", max_length=10, choices=Verschluesselung.choices, default=Verschluesselung.KEINE
+    )
+    ldap_base_dn = models.CharField("Base DN", max_length=255, blank=True)
+    ldap_bind_dn = models.CharField("Bind-DN (Service-Account)", max_length=255, blank=True)
+    ldap_bind_passwort = VerschluesseltesTextFeld("Bind-Passwort", blank=True)
+    ldap_benutzerfilter = models.CharField("Benutzerfilter", max_length=255, default="(uid=%s)")
+    ldap_namensattribut = models.CharField("Attribut Anzeigename", max_length=50, default="cn")
+    ldap_mailattribut = models.CharField("Attribut E-Mail", max_length=50, default="mail")
+
+    class Meta:
+        verbose_name = "Authentifizierung"
+        verbose_name_plural = "Authentifizierung"
+
+    def __str__(self):
+        return "Authentifizierung"
+
+    @classmethod
+    def holen(cls) -> "Authentifizierung":
+        einstellung, _ = cls.objects.get_or_create(pk=1)
+        return einstellung

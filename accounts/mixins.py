@@ -7,10 +7,12 @@ Nicht angemeldete Besucher werden auf die Anmeldeseite geleitet, angemeldete
 Benutzer ohne Berechtigung erhalten die Fehlerseite 403.
 """
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 
-from .modules import AKTION_LESEN, AKTION_SCHREIBEN
+from .modules import AKTION_LESEN, AKTION_SCHREIBEN, LIZENZ_MODUL
 
 LESENDE_METHODEN = ("GET", "HEAD", "OPTIONS")
 
@@ -42,6 +44,12 @@ class ModulRechtMixin(LoginRequiredMixin):
             self.get_modul(), self.get_aktion()
         ):
             raise PermissionDenied("Ihnen fehlt die Berechtigung für dieses Modul.")
+        lizenzmodul = LIZENZ_MODUL.get(self.modul or "")
+        if request.user.is_authenticated and lizenzmodul and settings.LIZENZ_PRUEFUNG:
+            from einstellungen.lizenzen import modul_lizenziert, modulname
+
+            if not modul_lizenziert(lizenzmodul):
+                return render(request, "402.html", {"modulname": modulname(lizenzmodul)}, status=402)
         # Nicht angemeldete Besucher behandelt LoginRequiredMixin.
         return super().dispatch(request, *args, **kwargs)
 
