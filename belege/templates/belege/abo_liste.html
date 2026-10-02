@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h4 class="mb-3">Abonnements</h4>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto">
+    <div class="position-relative" style="min-width:300px;">
+      <input type="text" name="q" class="form-control" style="padding-right:2rem;" placeholder="Suche nach Kunde oder Artikel" value="{{ suche }}" autocomplete="off" data-livesuche="#ergebnis">
+      <button type="button" class="btn-close position-absolute top-50 end-0 translate-middle-y me-2" data-livesuche-leeren aria-label="Suche leeren"></button>
+    </div>
+  </div>
+  <div class="col-auto">
+    <select name="status" class="form-select" onchange="this.form.submit()">
+      <option value="">Alle Status</option>
+      {% for wert, label in status_auswahl %}<option value="{{ wert }}" {% if wert == status_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+</form>
+<div id="ergebnis">{% include "belege/_abo_tabelle.html" %}</div>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'core/js/livesuche.js' %}"></script>{% endblock %}

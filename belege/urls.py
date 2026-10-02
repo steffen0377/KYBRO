@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import abo_views, views
 
 app_name = "belege"
 
@@ -31,4 +31,8 @@ urlpatterns = [
     path("rechnungen/<int:pk>/status/", views.RechnungStatusView.as_view(), name="rechnungen_status"),
     path("rechnungen/<int:pk>/loeschen/", views.RechnungLoeschenView.as_view(), name="rechnungen_loeschen"),
     path("rechnungen/<int:pk>/seriennummern/", views.RechnungSeriennummernView.as_view(), name="rechnungen_seriennummern"),
+    path("abos/", abo_views.AboListeView.as_view(), name="abos_liste"),
+    path("abos/<int:pk>/", abo_views.AboDetailView.as_view(), name="abos_ansehen"),
+    path("abos/<int:pk>/kuendigen/", abo_views.AboKuendigenView.as_view(), name="abos_kuendigen"),
+    path("abos/<int:pk>/reaktivieren/", abo_views.AboReaktivierenView.as_view(), name="abos_reaktivieren"),
 ]

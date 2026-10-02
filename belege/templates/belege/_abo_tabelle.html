@@ -1,0 +1,26 @@
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Kunde</th><th>Artikel</th><th>Zyklus</th><th class="text-end">Preis (netto)</th><th>Nächste Abrechnung</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for a in abos %}
+      <tr style="cursor:pointer;" data-href="{% url 'belege:abos_ansehen' a.pk %}">
+        <td>{{ a.kunde.anzeigename }}</td>
+        <td>{{ a.artikel.name }}{% if a.menge != 1 %} × {{ a.menge }}{% endif %}</td>
+        <td>{{ a.get_zyklus_display }}</td>
+        <td class="text-end">{{ a.preis }} €</td>
+        <td>{% if a.status == "beendet" %}–{% else %}{{ a.naechste_abrechnung|date:"d.m.Y" }}{% endif %}</td>
+        <td><span class="badge bg-{% if a.status == 'aktiv' %}success{% elif a.status == 'gekuendigt' %}warning{% else %}dark{% endif %}">{{ a.get_status_display }}</span></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="text-muted text-center py-3">Keine Abonnements gefunden.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('#ergebnis tr[data-href]').forEach(function (zeile) {
+    zeile.addEventListener('click', function (e) { if (!e.target.closest('a,button,form,input')) { window.location = zeile.dataset.href; } });
+  });
+</script>

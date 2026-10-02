@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Abonnement: {{ abo.artikel.name }}
+  <span class="badge bg-{% if abo.status == 'aktiv' %}success{% elif abo.status == 'gekuendigt' %}warning{% else %}dark{% endif %}">{{ abo.get_status_display }}</span></h4>
+<div class="card p-3 mb-3">
+  <div class="row">
+    <div class="col-md-6">
+      <strong>Kunde:</strong> <a href="{% url 'stammdaten:kunden_bearbeiten' abo.kunde.pk %}">{{ abo.kunde.anzeigename }}</a><br>
+      <strong>Abrechnung:</strong> {{ abo.get_zyklus_display }}, {{ abo.menge }} × {{ abo.preis }} € netto<br>
+      <strong>Beginn:</strong> {{ abo.beginn|date:"d.m.Y" }}<br>
+      {% if abo.status != "beendet" %}<strong>Nächste Abrechnung:</strong> {{ abo.naechste_abrechnung|date:"d.m.Y" }}<br>{% endif %}
+      {% if abo.ende %}<strong>Ende:</strong> {{ abo.ende|date:"d.m.Y" }}<br>{% endif %}
+    </div>
+    <div class="col-md-6">
+      {% if abo.mindestlaufzeit_monate %}<strong>Mindestlaufzeit:</strong> {{ abo.mindestlaufzeit_monate }} Monate (bis {{ abo.fruehestes_ende|date:"d.m.Y" }})<br>{% endif %}
+      <strong>Kündigungsfrist:</strong> {{ abo.kuendigungsfrist_tage|default:0 }} Tage<br>
+      {% if abo.kuendigung_wirksam %}<strong>Kündigung eingegangen:</strong> {{ abo.kuendigung_eingang|date:"d.m.Y" }}<br>
+        <strong>Wirksam zum:</strong> {{ abo.kuendigung_wirksam|date:"d.m.Y" }}<br>{% endif %}
+      {% if abo.ursprungsrechnung %}<strong>Ursprungsrechnung:</strong> <a href="{% url 'belege:rechnungen_ansehen' abo.ursprungsrechnung.pk %}">{{ abo.ursprungsrechnung.nummer }}</a>{% endif %}
+    </div>
+  </div>
+</div>
+
+{% if darf_schreiben %}
+  {% if abo.status == "aktiv" %}
+    <form method="post" action="{% url 'belege:abos_kuendigen' abo.pk %}" class="card p-3 mb-3" onsubmit="return confirm('Abonnement kündigen?')">
+      {% csrf_token %}
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label">Kündigung eingegangen am</label><input type="date" name="eingang" class="form-control" value="{% now 'Y-m-d' %}"></div>
+        <div class="col-md-6 text-muted small">Bei Kündigung heute endet das Abonnement zum {{ vorschau.kuendigung_wirksam|date:"d.m.Y" }} (nach Mindestlaufzeit und Kündigungsfrist, zum Ende eines Abrechnungszeitraums).</div>
+        <div class="col-auto"><button class="btn btn-app-outline-danger" type="submit">Kündigen</button></div>
+      </div>
+    </form>
+  {% elif abo.status == "gekuendigt" %}
+    <form method="post" action="{% url 'belege:abos_reaktivieren' abo.pk %}" class="mb-3">{% csrf_token %}
+      <button class="btn btn-app-outline-secondary" type="submit">Kündigung zurücknehmen</button></form>
+  {% endif %}
+{% endif %}
+
+<div class="card p-3">
+  <h6>Rechnungen</h6>
+  <table class="table align-middle mb-0">
+    <thead><tr><th>Nr.</th><th>Zeitraum</th><th class="text-end">Betrag</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for r in rechnungen %}
+      <tr><td><a href="{% url 'belege:rechnungen_ansehen' r.pk %}">{{ r.nummer }}</a></td>
+        <td>{% if r.zeitraum_von %}{{ r.zeitraum_von|date:"d.m.Y" }} – {{ r.zeitraum_bis|date:"d.m.Y" }}{% endif %}</td>
+        <td class="text-end">{{ r.brutto }} €</td><td>{{ r.get_status_display }}</td></tr>
+    {% empty %}<tr><td colspan="4" class="text-muted">Noch keine Folgerechnungen.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
