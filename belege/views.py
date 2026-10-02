@@ -629,3 +629,19 @@ class AuftragPdfView(BelegPdfView):
 class RechnungPdfView(BelegPdfView):
     modul = "rechnungen"
     model = Rechnung
+
+
+class AuftragUnterschriftView(ModulRechtMixin, View):
+    """Liefert das Unterschriftsbild nur an angemeldete Benutzer mit Leserecht (kein öffentliches /media)."""
+
+    modul = "auftraege"
+
+    def get(self, request, pk):
+        from django.http import FileResponse, Http404
+
+        auftrag = get_object_or_404(Auftrag, pk=pk)
+        if not auftrag.unterschrift:
+            raise Http404("Keine Unterschrift vorhanden.")
+        antwort = FileResponse(auftrag.unterschrift.open("rb"))
+        antwort["Cache-Control"] = "private, max-age=3600"
+        return antwort

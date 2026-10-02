@@ -20,12 +20,12 @@
     {% for r in rechnungen %}<a href="{% url 'belege:rechnungen_ansehen' r.pk %}" class="ms-1">{{ r.nummer }}</a> <span class="badge bg-secondary">{{ r.get_status_display }}</span>{% endfor %}
   </div>
 {% endif %}
-<div class="card p-3 mb-3">
+<div class="card p-3 mb-3"><div>
   <strong>Kunde:</strong> <a href="{% url 'stammdaten:kunden_bearbeiten' beleg.kunde.pk %}">{{ beleg.kunde.anzeigename }}</a><br>
   {{ beleg.kunde.strasse }}, {{ beleg.kunde.plz }} {{ beleg.kunde.ort }}<br>
   <strong>Datum:</strong> {{ beleg.datum|date:"d.m.Y" }}
   {% if beleg.unterschrieben_am %}<br><strong>Unterschrieben</strong> am {{ beleg.unterschrieben_am|date:"d.m.Y H:i" }}{% if beleg.unterschrieben_von %} von {{ beleg.unterschrieben_von }}{% endif %}{% endif %}
-  {% if beleg.unterschrift %}<div class="mt-2"><img src="{{ beleg.unterschrift.url }}" alt="Unterschrift" style="max-height:80px;background:#fff;border:1px solid #dee2e6;"></div>{% endif %}
+  {% if beleg.unterschrift %}<div class="mt-2"><img src="{% url 'belege:auftraege_unterschrift' beleg.pk %}" alt="Unterschrift" style="max-height:80px;background:#fff;border:1px solid #dee2e6;"></div></div>{% endif %}
 </div>
 <div class="card p-3 mb-3">
   {% include "belege/_positionen_tabelle.html" %}

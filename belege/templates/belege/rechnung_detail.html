@@ -22,14 +22,14 @@
     {% url 'belege:abos_ansehen' beleg.abo.pk as url_abo %}{% if url_abo %}<a href="{{ url_abo }}" class="btn btn-sm btn-app-outline-primary">Abo ansehen</a>{% endif %}
   </div>
 {% endif %}
-<div class="card p-3 mb-3">
+<div class="card p-3 mb-3"><div>
   <strong>Kunde:</strong> <a href="{% url 'stammdaten:kunden_bearbeiten' beleg.kunde.pk %}">{{ beleg.kunde.anzeigename }}</a><br>
   {{ beleg.kunde.strasse }}, {{ beleg.kunde.plz }} {{ beleg.kunde.ort }}<br>
   <strong>Rechnungsdatum:</strong> {{ beleg.datum|date:"d.m.Y" }}
   {% if beleg.faellig_am %} — <strong>Fällig bis:</strong> {{ beleg.faellig_am|date:"d.m.Y" }}{% endif %}
   {% if beleg.leistungsdatum %} — <strong>Leistungsdatum:</strong> {{ beleg.leistungsdatum|date:"d.m.Y" }}{% endif %}
   {% if beleg.auftrag %}<br><span class="text-muted">Zu Auftrag</span> <a href="{% url 'belege:auftraege_ansehen' beleg.auftrag.pk %}">{{ beleg.auftrag.nummer }}</a>{% endif %}
-</div>
+</div></div>
 <div class="card p-3 mb-3">
   {% include "belege/_positionen_tabelle.html" %}
 </div>

@@ -25,11 +25,11 @@
   </div>
 {% endif %}
 
-<div class="card p-3 mb-3">
+<div class="card p-3 mb-3"><div>
   <strong>Kunde:</strong> <a href="{% url 'stammdaten:kunden_bearbeiten' beleg.kunde.pk %}">{{ beleg.kunde.anzeigename }}</a><br>
   {{ beleg.kunde.strasse }}, {{ beleg.kunde.plz }} {{ beleg.kunde.ort }}<br>
   <strong>Datum:</strong> {{ beleg.datum|date:"d.m.Y" }}{% if beleg.gueltig_bis %} — <strong>Gültig bis:</strong> {{ beleg.gueltig_bis|date:"d.m.Y" }}{% endif %}
-</div>
+</div></div>
 <div class="card p-3 mb-3">
   {% include "belege/_positionen_tabelle.html" with zeige_artikel_anlegen=True %}
 </div>

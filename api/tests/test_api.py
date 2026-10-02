@@ -282,3 +282,21 @@ class RechnungTests(ApiTestBasis):
         self.assertEqual(self.api("post", "auftrag_zu_rechnung", {"auftrag_id": daten["id"]}).status_code, 409)
         self.assertEqual(self.api("post", "auftrag_zu_rechnung", {}).status_code, 400)
         self.assertEqual(self.api("post", "auftrag_zu_rechnung", {"auftrag_id": 999}).status_code, 404)
+
+
+class UnterschriftAnzeigeTests(ApiTestBasis):
+    def test_unterschrift_nur_fuer_angemeldete_mit_recht(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=tmp):
+            daten = self.api("post", "auftraege", self.auftragsdaten(unterschrift=png_base64())).json()["data"]
+            url = reverse("belege:auftraege_unterschrift", args=[daten["id"]])
+            self.assertEqual(self.client.get(url).status_code, 302)  # nicht angemeldet
+            self.client.force_login(self.admin)
+            antwort = self.client.get(url)
+            self.assertEqual(antwort.status_code, 200)
+            self.assertTrue(b"".join(antwort.streaming_content).startswith(b"\x89PNG"))
+            self.assertContains(self.client.get(reverse("belege:auftraege_ansehen", args=[daten["id"]])), url)
+            ohne = self.api("post", "auftraege", self.auftragsdaten()).json()["data"]["id"]
+            self.assertEqual(self.client.get(reverse("belege:auftraege_unterschrift", args=[ohne])).status_code, 404)
+            self.client.force_login(User.objects.create_user("x", password=PW))
+            self.assertEqual(self.client.get(url).status_code, 403)

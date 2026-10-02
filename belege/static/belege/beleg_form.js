@@ -27,12 +27,22 @@
     return kundenWahl && steuerbefreit.indexOf(parseInt(kundenWahl.value, 10)) !== -1;
   }
 
+  // Bei steuerbefreiten Kunden ist die MwSt. fest 0 %. Der vorherige Satz wird gemerkt und
+  // beim Wechsel zu einem steuerpflichtigen Kunden wiederhergestellt.
   function steuerAnwenden(zeile) {
     var feld = zeile.querySelector('.feld-steuer');
     if (kundeSteuerbefreit()) {
+      if (zeile.dataset.befreit !== '1') {
+        zeile.dataset.steuerNormal = feld.value;
+        zeile.dataset.befreit = '1';
+      }
       feld.value = '0,00';
       feld.readOnly = true;
     } else {
+      if (zeile.dataset.befreit === '1') {
+        feld.value = zeile.dataset.steuerNormal || format(standardSteuer);
+        zeile.dataset.befreit = '';
+      }
       feld.readOnly = false;
     }
   }
@@ -94,6 +104,7 @@
         zeile.querySelector('.feld-beschreibung').value = a.name;
         zeile.querySelector('.feld-preis').value = format(a.preis);
         zeile.querySelector('.feld-steuer').value = format(a.steuersatz);
+        zeile.dataset.befreit = '';
       }
       optionenAufbauen(zeile, null);
       modellUebernehmen(zeile);
@@ -143,6 +154,7 @@
   koerper.addEventListener('formset:hinzugefuegt', function (e) {
     var zeile = e.target;
     zeile.querySelector('.feld-steuer').value = format(standardSteuer);
+    zeile.dataset.befreit = '';
     zeile.querySelector('.feld-menge').value = '1,00';
     zeileBinden(zeile);
     optionenAufbauen(zeile, null);

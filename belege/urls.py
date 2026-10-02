@@ -18,6 +18,7 @@ urlpatterns = [
     # Aufträge
     path("auftraege/", views.AuftragListeView.as_view(), name="auftraege_liste"),
     path("auftraege/<int:pk>/", views.AuftragDetailView.as_view(), name="auftraege_ansehen"),
+    path("auftraege/<int:pk>/unterschrift/", views.AuftragUnterschriftView.as_view(), name="auftraege_unterschrift"),
     path("auftraege/<int:pk>/pdf/", views.AuftragPdfView.as_view(), name="auftraege_pdf"),
     path("auftraege/<int:pk>/status/", views.AuftragStatusView.as_view(), name="auftraege_status"),
     path("auftraege/<int:pk>/rechnung/", views.AuftragZuRechnungView.as_view(), name="auftraege_zu_rechnung"),
