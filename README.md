@@ -62,7 +62,7 @@ python manage.py test
 | `belege/` | Angebote, Aufträge, Rechnungen, Abonnements, PDF und ZUGFeRD |
 | `einstellungen/` | Firmendaten, Nummernkreise, SMTP, Formulareinstellungen, Lizenzen, Anmeldeverfahren |
 | `api/` | Mobile-API (JSON, Token), siehe `api/README.md` |
-| `deploy/` | Beispiele für systemd und Apache |
+| `deploy/` | Beispiele für systemd, nginx (Standard) und Apache |
 | `docs/` | Betriebsanleitung und Abnahmeliste |
 
 ## Wichtige Regeln der Fachlogik

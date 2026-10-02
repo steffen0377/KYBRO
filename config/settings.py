@@ -160,7 +160,7 @@ SECURE_COOKIES = env.bool("SECURE_COOKIES", default=not DEBUG)
 SESSION_COOKIE_SECURE = SECURE_COOKIES
 CSRF_COOKIE_SECURE = SECURE_COOKIES
 
-# Nur aktivieren, wenn ein Reverse-Proxy (Apache/nginx) den Header
+# Nur aktivieren, wenn ein Reverse-Proxy (nginx/Apache) den Header
 # X-Forwarded-Proto zuverlässig setzt und überschreibt.
 if env.bool("TRUST_PROXY_SSL_HEADER", default=False):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

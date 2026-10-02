@@ -1,14 +1,15 @@
-# Betrieb von KYBRO (Ubuntu, MariaDB, Apache)
+# Betrieb von KYBRO (Ubuntu, MariaDB, nginx, gunicorn)
 
-Diese Anleitung beschreibt die Installation auf einem Ubuntu-Server mit MariaDB und Apache als
+Diese Anleitung beschreibt die Installation auf einem Ubuntu-Server mit MariaDB und nginx als
 Reverse-Proxy. Die Anwendung selbst läuft mit gunicorn als Systemdienst. Die Beispieldateien liegen
-im Ordner `deploy/`.
+im Ordner `deploy/`. Wer lieber Apache einsetzt, findet eine Vorlage in `deploy/alternativ-apache-kybro.conf`
+(Befehle am Ende von Abschnitt 4).
 
 ## 1. Pakete
 
 ```bash
 sudo apt install python3-venv python3-dev build-essential pkg-config libmariadb-dev \
-                 mariadb-server apache2 libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu fonts-liberation
+                 mariadb-server nginx certbot python3-certbot-nginx libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu fonts-liberation
 ```
 
 ## 2. Datenbank
@@ -50,9 +51,20 @@ aus ihm werden auch die Verschlüsselung der gespeicherten Passwörter und die A
 sudo cp deploy/kybro.service deploy/kybro-abos.service deploy/kybro-abos.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now kybro kybro-abos.timer
-sudo cp deploy/apache-kybro.conf /etc/apache2/sites-available/kybro.conf   # Servername und Zertifikat anpassen
-sudo a2enmod proxy proxy_http headers ssl rewrite && sudo a2ensite kybro && sudo systemctl reload apache2
+# Zertifikat zuerst holen (Let's Encrypt), solange nginx die Konfiguration noch nicht braucht:
+sudo certbot certonly --standalone -d kybro.example.de \
+     --pre-hook "systemctl stop nginx" --post-hook "systemctl start nginx"
+sudo cp deploy/nginx-kybro.conf /etc/nginx/sites-available/kybro        # Servername anpassen
+sudo ln -s /etc/nginx/sites-available/kybro /etc/nginx/sites-enabled/kybro
+sudo nginx -t && sudo systemctl reload nginx
 ```
+
+gunicorn lauscht nur auf `127.0.0.1:8000` und ist damit von außen nicht erreichbar; nginx liefert `/static/`
+direkt aus `staticfiles/` und reicht alles andere weiter. Soll der Server nur KYBRO ausliefern, entfernst du die Standardseite von nginx (`sudo rm /etc/nginx/sites-enabled/default`).
+
+Alternative Apache: `deploy/alternativ-apache-kybro.conf` nach `/etc/apache2/sites-available/kybro.conf` kopieren,
+dann `sudo a2enmod proxy proxy_http headers ssl rewrite && sudo a2ensite kybro && sudo systemctl reload apache2`
+(Paket `apache2` statt `nginx`).
 
 Der Timer `kybro-abos` erzeugt täglich um 05:00 Uhr die Entwurfsrechnungen fälliger Abonnements
 (`manage.py abo_rechnungen_erzeugen`). Der Lauf ist wiederholbar, ohne Doppelrechnungen zu erzeugen.
@@ -91,7 +103,7 @@ Die Entwürfe müssen anschließend in der Anwendung geprüft und freigegeben we
 
 ## 7. Hinweise zur Sicherheit
 
-* Die Anwendung nur über HTTPS betreiben (Apache-Beispiel leitet um und setzt HSTS).
+* Die Anwendung nur über HTTPS betreiben (das nginx-Beispiel leitet um und setzt HSTS).
 * `/media` nicht veröffentlichen: Briefbogen und Unterschriften werden nur über die Anwendung ausgeliefert.
 * Die Mobile-API (`/api/v1/`) nutzt Token-Anmeldung mit Sperre nach 5 Fehlversuchen je Benutzer und IP-Adresse.
   Beschreibung: `api/README.md`.
