@@ -182,6 +182,7 @@ class Auftrag(Beleg):
     unterschrieben_von = models.CharField("Unterschrieben von", max_length=150, blank=True)
     # Von der mobilen App vergebene ID: macht das erneute Senden eines Auftrags unschädlich.
     client_uuid = models.UUIDField(null=True, blank=True, unique=True, editable=False)
+    geaendert = models.DateTimeField(auto_now=True)
 
     class Meta(Beleg.Meta):
         verbose_name = "Auftrag"

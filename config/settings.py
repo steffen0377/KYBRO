@@ -7,6 +7,7 @@ Umgebungsvariablen bzw. der Datei ``.env`` im Projektverzeichnis (siehe
 mit ``DB_NAME`` gegen MariaDB.
 """
 
+import hashlib
 import sys
 from pathlib import Path
 
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
     "stammdaten",
     "belege",
     "lager",
+    "api",
 ]
 
 MIDDLEWARE = [
@@ -188,3 +190,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+
+# Mobile API: Signierschlüssel der Tokens (Standard: aus SECRET_KEY abgeleitet) und Gültigkeit.
+API_TOKEN_SCHLUESSEL = env("API_TOKEN_SCHLUESSEL", default="") or hashlib.sha256(
+    ("api-token:" + SECRET_KEY).encode()
+).hexdigest()
+API_TOKEN_GUELTIGKEIT_TAGE = env.int("API_TOKEN_GUELTIGKEIT_TAGE", default=30)
