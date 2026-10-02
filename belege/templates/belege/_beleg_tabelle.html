@@ -1,0 +1,28 @@
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Nr.</th><th>Kunde</th><th>Datum</th><th class="text-end">Betrag</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for b in belege %}
+      <tr style="cursor:pointer;" data-href="{% url url_ansehen b.pk %}">
+        <td>{{ b.nummer }}</td>
+        <td>{{ b.kunde.anzeigename }}</td>
+        <td>{{ b.datum|date:"d.m.Y" }}</td>
+        <td class="text-end">{{ b.brutto }} €</td>
+        <td>
+          <span class="badge bg-{{ b.badge }}">{{ b.get_status_display }}</span>
+          {% if b.ist_ueberfaellig and b.status != "ueberfaellig" %}<span class="badge bg-danger">fällig überschritten</span>{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="text-muted text-center py-3">Keine Einträge gefunden.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('#ergebnis tr[data-href]').forEach(function (zeile) {
+    zeile.addEventListener('click', function (e) { if (!e.target.closest('a,button,form,input')) { window.location = zeile.dataset.href; } });
+  });
+</script>

@@ -36,6 +36,9 @@ class Seriennummer(models.Model):
     nummer = models.CharField("Seriennummer", max_length=100)
     status = models.CharField("Status", max_length=10, choices=Status.choices, default=Status.LAGER)
     notiz = models.CharField("Notiz", max_length=255, blank=True)
+    rechnung = models.ForeignKey(
+        "belege.Rechnung", null=True, blank=True, on_delete=models.SET_NULL, related_name="seriennummern"
+    )
     verkauft_am = models.DateTimeField(null=True, blank=True)
     erstellt = models.DateTimeField(auto_now_add=True)
 

@@ -4,7 +4,7 @@
 {% block content %}
 <h4>{% if object %}{{ object.name }}{% else %}Neuer Artikel{% endif %}</h4>
 <form method="post" class="card p-4" style="max-width:1000px;">
-  {% csrf_token %}
+  {% csrf_token %}{% if aus_position %}<input type="hidden" name="aus_position" value="{{ aus_position }}">{% endif %}
   {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
 
   <ul class="nav nav-tabs mb-3" role="tablist">

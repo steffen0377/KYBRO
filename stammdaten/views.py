@@ -214,8 +214,38 @@ class ArtikelFormularMixin(ModulRechtMixin):
 class ArtikelCreateView(ArtikelFormularMixin, CreateView):
     extra_context = {"seitentitel": "Neuer Artikel"}
 
+    def _position(self):
+        """Angebotsposition ohne Artikel, aus der dieser Artikel angelegt wird (?aus_position=)."""
+        from belege.models import AngebotPosition
+
+        pk = self.request.GET.get("aus_position") or self.request.POST.get("aus_position")
+        if not (pk and str(pk).isdigit()):
+            return None
+        return AngebotPosition.objects.filter(pk=pk, artikel__isnull=True).select_related("angebot").first()
+
     def get_initial(self):
-        return {"einheit": "Stk.", "steuersatz": Decimal("19.00"), "lagerfuehrung": True, "aktiv": True}
+        start = {"einheit": "Stk.", "steuersatz": Decimal("19.00"), "lagerfuehrung": True, "aktiv": True}
+        position = self._position()
+        if position:
+            start.update(name=position.beschreibung, verkaufspreis=position.einzelpreis, steuersatz=position.steuersatz)
+            if position.einheit:
+                start["einheit"] = position.einheit
+        return start
+
+    def get_context_data(self, **kwargs):
+        kontext = super().get_context_data(**kwargs)
+        position = self._position()
+        kontext["aus_position"] = position.pk if position else ""
+        return kontext
+
+    def get_success_url(self):
+        position = self._position()
+        if position:
+            position.artikel = self.object
+            position.artikelnummer = self.object.artikelnummer
+            position.save(update_fields=["artikel", "artikelnummer"])
+            return reverse("belege:angebote_ansehen", args=[position.angebot_id])
+        return super().get_success_url()
 
 
 class ArtikelUpdateView(ArtikelFormularMixin, UpdateView):

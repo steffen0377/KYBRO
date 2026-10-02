@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+  <h4>Rechnung {{ beleg.nummer }} <span class="badge bg-{{ badge }}">{{ beleg.get_status_display }}</span>
+    {% if beleg.ist_ueberfaellig and beleg.status != "ueberfaellig" %}<span class="badge bg-danger">fällig überschritten</span>{% endif %}</h4>
+  <div class="d-flex flex-wrap gap-1">
+    {% block pdf_knoepfe %}{% endblock %}
+    {% if darf_schreiben and beleg.ist_entwurf %}<a href="{% url 'belege:rechnungen_bearbeiten' beleg.pk %}" class="btn btn-app-outline-secondary">Bearbeiten</a>{% endif %}
+  </div>
+</div>
+{% if offene_seriennummern %}
+  <div class="alert alert-app-warning d-flex justify-content-between align-items-center">
+    <span>Für diese Rechnung fehlen noch Seriennummern.</span>
+    {% if darf_schreiben %}<a href="{% url 'belege:rechnungen_seriennummern' beleg.pk %}" class="btn btn-sm btn-app-warning">Jetzt zuordnen</a>{% endif %}
+  </div>
+{% endif %}
+{% if beleg.abo %}
+  <div class="alert alert-app-info d-flex justify-content-between align-items-center">
+    <span>Automatisch erzeugte Abo-Rechnung{% if beleg.zeitraum_von %} für den Zeitraum {{ beleg.zeitraum_von|date:"d.m.Y" }} – {{ beleg.zeitraum_bis|date:"d.m.Y" }}{% endif %}{% if beleg.ist_entwurf %} — bitte prüfen und freigeben.{% endif %}</span>
+    {% url 'belege:abos_ansehen' beleg.abo.pk as url_abo %}{% if url_abo %}<a href="{{ url_abo }}" class="btn btn-sm btn-app-outline-primary">Abo ansehen</a>{% endif %}
+  </div>
+{% endif %}
+<div class="card p-3 mb-3">
+  <strong>Kunde:</strong> <a href="{% url 'stammdaten:kunden_bearbeiten' beleg.kunde.pk %}">{{ beleg.kunde.anzeigename }}</a><br>
+  {{ beleg.kunde.strasse }}, {{ beleg.kunde.plz }} {{ beleg.kunde.ort }}<br>
+  <strong>Rechnungsdatum:</strong> {{ beleg.datum|date:"d.m.Y" }}
+  {% if beleg.faellig_am %} — <strong>Fällig bis:</strong> {{ beleg.faellig_am|date:"d.m.Y" }}{% endif %}
+  {% if beleg.leistungsdatum %} — <strong>Leistungsdatum:</strong> {{ beleg.leistungsdatum|date:"d.m.Y" }}{% endif %}
+  {% if beleg.auftrag %}<br><span class="text-muted">Zu Auftrag</span> <a href="{% url 'belege:auftraege_ansehen' beleg.auftrag.pk %}">{{ beleg.auftrag.nummer }}</a>{% endif %}
+</div>
+<div class="card p-3 mb-3">
+  {% include "belege/_positionen_tabelle.html" %}
+</div>
+{% if darf_schreiben %}
+  {% url 'belege:rechnungen_status' beleg.pk as url_status %}
+  {% include "belege/_status_form.html" with url=url_status %}
+  {% if beleg.ist_entwurf %}
+    <form method="post" action="{% url 'belege:rechnungen_loeschen' beleg.pk %}" class="d-inline ms-2" onsubmit="return confirm('Rechnung wirklich löschen? Lagerbuchungen werden zurückgenommen.')">{% csrf_token %}<button class="btn btn-app-outline-danger" type="submit">Löschen</button></form>
+  {% endif %}
+{% endif %}
+{% endblock %}

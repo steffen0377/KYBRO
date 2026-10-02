@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+  <h4>Angebot {{ beleg.nummer }} <span class="badge bg-{{ badge }}">{{ beleg.get_status_display }}</span></h4>
+  <div class="d-flex flex-wrap gap-1">
+    {% block pdf_knoepfe %}{% endblock %}
+    {% if darf_schreiben %}
+      {% if beleg.bearbeitbar %}<a href="{% url 'belege:angebote_bearbeiten' beleg.pk %}" class="btn btn-app-outline-secondary">Bearbeiten</a>{% endif %}
+      {% if not auftrag %}
+        <form method="post" action="{% url 'belege:angebote_zu_auftrag' beleg.pk %}" onsubmit="return confirm('Auftrag aus diesem Angebot erstellen?')">{% csrf_token %}<button class="btn btn-app-outline-success" type="submit">In Auftrag übernehmen</button></form>
+      {% endif %}
+    {% endif %}
+    {% if darf_rechnung_schreiben %}
+      <form method="post" action="{% url 'belege:angebote_zu_rechnung' beleg.pk %}" onsubmit="return confirm('Auftrag anlegen (falls noch nicht vorhanden) und Rechnung aus diesem Angebot erstellen? Der Lagerbestand wird reduziert.')">{% csrf_token %}<button class="btn btn-app-success" type="submit">Rechnung erstellen</button></form>
+    {% endif %}
+  </div>
+</div>
+
+{% if auftrag %}
+  <div class="alert alert-app-info d-flex justify-content-between align-items-center">
+    <span>Zu diesem Angebot wurde bereits Auftrag {{ auftrag.nummer }} <span class="badge bg-secondary">{{ auftrag.get_status_display }}</span> erstellt.</span>
+    <a href="{% url 'belege:auftraege_ansehen' auftrag.pk %}" class="btn btn-sm btn-app-outline-primary">Auftrag ansehen</a>
+  </div>
+{% endif %}
+
+<div class="card p-3 mb-3">
+  <strong>Kunde:</strong> <a href="{% url 'stammdaten:kunden_bearbeiten' beleg.kunde.pk %}">{{ beleg.kunde.anzeigename }}</a><br>
+  {{ beleg.kunde.strasse }}, {{ beleg.kunde.plz }} {{ beleg.kunde.ort }}<br>
+  <strong>Datum:</strong> {{ beleg.datum|date:"d.m.Y" }}{% if beleg.gueltig_bis %} — <strong>Gültig bis:</strong> {{ beleg.gueltig_bis|date:"d.m.Y" }}{% endif %}
+</div>
+<div class="card p-3 mb-3">
+  {% include "belege/_positionen_tabelle.html" with zeige_artikel_anlegen=True %}
+</div>
+{% if darf_schreiben %}
+  {% url 'belege:angebote_status' beleg.pk as url_status %}
+  {% include "belege/_status_form.html" with url=url_status %}
+  {% if beleg.bearbeitbar %}
+    <form method="post" action="{% url 'belege:angebote_loeschen' beleg.pk %}" class="d-inline ms-2" onsubmit="return confirm('Angebot wirklich löschen?')">{% csrf_token %}<button class="btn btn-app-outline-danger" type="submit">Löschen</button></form>
+  {% endif %}
+{% endif %}
+{% endblock %}

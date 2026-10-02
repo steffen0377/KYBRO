@@ -1,0 +1,7 @@
+<form method="post" action="{{ url }}" class="d-inline">
+  {% csrf_token %}
+  <div class="input-group" style="max-width:320px;">
+    {{ status_form.status }}
+    <button class="btn btn-app-outline-primary" type="submit">Status ändern</button>
+  </div>
+</form>

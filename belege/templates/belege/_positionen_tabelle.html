@@ -1,0 +1,45 @@
+{# Positionen eines Belegs mit Summen. Erwartet: positionen, summen, beleg. Optional: zeige_artikel_anlegen #}
+<table class="table align-middle">
+  <thead>
+    <tr>
+      <th>Pos.</th><th>Beschreibung</th><th class="text-end">Menge</th><th class="text-end">Einzelpreis</th>
+      <th class="text-end">Rabatt</th><th class="text-end">MwSt.</th><th class="text-end">Gesamt (netto)</th><th>Modell</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for p in positionen %}
+    <tr>
+      <td>{{ p.position }}</td>
+      <td>
+        {{ p.beschreibung }}
+        {% if p.artikelnummer %}<div class="small text-muted">Art.-Nr. {{ p.artikelnummer }}</div>{% endif %}
+        {% if p.seriennummern_text %}<div class="small text-muted">S/N: {{ p.seriennummern_text }}</div>{% endif %}
+      </td>
+      <td class="text-end">{{ p.menge }} {{ p.einheit }}</td>
+      <td class="text-end">{{ p.einzelpreis }} €</td>
+      <td class="text-end">{% if p.rabatt %}{{ p.rabatt }} %{% endif %}</td>
+      <td class="text-end">{{ p.steuersatz }} %</td>
+      <td class="text-end">{{ p.netto }} €</td>
+      <td>{% if p.ist_abo %}<span class="badge bg-app-info">{{ p.get_abrechnung_display }}</span>{% endif %}</td>
+      <td class="text-end">
+        {% if zeige_artikel_anlegen and not p.artikel_id and darf_artikel_schreiben %}
+          <a href="{% url 'stammdaten:artikel_neu' %}?aus_position={{ p.pk }}" class="btn btn-sm btn-app-outline-success">Als Artikel anlegen</a>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot>
+    {% for satz, g in summen.gruppen.items %}
+      {% if summen.gruppen|length > 1 %}
+        <tr class="text-muted small"><td colspan="6" class="text-end">Netto zu {{ satz }} %</td><td class="text-end">{{ g.netto }} €</td><td colspan="2"></td></tr>
+      {% endif %}
+    {% endfor %}
+    <tr><td colspan="6" class="text-end">Netto</td><td class="text-end">{{ summen.netto }} €</td><td colspan="2"></td></tr>
+    {% for satz, g in summen.gruppen.items %}
+      <tr><td colspan="6" class="text-end">MwSt. {{ satz }} %</td><td class="text-end">{{ g.steuer }} €</td><td colspan="2"></td></tr>
+    {% endfor %}
+    <tr><td colspan="6" class="text-end fw-bold">Gesamt</td><td class="text-end fw-bold">{{ summen.brutto }} €</td><td colspan="2"></td></tr>
+  </tfoot>
+</table>
+{% if beleg.notizen %}<p class="text-muted">{{ beleg.notizen|linebreaksbr }}</p>{% endif %}

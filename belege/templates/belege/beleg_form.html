@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h4>{{ seitentitel }}</h4>
+<form method="post" class="card p-4">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  {% for fehler in formset.non_form_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.kunde %}</div>
+    <div class="col-md-2">{% include "core/feld.html" with feld=form.datum %}</div>
+    {% if form.gueltig_bis %}
+      <div class="col-md-2">{% include "core/feld.html" with feld=form.gueltig_bis %}</div>
+    {% else %}
+      <div class="col-md-2">{% include "core/feld.html" with feld=form.leistungsdatum %}</div>
+      <div class="col-md-2">{% include "core/feld.html" with feld=form.faellig_am %}</div>
+    {% endif %}
+  </div>
+
+  <div id="positionen">
+    {{ formset.management_form }}
+    <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th style="width:19%">Artikel</th><th>Beschreibung</th><th style="width:8%">Menge</th>
+          <th style="width:11%">Einzelpreis</th><th style="width:7%">Rabatt %</th><th style="width:7%">MwSt. %</th>
+          <th style="width:11%">Modell</th><th></th>
+        </tr>
+      </thead>
+      <tbody data-formset="pos">
+        {% for f in formset %}
+          <tr>
+            <td>{{ f.id }}{{ f.artikel }}{{ f.preisoption }}{% for e in f.artikel.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}{% for e in f.preisoption.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}</td>
+            <td>{{ f.beschreibung }}{% for e in f.beschreibung.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}</td>
+            <td>{{ f.menge }}{% for e in f.menge.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}</td>
+            <td>{{ f.einzelpreis }}{% for e in f.einzelpreis.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}</td>
+            <td>{{ f.rabatt }}{% for e in f.rabatt.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}</td>
+            <td>{{ f.steuersatz }}{% for e in f.steuersatz.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}</td>
+            <td>{{ f.abrechnung }}{% for e in f.abrechnung.errors %}<div class="text-app-danger small">{{ e }}</div>{% endfor %}</td>
+            {% include "stammdaten/_zeile_loeschen.html" with form=f %}
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="6" class="text-end">Netto</td><td colspan="2" id="summe-netto" class="fw-semibold"></td></tr>
+        <tr><td colspan="6" class="text-end">MwSt.</td><td colspan="2" id="summe-steuer" class="fw-semibold"></td></tr>
+        <tr><td colspan="6" class="text-end fw-bold">Gesamt</td><td colspan="2" id="summe-brutto" class="fw-bold"></td></tr>
+      </tfoot>
+    </table>
+    </div>
+    <template id="pos-leer">
+      {% with f=formset.empty_form %}
+        <tr>
+          <td>{{ f.artikel }}{{ f.preisoption }}</td><td>{{ f.beschreibung }}</td><td>{{ f.menge }}</td>
+          <td>{{ f.einzelpreis }}</td><td>{{ f.rabatt }}</td><td>{{ f.steuersatz }}</td><td>{{ f.abrechnung }}</td>
+          {% include "stammdaten/_zeile_loeschen.html" with form=f %}
+        </tr>
+      {% endwith %}
+    </template>
+    <button type="button" class="btn btn-sm btn-app-outline-primary mb-3" data-formset-add="pos">+ Position hinzufügen</button>
+  </div>
+
+  <div class="mb-3">{% include "core/feld.html" with feld=form.notizen %}</div>
+
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{{ url_abbrechen }}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+
+{{ artikel_daten|json_script:"artikel-daten" }}
+{{ sonderpreise|json_script:"sonderpreise-daten" }}
+{{ form.steuerbefreite_kunden|json_script:"steuerbefreit-daten" }}
+{{ standard_steuer|json_script:"standard-steuer" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/formset.js' %}"></script>
+<script src="{% static 'belege/beleg_form.js' %}"></script>
+{% endblock %}

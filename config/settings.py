@@ -55,7 +55,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "accounts",
     "core",
+    "einstellungen",
     "stammdaten",
+    "belege",
     "lager",
 ]
 

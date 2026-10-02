@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>Seriennummern zuordnen – Rechnung {{ rechnung.nummer }}</h4>
+{% if not offen %}
+  <div class="alert alert-app-success">Alle Seriennummern sind bereits zugeordnet.</div>
+  <a href="{% url 'belege:rechnungen_ansehen' rechnung.pk %}" class="btn btn-app-secondary">Zur Rechnung</a>
+{% else %}
+<form method="post" class="card p-4">
+  {% csrf_token %}
+  {% for e in offen %}
+    <div class="mb-4">
+      <label class="form-label fw-bold" for="serien_{{ e.artikel.pk }}">{{ e.artikel.name }} — bitte {{ e.offen }} Seriennummer(n) auswählen</label>
+      {% if e.zu_wenig %}
+        <div class="alert alert-app-danger">Nur {{ e.verfuegbar|length }} Seriennummer(n) im Lager verfügbar, benötigt werden {{ e.offen }}. Bitte zuerst im Lager Wareneingang buchen.</div>
+      {% endif %}
+      <select name="serien_{{ e.artikel.pk }}" id="serien_{{ e.artikel.pk }}" class="form-select" multiple size="{% if e.verfuegbar|length > 8 %}8{% elif e.verfuegbar|length < 3 %}3{% else %}{{ e.verfuegbar|length }}{% endif %}">
+        {% for s in e.verfuegbar %}<option value="{{ s.pk }}">{{ s.nummer }}</option>{% endfor %}
+      </select>
+      <div class="form-text">Mehrfachauswahl: Strg/Cmd gedrückt halten.</div>
+    </div>
+  {% endfor %}
+  <div>
+    <button class="btn btn-app-primary" type="submit">Zuordnen und Bestand buchen</button>
+    <a href="{% url 'belege:rechnungen_ansehen' rechnung.pk %}" class="btn btn-app-secondary">Später</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
