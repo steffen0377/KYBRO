@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import environ
+from django.contrib.messages import constants as message_constants
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "accounts",
+    "core",
 ]
 
 MIDDLEWARE = [
@@ -77,6 +79,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.navigation",
             ],
         },
     },
@@ -159,6 +162,13 @@ TIME_ZONE = "Europe/Berlin"
 USE_I18N = True
 USE_TZ = True
 USE_THOUSAND_SEPARATOR = True
+
+# Meldungen werden mit den Bootstrap-Klassen alert-app-success/-info/-warning/-danger
+# dargestellt (siehe core/static/core/css/style.css).
+MESSAGE_TAGS = {
+    message_constants.DEBUG: "info",
+    message_constants.ERROR: "danger",
+}
 
 # ---------------------------------------------------------------------------
 # Statische Dateien und Uploads (Logo, Briefbogen)

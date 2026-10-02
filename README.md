@@ -47,7 +47,18 @@ python manage.py test
 | Verzeichnis | Zweck |
 | --- | --- |
 | `config/` | Einstellungen, URL-Wurzel, WSGI/ASGI |
-| `accounts/` | Benutzer, Gruppen und Modulrechte |
+| `accounts/` | Benutzer, Anmeldung, Gruppen und Modulrechte |
+| `core/` | Basis-Layout mit Seitenmenü, Dashboard, gemeinsame Styles und Bootstrap |
+
+## Layout und Menü
+
+`core/templates/base.html` ist das gemeinsame Layout (Seitenmenü, Kopfzeile,
+Meldungen); jede Seite erweitert es mit `{% extends "base.html" %}`. Das Menü
+steht als Daten in `core/navigation.py`: Einträge erscheinen nur mit
+Leserecht auf das jeweilige Modul, Administrationspunkte nur für Administratoren.
+Menüpunkte, deren Seite noch nicht existiert, sind ausgegraut. Bootstrap und die
+Icons liegen lokal unter `core/static/core/vendor/`, es werden keine externen
+Server angesprochen.
 
 ## Rechte
 
@@ -57,3 +68,7 @@ zugewiesen, Benutzer erhalten sie über ihre Gruppen. Administratoren
 (`is_superuser`) haben immer vollen Zugriff. Die Modulliste steht in
 `accounts/modules.py`; ein neues Modul braucht dort einen Eintrag und danach
 `python manage.py makemigrations accounts`.
+
+Views schützt man mit `accounts.mixins.ModulRechtMixin` (Attribut `modul`; lesende
+Anfragen brauchen das Leserecht, alle anderen das Schreibrecht) oder mit
+`AdminRequiredMixin`.

@@ -1,0 +1,263 @@
+:root {
+  /* ---- Marken-/Akzentfarben (zentrale Design-Tokens) ---- */
+  --color-primary: #0d6efd;
+  --color-secondary: #6c757d;
+  --color-success: #198754;
+  --color-danger: #dc3545;
+  --color-warning: #ffc107;
+  --color-info: #0dcaf0;
+  --color-light: #f8f9fa;
+  --color-darkblue: #091d38;
+  --color-dark: #212529;
+
+  /* ---- Layout-/Hintergrundfarben ---- */
+  --color-body-bg: #f4f6f9;
+  --color-card-shadow: rgba(0, 0, 0, 0.08);
+  --color-table-head-bg: #eef1f5;
+  --color-sidebar-bg: rgba(9, 29, 56, 1);
+  --color-sidebar-link: rgba(255, 255, 255, .75);
+  --color-sidebar-link-active: #fff;
+  --color-sidebar-link-active-bg: rgba(255, 255, 255, .12);
+
+  /* ---- Status-/Hinweisfarben ---- */
+  --color-low-stock: #b02a37;
+  --color-row-unpaid-bg: #fbdce6;
+  --color-row-paid-bg: #d9f2df;
+  --color-row-due-bg: #fff3b0;
+
+  /* ---- Zusätzliche Tönungen für eigene Alert-/Hintergrundklassen ---- */
+  --color-danger-bg: #f8d7da;
+  --color-danger-border: #f1aeb5;
+  --color-danger-text: #842029;
+  --color-success-bg: #d1e7dd;
+  --color-success-border: #a3cfbb;
+  --color-success-text: #0f5132;
+  --color-info-bg: #cff4fc;
+  --color-info-border: #9eeaf9;
+  --color-info-text: #055160;
+  --color-warning-bg: #fff3cd;
+  --color-warning-border: #ffecb5;
+  --color-warning-text: #664d03;
+}
+
+/* ====================================================================
+   Eigene Farbklassen (ersetzen Bootstraps .btn-primary, .alert-danger,
+   .bg-light etc. – keine Kopplung mehr an --bs-* Variablen)
+   ==================================================================== */
+
+.btn-app-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.btn-app-primary:hover,
+.btn-app-primary:focus {
+  background-color: color-mix(in srgb, var(--color-primary) 85%, black);
+  border-color: color-mix(in srgb, var(--color-primary) 85%, black);
+  color: #fff;
+}
+.btn-app-primary:active {
+  background-color: color-mix(in srgb, var(--color-primary) 75%, black);
+  border-color: color-mix(in srgb, var(--color-primary) 75%, black);
+  color: #fff;
+}
+
+.btn-app-secondary {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: #fff;
+}
+.btn-app-secondary:hover,
+.btn-app-secondary:focus {
+  background-color: color-mix(in srgb, var(--color-secondary) 85%, black);
+  border-color: color-mix(in srgb, var(--color-secondary) 85%, black);
+  color: #fff;
+}
+.btn-app-secondary:active {
+  background-color: color-mix(in srgb, var(--color-secondary) 75%, black);
+  border-color: color-mix(in srgb, var(--color-secondary) 75%, black);
+  color: #fff;
+}
+
+.btn-app-success {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+.btn-app-success:hover,
+.btn-app-success:focus {
+  background-color: color-mix(in srgb, var(--color-success) 85%, black);
+  border-color: color-mix(in srgb, var(--color-success) 85%, black);
+  color: #fff;
+}
+.btn-app-success:active {
+  background-color: color-mix(in srgb, var(--color-success) 75%, black);
+  border-color: color-mix(in srgb, var(--color-success) 75%, black);
+  color: #fff;
+}
+
+.btn-app-warning {
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+  color: #000;
+}
+.btn-app-warning:hover,
+.btn-app-warning:focus {
+  background-color: color-mix(in srgb, var(--color-warning) 85%, black);
+  border-color: color-mix(in srgb, var(--color-warning) 85%, black);
+  color: #000;
+}
+.btn-app-warning:active {
+  background-color: color-mix(in srgb, var(--color-warning) 75%, black);
+  border-color: color-mix(in srgb, var(--color-warning) 75%, black);
+  color: #000;
+}
+
+.btn-app-outline-primary {
+  background-color: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+}
+.btn-app-outline-primary:hover,
+.btn-app-outline-primary:focus {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.btn-app-outline-secondary {
+  background-color: transparent;
+  border: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+}
+.btn-app-outline-secondary:hover,
+.btn-app-outline-secondary:focus {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: #fff;
+}
+
+.btn-app-outline-success {
+  background-color: transparent;
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+.btn-app-outline-success:hover,
+.btn-app-outline-success:focus {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+
+.btn-app-outline-danger {
+  background-color: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+.btn-app-outline-danger:hover,
+.btn-app-outline-danger:focus {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
+.alert-app-danger {
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+
+.alert-app-success {
+  background-color: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success-text);
+}
+
+.alert-app-info {
+  background-color: var(--color-info-bg);
+  border: 1px solid var(--color-info-border);
+  color: var(--color-info-text);
+}
+
+.alert-app-warning {
+  background-color: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+
+.bg-app-light {
+  background-color: var(--color-light) !important;
+}
+
+.bg-app-secondary {
+  background-color: var(--color-secondary) !important;
+  color: #fff;
+}
+
+.bg-app-success {
+  background-color: var(--color-success) !important;
+  color: #fff;
+}
+
+.bg-app-info {
+  background-color: var(--color-info) !important;
+  color: var(--color-dark);
+}
+
+.bg-app-dark {
+  background-color: var(--color-darkblue) !important;
+  color: #fff;
+}
+
+.text-app-danger {
+  color: var(--color-danger) !important;
+}
+
+.text-app-success {
+  color: var(--color-success) !important;
+}
+
+body { background-color: var(--color-body-bg); }
+.card { border: none; box-shadow: 0 1px 3px var(--color-card-shadow); }
+.table thead { background-color: var(--color-table-head-bg); }
+.low-stock { color: var(--color-low-stock); font-weight: 600; }
+tr.row-unpaid > td { background-color: var(--color-row-unpaid-bg) !important; }
+tr.row-paid > td { background-color: var(--color-row-paid-bg) !important; }
+tr.row-due > td { background-color: var(--color-row-due-bg) !important; }
+
+html, body { height: 100%; }
+#wrapper { min-height: 100vh; }
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+}
+.sidebar .nav-link {
+  color: var(--color-sidebar-link);
+}
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+  color: var(--color-sidebar-link-active);
+  background-color: var(--color-sidebar-link-active-bg);
+}
+.sidebar-logo {
+  max-width: 160px;
+  max-height: 70px;
+  object-fit: contain;
+}
+.nav-chevron {
+  transition: transform .2s ease;
+}
+.sidebar .nav-link.collapsed .nav-chevron {
+  transform: rotate(-90deg);
+}
+.sidebar-bg {
+  background-color: var(--color-sidebar-bg);
+}
+
+@media print {
+  .no-print { display: none !important; }
+}

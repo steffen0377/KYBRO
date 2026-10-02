@@ -1,0 +1,33 @@
+{% load static %}<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anmelden – KYBRO</title>
+<link href="{% static 'core/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'core/css/style.css' %}" rel="stylesheet">
+</head>
+<body class="bg-app-dark">
+<div class="container d-flex align-items-center justify-content-center" style="min-height:100vh;">
+  <div class="card p-4 shadow-sm" style="max-width:380px; width:100%;">
+    <h4 class="mb-3 text-center">KYBRO</h4>
+    {% for fehler in form.non_field_errors %}
+      <div class="alert alert-app-danger">{{ fehler }}</div>
+    {% endfor %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="mb-3">
+        <label class="form-label" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+        {{ form.username }}
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+        {{ form.password }}
+      </div>
+      <button type="submit" class="btn btn-app-primary w-100">Anmelden</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

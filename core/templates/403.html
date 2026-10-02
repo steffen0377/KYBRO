@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="alert alert-app-danger" role="alert">
+  <strong>Zugriff verweigert.</strong>
+  {% if exception %}{{ exception }}{% else %}Ihnen fehlt die Berechtigung für diese Seite.{% endif %}
+</div>
+<a href="{% url 'core:dashboard' %}" class="btn btn-app-secondary">Zum Dashboard</a>
+{% endblock %}
