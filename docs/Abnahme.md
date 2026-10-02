@@ -6,7 +6,7 @@ Punkte lassen sich in einer frisch eingerichteten Testinstallation durchspielen
 
 ## A. Einrichtung und Rechte
 
-- [ ] Lizenz „Warenwirtschaft“ anlegen; ohne Lizenz erscheint auf den Fachseiten „Keine gültige Lizenz“, Einstellungen bleiben erreichbar.
+- [ ] Lizenzprüfung ist standardmäßig aus (Fachseiten ohne Lizenz nutzbar). Optional: `LIZENZ_PRUEFUNG=True` setzen; ohne Lizenz „Warenwirtschaft“ erscheint „Keine gültige Lizenz“, Einstellungen bleiben erreichbar.
 - [ ] Firmendaten, Logo und Briefbogen (einmal als PNG, einmal als PDF) hinterlegen; Präfixe und Zahlungsziel ändern.
 - [ ] Benutzer und Gruppe anlegen; Gruppe mit nur „Artikel: Lesen“ sieht nur Artikel und kann nichts ändern (403 beim Aufruf von Schreibseiten).
 - [ ] Ein Administrator kann sich nicht selbst die Rolle entziehen oder das eigene Konto deaktivieren.

@@ -61,8 +61,9 @@ Die Entwürfe müssen anschließend in der Anwendung geprüft und freigegeben we
 ## 5. Erste Einrichtung in der Anwendung
 
 1. Als Administrator anmelden.
-2. **Einstellungen › Lizenzen:** eine Lizenz mit dem Modul „Warenwirtschaft“ anlegen. Ohne gültige Lizenz sind
-   die Fachmodule gesperrt (Hinweis „Keine gültige Lizenz“).
+2. **Lizenzen (optional):** Die Lizenzprüfung ist vorbereitet, aber standardmäßig abgeschaltet; es ist keine Lizenz
+   nötig. Zum Aktivieren `LIZENZ_PRUEFUNG=True` in die `.env` setzen und unter Einstellungen › Lizenzen eine Lizenz
+   mit dem Modul „Warenwirtschaft“ anlegen, sonst sind die Fachmodule gesperrt (Hinweis „Keine gültige Lizenz“).
 3. **Einstellungen › Firma:** Firmen- und Bankdaten, Logo, Briefbogen (PNG/JPG oder PDF), Präfixe, Zahlungsziel.
    Die Firmendaten gehen in die PDFs und in die E-Rechnung (ZUGFeRD) ein.
 4. **Einstellungen › E-Mail:** SMTP-Zugang eintragen und mit „Testmail“ prüfen.

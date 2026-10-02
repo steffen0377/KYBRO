@@ -41,10 +41,10 @@ Ohne `DB_NAME` in der `.env` läuft die Anwendung lokal auf SQLite. Für MariaDB
 `DB_PASSWORD` und `DB_HOST` setzen; die Datenbank muss mit `CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
 angelegt sein. Die Anwendung ist gegen SQLite und MariaDB 10.11 getestet.
 
-Nach dem ersten Start: **Einstellungen › Lizenzen** (ohne Lizenz sind die Fachmodule gesperrt), danach
-**Einstellungen › Firma**. Die Schritte stehen in `docs/Betrieb.md`.
+Nach dem ersten Start: **Einstellungen › Firma**. Die Lizenzprüfung ist vorbereitet, aber standardmäßig aus; sie
+wird nur mit `LIZENZ_PRUEFUNG=True` in der `.env` aktiv (dann Lizenzen unter Einstellungen › Lizenzen anlegen). Die Schritte stehen in `docs/Betrieb.md`.
 
-Tests ausführen (die Lizenzprüfung ist in Tests ausgeschaltet, eigene Tests prüfen sie):
+Tests ausführen (die Lizenzprüfung ist standardmäßig aus, eigene Tests prüfen sie):
 
 ```bash
 python manage.py test

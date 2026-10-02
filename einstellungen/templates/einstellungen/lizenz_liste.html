@@ -12,7 +12,7 @@
       <tr><td><a href="{% url 'einstellungen:lizenz_bearbeiten' l.pk %}">{{ l.referenz }}</a></td><td>{{ l.modul_namen }}</td>
         <td>{{ l.gueltig_ab|date:"d.m.Y" }}</td><td>{{ l.gueltig_bis|date:"d.m.Y"|default:"unbefristet" }}</td><td>{{ l.get_status_display }}</td>
         <td><form method="post" action="{% url 'einstellungen:lizenz_loeschen' l.pk %}" onsubmit="return confirm('Lizenz löschen?')">{% csrf_token %}<button class="btn btn-sm btn-app-outline-danger" type="submit">Löschen</button></form></td></tr>
-    {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Keine Lizenz hinterlegt. Ohne gültige Lizenz sind die Fachmodule gesperrt.</td></tr>{% endfor %}
+    {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Keine Lizenz hinterlegt. Die Lizenzprüfung ist vorbereitet; solange sie nicht aktiviert ist (LIZENZ_PRUEFUNG), sind alle Module ohne Lizenz nutzbar.</td></tr>{% endfor %}
     </tbody>
   </table>
 </div>
