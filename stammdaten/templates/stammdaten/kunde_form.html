@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h4>{% if object %}{{ object.anzeigename }}{% else %}Neuer Kunde{% endif %}</h4>
+<form method="post" class="card p-4" style="max-width:1000px;">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><button class="nav-link {% if aktiver_tab == 'allgemein' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-allgemein" type="button" role="tab">Allgemein</button></li>
+    <li class="nav-item"><button class="nav-link {% if aktiver_tab == 'ansprechpartner' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-ansprechpartner" type="button" role="tab">Ansprechpartner</button></li>
+    <li class="nav-item"><button class="nav-link {% if aktiver_tab == 'buchhaltung' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-buchhaltung" type="button" role="tab">Buchhaltung</button></li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade {% if aktiver_tab == 'allgemein' %}show active{% endif %}" id="tab-allgemein" role="tabpanel">
+      <div class="row g-3">
+        <div class="col-md-6">{% include "core/feld.html" with feld=form.firma %}</div>
+        <div class="col-md-3">{% include "core/feld.html" with feld=form.vorname %}</div>
+        <div class="col-md-3">{% include "core/feld.html" with feld=form.nachname %}</div>
+        <div class="col-md-8">{% include "core/feld.html" with feld=form.strasse %}</div>
+        <div class="col-md-4">{% include "core/feld.html" with feld=form.plz %}</div>
+        <div class="col-md-6">{% include "core/feld.html" with feld=form.ort %}</div>
+        <div class="col-md-6">{% include "core/feld.html" with feld=form.land %}</div>
+        <div class="col-md-6">{% include "core/feld.html" with feld=form.email %}</div>
+        <div class="col-md-6">{% include "core/feld.html" with feld=form.telefon %}</div>
+        <div class="col-md-6">{% include "core/feld.html" with feld=form.steuernummer %}</div>
+        <div class="col-md-6">{% include "core/feld.html" with feld=form.ust_id %}</div>
+        <div class="col-md-6">{% include "core/feld.html" with feld=form.zahlungsart %}</div>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check">
+            {{ form.steuerbefreit }}
+            <label class="form-check-label" for="{{ form.steuerbefreit.id_for_label }}">{{ form.steuerbefreit.label }}</label>
+          </div>
+        </div>
+        <div class="col-md-6" id="befreiung-wrap">
+          {% include "core/feld.html" with feld=form.befreiungsgrund %}
+          <div class="form-text" style="margin-top:-1rem;">Pflichtangabe für ZUGFeRD (BT-120), wenn steuerbefreit.</div>
+        </div>
+        <div class="col-12">{% include "core/feld.html" with feld=form.notizen %}</div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade {% if aktiver_tab == 'ansprechpartner' %}show active{% endif %}" id="tab-ansprechpartner" role="tabpanel">
+      {% include "stammdaten/_formset_zeilen.html" with fs=ansprechpartner %}
+      <table class="table">
+        <thead><tr><th>Nachname</th><th>Vorname</th><th>Firma</th><th>Telefonnummer</th><th>E-Mailadresse</th><th></th></tr></thead>
+        <tbody data-formset="ansp">
+          {% for form in ansprechpartner %}
+            <tr>
+              <td>{{ form.id }}{{ form.nachname }}</td><td>{{ form.vorname }}</td><td>{{ form.firma }}</td><td>{{ form.telefon }}</td>
+              <td>{{ form.email }}{% for f in form.email.errors %}<div class="text-app-danger small">{{ f }}</div>{% endfor %}</td>
+              {% include "stammdaten/_zeile_loeschen.html" %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <template id="ansp-leer">
+        {% with form=ansprechpartner.empty_form %}
+          <tr><td>{{ form.nachname }}</td><td>{{ form.vorname }}</td><td>{{ form.firma }}</td><td>{{ form.telefon }}</td><td>{{ form.email }}</td>{% include "stammdaten/_zeile_loeschen.html" %}</tr>
+        {% endwith %}
+      </template>
+      <button type="button" class="btn btn-sm btn-app-outline-primary" data-formset-add="ansp">+ Ansprechpartner hinzufügen</button>
+    </div>
+
+    <div class="tab-pane fade {% if aktiver_tab == 'buchhaltung' %}show active{% endif %}" id="tab-buchhaltung" role="tabpanel">
+      <h6 class="mb-3">Bankverbindung</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">{% include "core/feld.html" with feld=form.iban %}</div>
+        <div class="col-md-4">{% include "core/feld.html" with feld=form.bic %}</div>
+        <div class="col-md-4">{% include "core/feld.html" with feld=form.bank %}</div>
+      </div>
+
+      {% if not object %}
+        <div class="alert alert-app-info">Offene Posten sowie die Angebots- und Rechnungshistorie sind verfügbar, sobald der Kunde gespeichert wurde.</div>
+      {% else %}
+        <div class="alert {% if offene_summe > 0 %}alert-app-warning{% else %}alert-app-success{% endif %} d-flex justify-content-between align-items-center">
+          <span>Summe unbezahlter Rechnungen</span><strong>{{ offene_summe }} €</strong>
+        </div>
+
+        <h6 class="mt-4 mb-2">Letzte 10 Angebote</h6>
+        {% if not angebote %}<p class="text-muted">Noch keine Angebote vorhanden.</p>{% else %}
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Angebotsnummer</th><th>Datum</th><th class="text-end">Netto</th><th class="text-end">Brutto</th></tr></thead>
+          <tbody>
+          {% for o in angebote %}
+            <tr>
+              <td>{% url 'belege:angebote_ansehen' o.pk as url_angebot %}{% if url_angebot %}<a href="{{ url_angebot }}">{{ o.nummer }}</a>{% else %}{{ o.nummer }}{% endif %}</td>
+              <td>{{ o.datum|date:"d.m.Y" }}</td><td class="text-end">{{ o.netto }} €</td><td class="text-end">{{ o.brutto }} €</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+
+        <h6 class="mt-4 mb-2">Letzte 10 Rechnungen</h6>
+        {% if not rechnungen %}<p class="text-muted">Noch keine Rechnungen vorhanden.</p>{% else %}
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Rechnungsnummer</th><th>Datum</th><th>Fällig bis</th><th class="text-end">Brutto</th><th></th></tr></thead>
+          <tbody>
+          {% for r in rechnungen %}
+            <tr class="{% if r.status == 'bezahlt' %}row-paid{% elif r.ist_ueberfaellig %}row-unpaid{% else %}row-due{% endif %}">
+              <td>{% url 'belege:rechnungen_ansehen' r.pk as url_rechnung %}{% if url_rechnung %}<a href="{{ url_rechnung }}">{{ r.nummer }}</a>{% else %}{{ r.nummer }}{% endif %}</td>
+              <td>{{ r.datum|date:"d.m.Y" }}</td><td>{{ r.faellig_am|date:"d.m.Y"|default:"–" }}</td><td class="text-end">{{ r.brutto }} €</td>
+              <td class="text-end">
+                {% if r.status != 'bezahlt' and r.status != 'storniert' %}
+                  <button type="submit" class="btn btn-sm btn-app-success" form="bezahlt-{{ r.pk }}">Bezahlt</button>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% url 'stammdaten:kunden_liste' %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+
+{# Eigene Formulare für „Bezahlt“, da HTML keine verschachtelten Formulare erlaubt. #}
+{% for r in rechnungen %}{% if r.status != 'bezahlt' and r.status != 'storniert' %}
+  <form id="bezahlt-{{ r.pk }}" method="post" action="{% url 'stammdaten:kunden_rechnung_bezahlt' object.pk r.pk %}">{% csrf_token %}</form>
+{% endif %}{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/formset.js' %}"></script>
+<script>
+  (function () {
+    var haken = document.getElementById('{{ form.steuerbefreit.id_for_label }}');
+    var umschlag = document.getElementById('befreiung-wrap');
+    function umschalten() { umschlag.style.display = haken.checked ? '' : 'none'; }
+    haken.addEventListener('change', umschalten);
+    umschalten();
+  })();
+</script>
+{% endblock %}

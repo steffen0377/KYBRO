@@ -69,13 +69,18 @@ class MenueTests(TestCase):
         user = User.objects.create_user("anna", password="geheim-1234")
         self.assertNotIn("Verkauf", beschriftungen(self.menue_fuer(user)))
 
-    def test_nicht_umgesetzte_module_sind_ausgegraut(self):
+    def test_eintraege_ohne_vorhandene_seite_sind_ausgegraut(self):
+        from unittest import mock
+
+        from core import navigation
+
+        menue = (navigation.Eintrag("Zukunft", "bi-x", "gibt:es_nicht", modul="artikel"),)
         admin = User.objects.create_superuser("admin", password="geheim-1234")
-        menue = self.menue_fuer(admin)
-        artikel = next(p for p in menue if p["label"] == "Artikel")
-        self.assertFalse(artikel["verfuegbar"])
-        self.assertIsNone(artikel["url"])
-        antwort = self.client.get(reverse("core:dashboard"))
+        with mock.patch.object(navigation, "MENUE", menue):
+            eintrag = self.menue_fuer(admin)[0]
+            self.assertFalse(eintrag["verfuegbar"])
+            self.assertIsNone(eintrag["url"])
+            antwort = self.client.get(reverse("core:dashboard"))
         self.assertContains(antwort, 'title="Folgt in einer späteren Phase"')
 
     def test_administrator_sieht_alle_bereiche(self):

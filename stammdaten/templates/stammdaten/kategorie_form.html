@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>{% if object %}{{ object.name }}{% else %}Neue Kategorie{% endif %}</h4>
+<form method="post" class="card p-4" style="max-width:560px;">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  {% include "core/feld.html" with feld=form.name %}
+  {% include "core/feld.html" with feld=form.uebergeordnet %}
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% url 'stammdaten:kategorien_liste' %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

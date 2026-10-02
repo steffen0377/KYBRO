@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load rechte %}
+
+{% block content %}
+<h4>Lagerverwaltung</h4>
+{% if user|darf:"lager:schreiben" %}
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Wareneingang buchen (ohne Seriennummer)</h6>
+      <form method="post" action="{% url 'lager:wareneingang' %}">
+        {% csrf_token %}
+        <div class="mb-2">{{ form_wareneingang.artikel }}</div>
+        <div class="row g-2">
+          <div class="col-6">{{ form_wareneingang.menge }}</div>
+          <div class="col-6">{{ form_wareneingang.notiz }}</div>
+        </div>
+        <button class="btn btn-app-success mt-2" type="submit">Einlagern</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Bestand korrigieren (Inventur, ohne Seriennummer)</h6>
+      <form method="post" action="{% url 'lager:korrektur' %}">
+        {% csrf_token %}
+        <div class="mb-2">{{ form_korrektur.artikel }}</div>
+        <div class="row g-2">
+          <div class="col-6">{{ form_korrektur.neuer_bestand }}</div>
+          <div class="col-6">{{ form_korrektur.notiz }}</div>
+        </div>
+        <button class="btn btn-app-warning mt-2" type="submit">Korrektur speichern</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  {% if user|darf:"lager:schreiben" %}
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Wareneingang mit Seriennummern</h6>
+      {% if not serien_artikel %}
+        <p class="text-muted mb-0">Kein Artikel hat die Seriennummern-Erfassung aktiviert. Das lässt sich pro Artikel in der Artikelverwaltung einschalten.</p>
+      {% else %}
+      <form method="post" action="{% url 'lager:seriell_einlagern' %}">
+        {% csrf_token %}
+        <div class="mb-2">{{ form_seriell.artikel }}</div>
+        <div class="mb-2">{{ form_seriell.seriennummern }}<div class="form-text">{{ form_seriell.seriennummern.help_text }}</div></div>
+        <div class="mb-2">{{ form_seriell.notiz }}</div>
+        <button class="btn btn-app-success" type="submit">Seriennummern einlagern</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h6>Seriennummern ansehen / verwalten</h6>
+      {% if not serien_artikel %}
+        <p class="text-muted mb-0">—</p>
+      {% else %}
+        <form method="get" class="mb-3">
+          <select name="serien" class="form-select" onchange="this.form.submit()">
+            <option value="">Artikel wählen…</option>
+            {% for a in serien_artikel %}<option value="{{ a.pk }}" {% if gewaehlter_artikel and gewaehlter_artikel.pk == a.pk %}selected{% endif %}>{{ a.name }}</option>{% endfor %}
+          </select>
+        </form>
+        {% if gewaehlter_artikel %}
+          {% if not seriennummern %}<p class="text-muted">Noch keine Seriennummern erfasst.</p>{% else %}
+          <table class="table table-sm">
+            <thead><tr><th>S/N</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for s in seriennummern %}
+              <tr>
+                <td>{{ s.nummer }}</td>
+                <td>{% if s.status == 'lager' %}<span class="badge bg-app-success">Lager</span>{% elif s.status == 'verkauft' %}<span class="badge bg-app-secondary">Verkauft</span>{% else %}<span class="badge bg-app-dark">Defekt</span>{% endif %}</td>
+                <td class="text-end text-nowrap">
+                  {% if s.status == 'lager' and user|darf:"lager:schreiben" %}
+                    <form method="post" action="{% url 'lager:serie_defekt' s.pk %}" class="d-inline" onsubmit="return confirm('Als defekt markieren? Der Bestand wird um 1 reduziert.')">{% csrf_token %}<button class="btn btn-sm btn-app-outline-danger" type="submit">Defekt melden</button></form>
+                    <form method="post" action="{% url 'lager:serie_entfernen' s.pk %}" class="d-inline" onsubmit="return confirm('Fälschlich erfasste Seriennummer wirklich entfernen?')">{% csrf_token %}<button class="btn btn-sm btn-app-outline-secondary" type="submit">Entfernen</button></form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if unterbestand %}
+<div class="card p-3 mb-4">
+  <h6>Unter Mindestbestand</h6>
+  <table class="table table-sm mb-0">
+    <thead><tr><th>Artikel</th><th class="text-end">Bestand</th><th class="text-end">Mindestbestand</th></tr></thead>
+    <tbody>{% for a in unterbestand %}<tr><td>{{ a.artikelnummer }} {{ a.name }}</td><td class="text-end low-stock">{{ a.bestand }} {{ a.einheit }}</td><td class="text-end">{{ a.mindestbestand }}</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="card p-3">
+  <h6>Letzte Lagerbewegungen</h6>
+  <div class="table-responsive">
+  <table class="table table-sm">
+    <thead><tr><th>Datum</th><th>Artikel</th><th>Typ</th><th class="text-end">Menge</th><th>Notiz</th><th>Benutzer</th></tr></thead>
+    <tbody>
+    {% for m in bewegungen %}
+      <tr>
+        <td>{{ m.erstellt|date:"d.m.Y H:i" }}</td>
+        <td>{{ m.artikel.name }}</td>
+        <td>{{ m.get_typ_display }}</td>
+        <td class="text-end {% if m.menge < 0 %}text-app-danger{% else %}text-app-success{% endif %}">{% if m.menge > 0 %}+{% endif %}{{ m.menge }}</td>
+        <td>{{ m.notiz }}</td>
+        <td>{% if m.benutzer %}{{ m.benutzer.anzeigename }}{% else %}—{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="text-muted text-center py-3">Noch keine Lagerbewegungen.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

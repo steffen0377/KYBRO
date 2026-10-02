@@ -1,0 +1,40 @@
+{% load l10n %}
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th><a href="?{% if suche %}q={{ suche|urlencode }}&{% endif %}{% if gewaehlte_kategorie %}kategorie={{ gewaehlte_kategorie.pk }}&{% endif %}sort=artikelnummer&dir={{ naechste_richtung.artikelnummer }}" class="text-dark text-decoration-none">Art.-Nr.</a>{% if sortierung == "artikelnummer" %} <i class="bi bi-caret-{% if richtung == 'asc' %}up{% else %}down{% endif %}-fill"></i>{% endif %}</th>
+        <th><a href="?{% if suche %}q={{ suche|urlencode }}&{% endif %}{% if gewaehlte_kategorie %}kategorie={{ gewaehlte_kategorie.pk }}&{% endif %}sort=name&dir={{ naechste_richtung.name }}" class="text-dark text-decoration-none">Name</a>{% if sortierung == "name" %} <i class="bi bi-caret-{% if richtung == 'asc' %}up{% else %}down{% endif %}-fill"></i>{% endif %}</th>
+        <th>Kategorien</th>
+        <th class="text-end">VK-Preis</th>
+        <th class="text-end">MwSt.</th>
+        <th class="text-end">Bestand</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for a in artikel %}
+      <tr class="{% if not a.aktiv %}text-muted{% endif %}" style="cursor:pointer;" data-href="{% url 'stammdaten:artikel_bearbeiten' a.pk %}">
+        <td>{{ a.artikelnummer }}</td>
+        <td>{{ a.name }} {% if a.seriennummern %}<span class="badge bg-app-info text-dark">S/N</span>{% endif %}</td>
+        <td>{% for k in a.kategorien.all %}{{ k.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        <td class="text-end">{{ a.verkaufspreis }} €</td>
+        <td class="text-end">{{ a.steuersatz }} %</td>
+        <td class="text-end {% if a.unter_mindestbestand %}low-stock{% endif %}">
+          {% if a.lagerfuehrung %}{{ a.bestand }}{% else %}<span class="text-muted">— kein Lagerartikel —</span>{% endif %}
+        </td>
+        <td>{% if a.aktiv %}<span class="badge bg-app-success">Aktiv</span>{% else %}<span class="badge bg-app-secondary">Inaktiv</span>{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="text-muted text-center py-3">Keine Artikel gefunden.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('#ergebnis tr[data-href]').forEach(function (zeile) {
+    zeile.addEventListener('click', function (e) { if (!e.target.closest('a,button,form,input')) { window.location = zeile.dataset.href; } });
+  });
+</script>

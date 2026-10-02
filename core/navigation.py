@@ -40,6 +40,7 @@ class Gruppe:
 MENUE = (
     Eintrag("Dashboard", "bi-speedometer2", "core:dashboard", praefix="core:dashboard"),
     Eintrag("Artikel", "bi-box-seam", "stammdaten:artikel_liste", "stammdaten:artikel", "artikel"),
+    Eintrag("Kategorien", "bi-tags", "stammdaten:kategorien_liste", "stammdaten:kategorien", "kategorien"),
     Eintrag("Lager", "bi-archive", "lager:uebersicht", "lager:", "lager"),
     Eintrag("Kunden", "bi-people", "stammdaten:kunden_liste", "stammdaten:kunden", "kunden"),
     Gruppe(
