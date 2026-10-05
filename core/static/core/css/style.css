@@ -291,18 +291,19 @@ html, body { height: 100%; }
 }
 .overlay-dialog::backdrop { background: rgba(0, 0, 0, .45); }
 
-/* Personal: Anwesenheits-Monatsübersicht */
+/* Personal: Anwesenheits-Monatsübersicht. Die Zellenregeln brauchen ".anwesenheit-matrix td", sonst überschreibt
+   Bootstrap (.table > * > *) den Hintergrund. */
 .anwesenheit-matrix th, .anwesenheit-matrix td { min-width: 1.9rem; padding: .2rem .25rem; font-size: .8rem; }
 .anwesenheit-matrix th.we { background: #f1f3f5; }
-.az-anwesend { background: #d1e7dd; }
-.az-homeoffice { background: #cff4fc; }
-.az-dienstreise { background: #e2d9f3; }
-.az-krank { background: #f8d7da; }
-.az-urlaub { background: #fff3cd; }
-.az-urlaub_offen { background: repeating-linear-gradient(45deg, #fff3cd, #fff3cd 4px, #fff 4px, #fff 8px); }
-.az-sonderurlaub { background: #ffe5d0; }
-.az-freizeitausgleich { background: #e9ecef; }
-.az-berufsschule { background: #d3e4ff; }
-.az-schulung { background: #d9f2d0; }
-.az-feiertag { background: #dee2e6; font-weight: 600; }
-.az-frei { background: #f1f3f5; }
+.az-anwesend, .anwesenheit-matrix td.az-anwesend { background: #d1e7dd; }
+.az-homeoffice, .anwesenheit-matrix td.az-homeoffice { background: #cff4fc; }
+.az-dienstreise, .anwesenheit-matrix td.az-dienstreise { background: #e2d9f3; }
+.az-krank, .anwesenheit-matrix td.az-krank { background: #f8d7da; }
+.az-urlaub, .anwesenheit-matrix td.az-urlaub { background: #fff3cd; }
+.az-urlaub_offen, .anwesenheit-matrix td.az-urlaub_offen { background: repeating-linear-gradient(45deg, #fff3cd, #fff3cd 4px, #fff 4px, #fff 8px); }
+.az-sonderurlaub, .anwesenheit-matrix td.az-sonderurlaub { background: #ffe5d0; }
+.az-freizeitausgleich, .anwesenheit-matrix td.az-freizeitausgleich { background: #e9ecef; }
+.az-berufsschule, .anwesenheit-matrix td.az-berufsschule { background: #d3e4ff; }
+.az-schulung, .anwesenheit-matrix td.az-schulung { background: #d9f2d0; }
+.az-feiertag, .anwesenheit-matrix td.az-feiertag { background: #dee2e6; font-weight: 600; }
+.az-frei, .anwesenheit-matrix td.az-frei { background: #f1f3f5; }
