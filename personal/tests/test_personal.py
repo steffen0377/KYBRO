@@ -160,6 +160,13 @@ class ViewTests(TestCase):
         })
         self.assertEqual(Anwesenheit.objects.count(), 0)
 
+    def test_berufsschule_und_schulung(self):
+        m = mitarbeiter()
+        for status in ("berufsschule", "schulung"):
+            r = self.client.post(reverse("personal:anwesenheit"), {"mitarbeiter": m.pk, "datum": "2026-10-05", "status": status})
+            self.assertEqual(r.status_code, 302)
+            self.assertEqual(Anwesenheit.objects.get(mitarbeiter=m).status, status)
+
     def test_urlaub_eintragen_ist_genehmigt(self):
         m = mitarbeiter()
         self.client.post(reverse("personal:urlaub_neu"), {"mitarbeiter": m.pk, "von": "2026-10-05", "bis": "2026-10-06"})

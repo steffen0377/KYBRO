@@ -196,6 +196,8 @@ class Anwesenheit(models.Model):
         KRANK = "krank", "Krank"
         SONDERURLAUB = "sonderurlaub", "Sonderurlaub"
         FREIZEITAUSGLEICH = "freizeitausgleich", "Freizeitausgleich"
+        BERUFSSCHULE = "berufsschule", "Berufsschule"
+        SCHULUNG = "schulung", "Schulung"
 
     mitarbeiter = models.ForeignKey(Mitarbeiter, on_delete=models.CASCADE, related_name="anwesenheiten")
     datum = models.DateField("Datum")

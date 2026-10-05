@@ -12,7 +12,7 @@ Menü **Personal** (Recht „Personal“ je Gruppe, lesen bzw. schreiben; Gruppe
   Tage gerundet). Je Jahr kann der Anspruch manuell überschrieben und ein Übertrag erfasst werden. Gezählt werden nur Arbeitstage
   laut Vertrag; **gesetzliche Feiertage werden nicht abgezogen** (noch nicht umgesetzt). Anträge: beantragt, genehmigt, abgelehnt,
   storniert. Wer Urlaub einträgt, genehmigt ihn zugleich.
-* **Anwesenheit:** Tagesstatus (anwesend, Homeoffice, Dienstreise, krank, Sonderurlaub, Freizeitausgleich) mit optionalen Zeiten;
+* **Anwesenheit:** Tagesstatus (anwesend, Homeoffice, Dienstreise, krank, Sonderurlaub, Freizeitausgleich, Berufsschule, Schulung) mit optionalen Zeiten;
   ein Zeitraum lässt sich auf einmal eintragen (nur Arbeitstage). Urlaub kommt aus den Urlaubsanträgen und wird in der
   Monatsübersicht automatisch angezeigt.
 * **Meine Zeiten:** Benutzer mit verknüpftem Mitarbeiter sehen ohne Personal-Recht ihre eigenen Zeiten und ihren Resturlaub,
