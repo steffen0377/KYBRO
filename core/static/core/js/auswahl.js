@@ -104,6 +104,10 @@
     var liste = document.createElement('ul');
     liste.className = 'auswahl-liste';
     liste.hidden = true;
+    // Grundlegende Darstellung inline, damit die Liste auch mit veraltetem CSS-Cache als Overlay erscheint.
+    liste.style.cssText = 'position:fixed;z-index:2000;max-height:280px;overflow-y:auto;margin:0;padding:.25rem 0;' +
+      'list-style:none;background:#fff;border:1px solid rgba(0,0,0,.2);border-radius:.375rem;' +
+      'box-shadow:0 .5rem 1rem rgba(0,0,0,.15)';
 
     select.parentNode.insertBefore(huelle, select);
     huelle.appendChild(eingabe);
