@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 
-from core.forms import BootstrapFormMixin
+from core.forms import BootstrapFormMixin, suchauswahl
 
 from .models import (
     Ansprechpartner,
@@ -23,6 +23,7 @@ class KategorieForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["uebergeordnet"].empty_label = "— keine (Hauptkategorie) —"
+        suchauswahl(self.fields["uebergeordnet"], "kategorie")
         if self.instance.pk:
             ausgeschlossen = self.instance.nachfahren_ids() | {self.instance.pk}
             self.fields["uebergeordnet"].queryset = Kategorie.objects.exclude(pk__in=ausgeschlossen)
@@ -77,11 +78,19 @@ class ArtikelLieferantForm(_ZeilenForm):
         model = ArtikelLieferant
         fields = ["lieferant", "lieferanten_artikelnummer", "hek"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        suchauswahl(self.fields["lieferant"], "lieferant")
+
 
 class SonderpreisForm(_ZeilenForm):
     class Meta:
         model = Sonderpreis
         fields = ["kunde", "art", "wert", "aktiv"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        suchauswahl(self.fields["kunde"], "kunde")
 
 
 class PreisoptionForm(_ZeilenForm):

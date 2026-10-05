@@ -4,7 +4,11 @@ from . import views
 
 app_name = "stammdaten"
 
+from .schnell import SchnellFormularView
+
 urlpatterns = [
+    path("schnell/<str:art>/neu/", SchnellFormularView.as_view(), name="schnell_neu"),
+    path("schnell/<str:art>/<int:pk>/", SchnellFormularView.as_view(), name="schnell_bearbeiten"),
     path("kategorien/", views.KategorieListView.as_view(), name="kategorien_liste"),
     path("kategorien/neu/", views.KategorieCreateView.as_view(), name="kategorien_neu"),
     path("kategorien/<int:pk>/", views.KategorieUpdateView.as_view(), name="kategorien_bearbeiten"),

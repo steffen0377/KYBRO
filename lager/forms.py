@@ -1,6 +1,6 @@
 from django import forms
 
-from core.forms import BootstrapFormMixin
+from core.forms import BootstrapFormMixin, suchauswahl
 from stammdaten.models import Artikel
 
 from .services import seriennummern_aus_text
@@ -21,6 +21,7 @@ class _ArtikelWahl(BootstrapFormMixin, forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["artikel"].queryset = _lagerartikel(self.mit_seriennummern)
+        suchauswahl(self.fields["artikel"])
         self.fields["notiz"].widget.attrs["placeholder"] = "Notiz (optional)"
 
 

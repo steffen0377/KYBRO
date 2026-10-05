@@ -117,6 +117,17 @@
     });
   }
 
+  // Mini-Formulare (Overlay) liefern aktuelle Artikel-/Kundendaten: Nachschlagetabellen nachführen.
+  document.addEventListener('auswahl:gespeichert', function (e) {
+    var d = e.detail;
+    if (d.art === 'artikel') { artikel[d.id] = d.daten; }
+    if (d.art === 'kunde') {
+      var i = steuerbefreit.indexOf(d.id);
+      if (d.daten.steuerbefreit && i === -1) { steuerbefreit.push(d.id); }
+      if (!d.daten.steuerbefreit && i !== -1) { steuerbefreit.splice(i, 1); }
+    }
+  });
+
   function zeilenInitialisieren() {
     koerper.querySelectorAll('tr').forEach(function (zeile) {
       var aktuell = zeile.querySelector('.feld-abrechnung').value;

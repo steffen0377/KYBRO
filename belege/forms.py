@@ -2,7 +2,7 @@ from django import forms
 from django.forms import BaseInlineFormSet, inlineformset_factory
 from django.utils import timezone
 
-from core.forms import BootstrapFormMixin
+from core.forms import BootstrapFormMixin, suchauswahl
 from einstellungen.models import Firma
 from stammdaten.models import Artikel, Kunde
 
@@ -27,6 +27,7 @@ class _KopfForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["kunde"].label_from_instance = lambda k: k.anzeigename
+        suchauswahl(self.fields["kunde"], "kunde")
         # Kunden mit Steuerbefreiung markieren, damit das Formular die MwSt. auf 0 setzen kann.
         self.steuerbefreite_kunden = list(
             Kunde.objects.filter(steuerbefreit=True).values_list("pk", flat=True)
@@ -60,6 +61,7 @@ class PositionForm(BootstrapFormMixin, forms.ModelForm):
             artikel = Artikel.objects.filter(aktiv=True) | Artikel.objects.filter(pk=self.instance.artikel_id)
         self.fields["artikel"].queryset = artikel.order_by("name")
         self.fields["artikel"].empty_label = "— manuell —"
+        suchauswahl(self.fields["artikel"], "artikel")
         self.fields["beschreibung"].required = False
         self.fields["artikel"].widget.attrs["class"] += " artikel-wahl"
         self.fields["beschreibung"].widget.attrs["class"] += " feld-beschreibung"

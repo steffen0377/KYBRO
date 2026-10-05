@@ -16,6 +16,7 @@ from core.views import LiveSucheMixin
 from einstellungen.models import Firma, Nummernkreis
 from einstellungen.services import naechste_belegnummer
 from lager.models import Seriennummer
+from stammdaten.schnell import artikel_formulardaten
 from stammdaten.models import Artikel, Sonderpreis
 
 from . import services
@@ -117,19 +118,7 @@ class BelegDetailView(ModulRechtMixin, DetailView):
 def _artikel_fuer_formular() -> list[dict]:
     """Artikeldaten für die Auswahl in Positionsformularen (als JSON an das Template)."""
     artikel = Artikel.objects.filter(aktiv=True).prefetch_related("preisoptionen").order_by("name")
-    return [
-        {
-            "id": a.pk,
-            "name": a.name,
-            "preis": float(a.verkaufspreis),
-            "steuersatz": float(a.steuersatz),
-            "optionen": [
-                {"id": o.pk, "abrechnung": o.abrechnung, "preis": float(o.preis)}
-                for o in a.preisoptionen.all() if o.aktiv
-            ],
-        }
-        for a in artikel
-    ]
+    return [artikel_formulardaten(a) for a in artikel]
 
 
 def _sonderpreise_fuer_formular() -> dict:
