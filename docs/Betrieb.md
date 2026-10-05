@@ -23,9 +23,9 @@ GRANT ALL PRIVILEGES ON kybro.* TO 'kybro'@'localhost';
 ## 3. Anwendung
 
 ```bash
-sudo useradd --system --create-home --home-dir /srv/kybro --shell /usr/sbin/nologin kybro
-# Code per git nach /srv/kybro legen (git clone bzw. git am der Patch-Dateien)
-cd /srv/kybro
+sudo useradd --system --create-home --home-dir /opt/kybro --shell /usr/sbin/nologin kybro
+# Code per git nach /opt/kybro legen (git clone bzw. git am der Patch-Dateien)
+cd /opt/kybro
 sudo -u kybro python3 -m venv venv
 sudo -u kybro venv/bin/pip install -r requirements.txt
 sudo -u kybro cp .env.example .env     # danach bearbeiten (siehe unten)
@@ -91,7 +91,7 @@ Die Entwürfe müssen anschließend in der Anwendung geprüft und freigegeben we
 * Aktualisieren:
 
   ```bash
-  cd /srv/kybro
+  cd /opt/kybro
   sudo -u kybro git am /tmp/*.patch            # bzw. git pull
   sudo -u kybro venv/bin/pip install -r requirements.txt
   sudo -u kybro venv/bin/python manage.py migrate
