@@ -13,5 +13,6 @@ urlpatterns = [
     path("lizenzen/neu/", views.LizenzNeuView.as_view(), name="lizenz_neu"),
     path("lizenzen/<int:pk>/", views.LizenzBearbeitenView.as_view(), name="lizenz_bearbeiten"),
     path("lizenzen/<int:pk>/loeschen/", views.LizenzLoeschenView.as_view(), name="lizenz_loeschen"),
+    path("live/", views.LiveAktivierenView.as_view(), name="live"),
     path("anmeldung/", views.AnmeldungView.as_view(), name="anmeldung"),
 ]

@@ -10,11 +10,12 @@ from django.views.generic import CreateView, FormView, ListView, TemplateView, U
 from accounts import ldap
 from accounts.mixins import AdminRequiredMixin
 
-from . import mail
+from . import live, mail
 from .forms import (
     AuthentifizierungForm,
     FirmaForm,
     FormulareForm,
+    LiveAktivierenForm,
     LizenzForm,
     MailForm,
     NummernkreisFormSet,
@@ -103,6 +104,30 @@ class AnmeldungView(EinzeleintragView):
                 messages.error(request, f"LDAP-Verbindung fehlgeschlagen: {fehler}")
             return redirect("einstellungen:anmeldung")
         return super().post(request, *args, **kwargs)
+
+
+class LiveAktivierenView(EinstellungenMixin, FormView):
+    """Einmaliger Wechsel vom Testbetrieb in den Live-Betrieb (löscht die Testdaten)."""
+
+    register = "firma"
+    template_name = "einstellungen/live.html"
+    form_class = LiveAktivierenForm
+    success_url = reverse_lazy("core:dashboard")
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and Firma.holen().betriebsmodus == Firma.Betrieb.LIVE:
+            messages.info(request, "Die Installation ist bereits im Live-Betrieb.")
+            return redirect("einstellungen:firma")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        try:
+            anzahl = live.live_aktivieren(self.request.user)
+        except live.LiveSchonAktiv:
+            return redirect("einstellungen:firma")
+        gesamt = sum(anzahl.values())
+        messages.success(self.request, f"Live-Betrieb aktiviert. {gesamt} Testdatensätze wurden gelöscht.")
+        return super().form_valid(form)
 
 
 class NummernkreiseView(EinstellungenMixin, TemplateView):

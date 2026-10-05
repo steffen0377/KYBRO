@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Live-Betrieb aktivieren</h4>
+<div class="card p-4" style="max-width: 720px;">
+  <div class="alert alert-app-danger">
+    <strong>Das lässt sich nicht rückgängig machen.</strong> Alle Testdaten werden endgültig gelöscht.
+  </div>
+  <p class="mb-1"><strong>Wird gelöscht:</strong></p>
+  <ul>
+    <li>Angebote, Aufträge, Rechnungen und Abonnements (samt Unterschriften)</li>
+    <li>Artikel, Kategorien, Kunden und Lieferanten</li>
+    <li>Lagerbewegungen und Seriennummern</li>
+    <li>Belegnummern-Zähler (die nächste Rechnung erhält wieder die Nummer 0001)</li>
+  </ul>
+  <p class="mb-1"><strong>Bleibt erhalten:</strong></p>
+  <ul>
+    <li>Firmendaten, Logo, Briefbogen, Präfixe, E-Mail-Einstellungen und Formulare</li>
+    <li>Benutzer, Gruppen, Anmeldeverfahren (LDAP) und Lizenzen</li>
+  </ul>
+  <form method="post" autocomplete="off">
+    {% csrf_token %}
+    {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+    <div class="form-check mb-3">
+      <input type="checkbox" class="form-check-input" id="{{ form.sicherung.id_for_label }}" name="sicherung">
+      <label class="form-check-label" for="{{ form.sicherung.id_for_label }}">{{ form.sicherung.label }}</label>
+      {% for fehler in form.sicherung.errors %}<div class="text-app-danger small">{{ fehler }}</div>{% endfor %}
+    </div>
+    {% include "core/feld.html" with feld=form.bestaetigung %}
+    <button class="btn btn-app-outline-danger" type="submit">Testdaten löschen und Live-Betrieb aktivieren</button>
+    <a href="{% url 'einstellungen:firma' %}" class="btn btn-app-outline-secondary">Abbrechen</a>
+  </form>
+</div>
+{% endblock %}

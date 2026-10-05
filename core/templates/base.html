@@ -70,6 +70,12 @@
       </div>
     </div>
     <div class="container-fluid p-4">
+      {% if testbetrieb %}
+        <div class="alert alert-warning py-2 small">
+          <i class="bi bi-exclamation-triangle me-1"></i><strong>Testbetrieb:</strong> Alle Daten sind Testdaten und werden beim Wechsel in den Live-Betrieb gelöscht.
+          {% if user.is_superuser %}<a href="{% url 'einstellungen:live' %}" class="alert-link ms-1">Live-Betrieb aktivieren</a>{% endif %}
+        </div>
+      {% endif %}
       {% for meldung in messages %}
         <div class="alert alert-app-{{ meldung.tags|default:'info' }} alert-dismissible fade show" role="alert">
           {{ meldung }}

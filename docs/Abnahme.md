@@ -45,6 +45,11 @@ Punkte lassen sich in einer frisch eingerichteten Testinstallation durchspielen
 - [ ] Kündigung: Vorschau des Endtermins (Mindestlaufzeit, Kündigungsfrist, Abrechnungszeitraum); Rücknahme; Ende nach Wirksamkeit.
 - [ ] Systemd-Timer `kybro-abos.timer` läuft (`systemctl list-timers`).
 
+## F0. Testbetrieb und Livegang
+
+- [ ] Neue Installation zeigt den Testbetrieb-Hinweis; „Live-Betrieb aktivieren“ erscheint nur für Administratoren.
+- [ ] Nach dem Livegang: Testdaten weg, Firmendaten/Benutzer/LDAP/Formulare erhalten, Belegnummer beginnt wieder bei 0001, Hinweis und Funktion verschwunden.
+
 ## F. Einstellungen
 
 - [ ] SMTP eintragen und Testmail an die eigene Adresse senden.

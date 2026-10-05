@@ -84,6 +84,20 @@ Die Entwürfe müssen anschließend in der Anwendung geprüft und freigegeben we
    wenn der LDAP-Server nicht erreichbar ist (Notfallzugang, wird protokolliert).
 7. Benutzer und Gruppen anlegen (Menü „Benutzer“, „Gruppen und Rechte“).
 
+## 5a. Testbetrieb und Livegang
+
+Jede neue Installation startet im **Testbetrieb**: Oben in der Anwendung steht ein gelber Hinweis. In dieser Phase
+können alle Nutzer testen und Verbesserungswünsche äußern. Firmendaten, Benutzer und alle Einstellungen
+pflegst du schon jetzt so, wie sie später gelten sollen.
+
+Zum Produktivstart unter **Einstellungen › Firma** (oder über den Hinweis) auf „Live-Betrieb aktivieren“ klicken.
+Vorher eine Datenbanksicherung erstellen (`mysqldump --single-transaction kybro > vor-livegang.sql`). Nach der
+Bestätigung (Haken und das Wort LIVE) werden gelöscht: Angebote, Aufträge, Rechnungen, Abonnements,
+Artikel, Kategorien, Kunden, Lieferanten, Lagerbewegungen, Seriennummern, Unterschriften, Belegnummern-Zähler und
+API-Anmeldeprotokolle. Erhalten bleiben Firmendaten, Logo, Briefbogen, Präfixe, SMTP, Formulare, Lizenzen, LDAP,
+Benutzer und Gruppen. Danach verschwindet der Hinweis, und die Funktion ist nicht mehr aufrufbar. Nur
+Administratoren können den Wechsel auslösen. Das Ergebnis steht im Protokoll (`journalctl -u kybro`, Eintrag `[LIVE]`).
+
 ## 6. Sicherung und Aktualisierung
 
 * Sichern: Datenbank (`mysqldump --single-transaction kybro`), Ordner `media/` (Logo, Briefbogen, Unterschriften)

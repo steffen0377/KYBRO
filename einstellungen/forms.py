@@ -109,6 +109,21 @@ class AuthentifizierungForm(BootstrapFormMixin, forms.ModelForm):
         return filter_
 
 
+class LiveAktivierenForm(forms.Form):
+    sicherung = forms.BooleanField(
+        label="Ich habe eine Sicherung der Datenbank erstellt, falls ich Daten doch noch brauche.",
+        error_messages={"required": "Bitte bestätigen."},
+    )
+    bestaetigung = forms.CharField(
+        label="Zur Bestätigung LIVE eintippen", widget=forms.TextInput(attrs={"autocomplete": "off"}),
+    )
+
+    def clean_bestaetigung(self):
+        if self.cleaned_data["bestaetigung"].strip() != "LIVE":
+            raise forms.ValidationError("Bitte genau LIVE eintippen.")
+        return "LIVE"
+
+
 # --- Formulareinstellungen (PDF-Layout und Texte) ---------------------------------------------
 
 JA_NEIN = [("1", "Ja"), ("0", "Nein")]

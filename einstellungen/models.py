@@ -16,6 +16,14 @@ class Firma(models.Model):
         SSL = "ssl", "SSL/TLS (meist Port 465)"
         TLS = "tls", "STARTTLS (meist Port 587)"
 
+    class Betrieb(models.TextChoices):
+        TEST = "test", "Testbetrieb"
+        LIVE = "live", "Live-Betrieb"
+
+    # Jede neue Installation startet im Testbetrieb. Der Wechsel zu "live" geschieht nur einmalig über
+    # einstellungen.live.live_aktivieren (löscht die Testdaten) und ist in der Oberfläche nicht umkehrbar.
+    betriebsmodus = models.CharField("Betriebsmodus", max_length=4, choices=Betrieb.choices, default=Betrieb.TEST)
+
     firmenname = models.CharField("Firmenname", max_length=150, blank=True)
     logo = models.ImageField(
         "Logo", upload_to="firma/", blank=True,

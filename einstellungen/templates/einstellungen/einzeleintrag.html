@@ -3,6 +3,12 @@
 {% block content %}
 <h4 class="mb-3">Einstellungen</h4>
 {% include "einstellungen/_register.html" %}
+{% if testbetrieb and aktives_register == "firma" %}
+<div class="alert alert-warning d-flex align-items-center justify-content-between">
+  <span><strong>Testbetrieb:</strong> Diese Installation enthält Testdaten. Vor dem Produktivbetrieb werden sie gelöscht, die Firmeneinstellungen bleiben.</span>
+  <a class="btn btn-sm btn-app-outline-danger" href="{% url 'einstellungen:live' %}">Live-Betrieb aktivieren</a>
+</div>
+{% endif %}
 <form method="post" class="card p-4" {% if mehrteilig %}enctype="multipart/form-data"{% endif %}>
   {% csrf_token %}
   <h5 class="mb-3">{{ titel }}</h5>
