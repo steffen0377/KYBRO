@@ -78,6 +78,45 @@ def anmelden(benutzername: str, passwort: str, cfg: Authentifizierung | None = N
         raise LdapNichtErreichbar(str(fehler)) from fehler
 
 
+def benutzer_testen(benutzername: str, passwort: str = "", cfg: Authentifizierung | None = None) -> str:
+    """Diagnose für die Einstellungsseite: Schritt für Schritt, woran eine Anmeldung scheitert.
+
+    Prüft Service-Konto, Benutzersuche (Base DN und Filter) und, wenn ein Passwort angegeben ist,
+    die Anmeldung des Benutzers. Gibt einen Text mit dem Ergebnis zurück oder wirft ``LdapNichtErreichbar``
+    mit einer verständlichen Fehlerbeschreibung (auch für "Benutzer nicht gefunden" und "Passwort falsch").
+    """
+    cfg = cfg or Authentifizierung.holen()
+    if not cfg.ldap_host:
+        raise LdapNichtErreichbar("Kein LDAP-Server eingetragen.")
+    try:
+        suche = _verbindung(cfg, cfg.ldap_bind_dn, cfg.ldap_bind_passwort)
+        if not _binden(suche, cfg):
+            raise LdapNichtErreichbar("Service-Konto: Anmeldung fehlgeschlagen (Bind-DN oder Passwort).")
+        filter_ = cfg.ldap_benutzerfilter.replace("%s", escape_filter_chars(benutzername))
+        attribute = [a for a in (cfg.ldap_namensattribut, cfg.ldap_mailattribut) if a]
+        suche.search(cfg.ldap_base_dn, filter_, attributes=attribute)
+        if not suche.entries:
+            raise LdapNichtErreichbar(
+                f"Benutzer nicht gefunden. Suchfilter: {filter_} unter {cfg.ldap_base_dn}. "
+                "Prüfen Sie Base DN und Benutzerfilter (Active Directory: (sAMAccountName=%s))."
+            )
+        if len(suche.entries) > 1:
+            raise LdapNichtErreichbar(f"Der Filter {filter_} liefert {len(suche.entries)} Treffer; er muss eindeutig sein.")
+        eintrag = suche.entries[0]
+        meldung = f"Benutzer gefunden: {eintrag.entry_dn}"
+        name = _erster_wert(eintrag, cfg.ldap_namensattribut)
+        mail = _erster_wert(eintrag, cfg.ldap_mailattribut)
+        if name or mail:
+            meldung += f" (Name: {name or '-'}, E-Mail: {mail or '-'})"
+        if not passwort:
+            return meldung + "."
+        if not _binden(_verbindung(cfg, eintrag.entry_dn, passwort), cfg):
+            raise LdapNichtErreichbar(meldung + ". Das Passwort des Benutzers wurde abgelehnt.")
+        return meldung + ". Anmeldung mit Passwort erfolgreich."
+    except LDAPException as fehler:
+        raise LdapNichtErreichbar(str(fehler)) from fehler
+
+
 def verbindung_testen(cfg: Authentifizierung | None = None) -> str:
     """Prüft Server und Service-Konto. Gibt eine Erfolgsmeldung zurück oder wirft ``LdapNichtErreichbar``."""
     cfg = cfg or Authentifizierung.holen()

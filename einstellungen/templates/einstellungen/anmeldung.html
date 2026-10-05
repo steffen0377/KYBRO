@@ -23,9 +23,36 @@
     <div class="col-md-4">{% include "core/feld.html" with feld=form.ldap_namensattribut %}</div>
     <div class="col-md-4">{% include "core/feld.html" with feld=form.ldap_mailattribut %}</div>
   </div>
+  <div class="mb-3">
+    <span class="text-muted small me-2">Vorlage für den Filter und die Attribute:</span>
+    <button type="button" class="btn btn-sm btn-app-outline-secondary" id="vorlage-ad">Active Directory</button>
+    <button type="button" class="btn btn-sm btn-app-outline-secondary" id="vorlage-openldap">OpenLDAP</button>
+  </div>
+  <hr>
+  <h6>Anmeldung testen (nutzt die gespeicherten Einstellungen)</h6>
+  <div class="row">
+    <div class="col-md-4 mb-3"><label class="form-label" for="test_benutzer">Testbenutzer</label>
+      <input class="form-control" id="test_benutzer" name="test_benutzer" autocomplete="off" placeholder="z. B. mmustermann"></div>
+    <div class="col-md-4 mb-3"><label class="form-label" for="test_passwort">Passwort (optional)</label>
+      <input class="form-control" id="test_passwort" name="test_passwort" type="password" autocomplete="new-password">
+      <div class="form-text">Wird nicht gespeichert.</div></div>
+  </div>
   <div>
     <button class="btn btn-app-primary" type="submit">Speichern</button>
-    <button class="btn btn-app-outline-secondary" type="submit" name="test" value="1" formnovalidate>Gespeicherte Verbindung testen</button>
+    <button class="btn btn-app-outline-secondary" type="submit" name="test" value="1" formnovalidate>Verbindung und Anmeldung testen</button>
   </div>
 </form>
+<script>
+  const vorlagen = {
+    "vorlage-ad": ["(sAMAccountName=%s)", "displayName", "mail"],
+    "vorlage-openldap": ["(uid=%s)", "cn", "mail"],
+  };
+  Object.entries(vorlagen).forEach(([id, werte]) => {
+    document.getElementById(id).addEventListener("click", () => {
+      ["ldap_benutzerfilter", "ldap_namensattribut", "ldap_mailattribut"].forEach((feld, i) => {
+        document.getElementById("id_" + feld).value = werte[i];
+      });
+    });
+  });
+</script>
 {% endblock %}

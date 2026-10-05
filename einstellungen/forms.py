@@ -77,6 +77,23 @@ class AuthentifizierungForm(BootstrapFormMixin, forms.ModelForm):
         help_text="Leer lassen, um das gespeicherte Passwort beizubehalten.",
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        hilfe = {
+            "ldap_host": "Name oder IP-Adresse des LDAP-Servers bzw. Domänencontrollers.",
+            "ldap_base_dn": "Ab hier werden Benutzer gesucht, z. B. DC=firma,DC=local oder OU=Benutzer,DC=firma,DC=local.",
+            "ldap_bind_dn": "Konto, das Benutzer suchen darf. Active Directory: auch Benutzername@firma.local möglich.",
+            "ldap_benutzerfilter": (
+                "Bestimmt, mit welchem Attribut man sich anmeldet; %s steht für den eingegebenen Benutzernamen. "
+                "Active Directory: (sAMAccountName=%s) – Anmeldung mit dem Kurznamen, z. B. mmustermann. "
+                "OpenLDAP: (uid=%s). Mit E-Mail-Adresse: (mail=%s)."
+            ),
+            "ldap_namensattribut": "Active Directory: displayName, OpenLDAP: cn.",
+            "ldap_mailattribut": "Normalerweise mail.",
+        }
+        for name, text in hilfe.items():
+            self.fields[name].help_text = text
+
     class Meta:
         model = Authentifizierung
         fields = ["modus", "ldap_host", "ldap_port", "ldap_verschluesselung", "ldap_base_dn", "ldap_bind_dn",

@@ -96,6 +96,9 @@ class AnmeldungView(EinzeleintragView):
         if "test" in request.POST:
             try:
                 messages.success(request, ldap.verbindung_testen())
+                benutzer = request.POST.get("test_benutzer", "").strip()
+                if benutzer:
+                    messages.success(request, ldap.benutzer_testen(benutzer, request.POST.get("test_passwort", "")))
             except ldap.LdapNichtErreichbar as fehler:
                 messages.error(request, f"LDAP-Verbindung fehlgeschlagen: {fehler}")
             return redirect("einstellungen:anmeldung")

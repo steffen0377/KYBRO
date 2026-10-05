@@ -110,6 +110,29 @@ class AnmeldeModiTests(TestCase):
         with attrappe(), self.assertRaises(ldap.LdapNichtErreichbar):
             ldap.verbindung_testen()
 
+    def test_benutzer_testen_diagnose(self):
+        ldap_einrichten("ldap")
+        with attrappe():
+            self.assertIn("Anmeldung mit Passwort erfolgreich", ldap.benutzer_testen("lena", "ldap-pw-1"))
+            self.assertIn("Benutzer gefunden", ldap.benutzer_testen("lena"))
+            with self.assertRaisesMessage(ldap.LdapNichtErreichbar, "Passwort des Benutzers wurde abgelehnt"):
+                ldap.benutzer_testen("lena", "falsch")
+            with self.assertRaisesMessage(ldap.LdapNichtErreichbar, "Benutzer nicht gefunden"):
+                ldap.benutzer_testen("unbekannt")
+            a = Authentifizierung.holen(); a.ldap_benutzerfilter = "(sAMAccountName=%s)"; a.save()
+            with self.assertRaisesMessage(ldap.LdapNichtErreichbar, "sAMAccountName"):
+                ldap.benutzer_testen("lena")
+
+    def test_testknopf_zeigt_ergebnis_fuer_testbenutzer(self):
+        ldap_einrichten("ldap")
+        self.client.force_login(self.admin)
+        with attrappe():
+            antwort = self.client.post(
+                reverse("einstellungen:anmeldung"),
+                {"test": "1", "test_benutzer": "lena", "test_passwort": "ldap-pw-1"}, follow=True,
+            )
+        self.assertContains(antwort, "Anmeldung mit Passwort erfolgreich")
+
     def test_bind_passwort_wird_verschluesselt_gespeichert(self):
         ldap_einrichten("ldap")
         from django.db import connection
