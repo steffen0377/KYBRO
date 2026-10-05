@@ -12,11 +12,14 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView
 
-from accounts.mixins import ModulRechtMixin
+from accounts.mixins import AdminRequiredMixin, ModulRechtMixin
 from core.views import LiveSucheMixin
 
-from .forms import AnwesenheitForm, MitarbeiterForm, UrlaubsantragForm, UrlaubsjahrForm, VertragForm
-from .models import Anwesenheit, Mitarbeiter, Urlaubsantrag, Urlaubsjahr, Vertrag
+from .forms import (
+    AnwesenheitForm, MitarbeiterForm, PersonalEinstellungForm, SondertagForm, UrlaubsantragForm, UrlaubsjahrForm, VertragForm,
+)
+from .kalender import Kalender
+from .models import Anwesenheit, Mitarbeiter, PersonalEinstellung, Sondertag, Urlaubsantrag, Urlaubsjahr, Vertrag
 from .services import antrag_tage, monatsuebersicht, urlaubskonto
 
 
@@ -126,23 +129,24 @@ class MitarbeiterDetailView(PersonalMixin, DetailView):
         kontext = super().get_context_data(**kwargs)
         m = self.object
         jahr = _jahr(self.request)
+        kalender = Kalender()
         kontext.update(
             seitentitel=m.anzeigename,
             jahr=jahr,
-            konto=urlaubskonto(m, jahr),
+            konto=urlaubskonto(m, jahr, kalender),
             urlaubsjahr=Urlaubsjahr.objects.filter(mitarbeiter=m, jahr=jahr).first(),
             vertraege=m.vertraege.all(),
-            antraege=self._antraege(m, jahr),
+            antraege=self._antraege(m, jahr, kalender),
             aktueller_vertrag=next((v for v in m.vertraege.all() if v.gueltig_bis is None or v.gueltig_bis >= datetime.date.today()), None),
             anwesenheiten=m.anwesenheiten.all()[:20],
         )
         return kontext
 
     @staticmethod
-    def _antraege(m, jahr):
+    def _antraege(m, jahr, kalender):
         antraege = list(m.urlaubsantraege.filter(Q(von__year=jahr) | Q(bis__year=jahr)))
         for a in antraege:
-            a.tage = antrag_tage(m, a)
+            a.tage = antrag_tage(m, a, kalender)
         return antraege
 
 
@@ -267,7 +271,7 @@ class AnwesenheitView(PersonalMixin, FormView):
         )
         zurueck, weiter = _nachbarmonate(jahr, monat)
         kontext.update(
-            seitentitel="Anwesenheit", uebersicht=monatsuebersicht(mitarbeiter, jahr, monat),
+            seitentitel="Anwesenheit", uebersicht=monatsuebersicht(mitarbeiter, jahr, monat, Kalender()),
             monat_datum=erster, zurueck=zurueck, weiter=weiter, heute=datetime.date.today(),
         )
         return kontext
@@ -301,8 +305,9 @@ class UrlaubListView(PersonalMixin, ListView):
         kontext = super().get_context_data(**kwargs)
         kontext["status"] = self.request.GET.get("status", "offen")
         kontext["stati"] = Urlaubsantrag.Status.choices
+        kalender = Kalender()
         for a in kontext["antraege"]:
-            a.tage = antrag_tage(a.mitarbeiter, a)
+            a.tage = antrag_tage(a.mitarbeiter, a, kalender)
         return kontext
 
 
@@ -382,11 +387,12 @@ class MeineZeitenView(EigeneDatenMixin, FormView):
         jahr, monat = _monat(self.request)
         zurueck, weiter = _nachbarmonate(jahr, monat)
         antraege = list(m.urlaubsantraege.filter(bis__gte=datetime.date(jahr, 1, 1)))
+        kalender = Kalender()
         for a in antraege:
-            a.tage = antrag_tage(m, a)
+            a.tage = antrag_tage(m, a, kalender)
         kontext.update(
-            seitentitel="Meine Zeiten", mitarbeiter=m, konto=urlaubskonto(m, datetime.date.today().year),
-            uebersicht=monatsuebersicht([m], jahr, monat), monat_datum=datetime.date(jahr, monat, 1),
+            seitentitel="Meine Zeiten", mitarbeiter=m, konto=urlaubskonto(m, datetime.date.today().year, kalender),
+            uebersicht=monatsuebersicht([m], jahr, monat, kalender), monat_datum=datetime.date(jahr, monat, 1),
             zurueck=zurueck, weiter=weiter, antraege=antraege,
         )
         return kontext
@@ -421,3 +427,61 @@ class MeinUrlaubStornierenView(EigeneDatenMixin, View):
         else:
             messages.error(request, "Nur offene Anträge können zurückgezogen werden. Bitte wende dich an die Personalverwaltung.")
         return redirect("personal:meine_zeiten")
+
+
+# --- Einstellungen (nur Administratoren) --------------------------------------------------------
+
+
+class EinstellungenView(AdminRequiredMixin, FormView):
+    """Bundesland und Sondertage (eigene Feiertage, halbe Urlaubstage)."""
+
+    form_class = PersonalEinstellungForm
+    template_name = "personal/einstellungen.html"
+    success_url = reverse_lazy("personal:einstellungen")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["instance"] = PersonalEinstellung.laden()
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, "Einstellungen gespeichert.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        kontext = super().get_context_data(**kwargs)
+        jahr = _jahr(self.request)
+        kontext.update(
+            seitentitel="Einstellungen Personal", sondertage=Sondertag.objects.all(), jahr=jahr,
+            feiertage=Kalender().feiertage(jahr),
+        )
+        return kontext
+
+
+class SondertagMixin(AdminRequiredMixin):
+    model = Sondertag
+    form_class = SondertagForm
+    template_name = "personal/sondertag_form.html"
+    success_url = reverse_lazy("personal:einstellungen")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Sondertag gespeichert.")
+        return super().form_valid(form)
+
+
+class SondertagCreateView(SondertagMixin, CreateView):
+    extra_context = {"seitentitel": "Neuer Sondertag"}
+
+
+class SondertagUpdateView(SondertagMixin, UpdateView):
+    extra_context = {"seitentitel": "Sondertag bearbeiten"}
+
+
+class SondertagLoeschenView(AdminRequiredMixin, View):
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        get_object_or_404(Sondertag, pk=pk).delete()
+        messages.success(request, "Sondertag gelöscht.")
+        return redirect("personal:einstellungen")

@@ -20,7 +20,7 @@
   <table class="table table-sm mb-0">
     {% for a in antraege %}
     <tr>
-      <td>{{ a.von|date:"d.m.Y" }} – {{ a.bis|date:"d.m.Y" }}</td><td>{{ a.tage }} Tag(e)</td><td>{{ a.get_status_display }}</td><td>{{ a.bemerkung }}</td>
+      <td>{{ a.von|date:"d.m.Y" }} – {{ a.bis|date:"d.m.Y" }}</td><td>{{ a.tage|floatformat:"-1" }} Tag(e)</td><td>{{ a.get_status_display }}</td><td>{{ a.bemerkung }}</td>
       <td class="text-end">{% if a.status == 'beantragt' %}<form method="post" action="{% url 'personal:mein_urlaub_stornieren' a.pk %}">{% csrf_token %}<button class="btn btn-sm btn-app-outline-danger">Zurückziehen</button></form>{% endif %}</td>
     </tr>
     {% empty %}<tr><td class="text-muted">Keine Anträge.</td></tr>{% endfor %}

@@ -6,7 +6,8 @@ from django.db.models import Q
 
 from core.forms import BootstrapFormMixin, suchauswahl
 
-from .models import WOCHENTAGE, Anwesenheit, Mitarbeiter, Urlaubsantrag, Urlaubsjahr, Vertrag
+from .kalender import BUNDESLAENDER, Kalender
+from .models import WOCHENTAGE, Anwesenheit, Mitarbeiter, PersonalEinstellung, Sondertag, Urlaubsantrag, Urlaubsjahr, Vertrag
 from .services import ist_arbeitstag, tage_zwischen
 
 DATUM = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
@@ -129,9 +130,11 @@ class AnwesenheitForm(BootstrapFormMixin, forms.Form):
         m = self.fixiert or d["mitarbeiter"]
         ende = d.get("datum_bis") or d["datum"]
         vertraege = list(m.vertraege.all())
+        kalender = Kalender()
+        # Bei Zeiträumen werden freie Tage und Feiertage übersprungen; ein einzelner Tag wird immer eingetragen.
         tage = [
             t for t in tage_zwischen(d["datum"], ende)
-            if ende == d["datum"] or ist_arbeitstag(vertraege, t)
+            if ende == d["datum"] or (ist_arbeitstag(vertraege, t) and kalender.anteil(t) > 0)
         ]
         for t in tage:
             if d["entfernen"]:
@@ -142,3 +145,30 @@ class AnwesenheitForm(BootstrapFormMixin, forms.Form):
                     defaults={"status": d["status"], "von": d.get("von"), "bis": d.get("bis"), "notiz": d.get("notiz", "")},
                 )
         return len(tage)
+
+
+class PersonalEinstellungForm(BootstrapFormMixin, forms.ModelForm):
+    bundesland = forms.ChoiceField(
+        label="Bundesland", required=False, choices=[("", "— keine gesetzlichen Feiertage —")] + BUNDESLAENDER,
+        help_text="Bestimmt die gesetzlichen Feiertage für Urlaubsberechnung und Anwesenheitsübersicht.",
+    )
+
+    class Meta:
+        model = PersonalEinstellung
+        fields = ["bundesland"]
+
+
+class SondertagForm(BootstrapFormMixin, forms.ModelForm):
+    urlaubsanteil = forms.TypedChoiceField(
+        label="Art", choices=[("0", "Feiertag (kein Urlaubstag)"), ("0.5", "Halber Tag (0,5 Urlaubstage)")],
+        coerce=lambda w: __import__("decimal").Decimal(w),
+    )
+
+    class Meta:
+        model = Sondertag
+        fields = ["name", "tag", "monat", "jahr", "urlaubsanteil"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.initial["urlaubsanteil"] = "0.5" if self.instance.urlaubsanteil else "0"

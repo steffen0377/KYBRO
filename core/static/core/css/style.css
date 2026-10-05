@@ -304,4 +304,5 @@ html, body { height: 100%; }
 .az-freizeitausgleich { background: #e9ecef; }
 .az-berufsschule { background: #d3e4ff; }
 .az-schulung { background: #d9f2d0; }
+.az-feiertag { background: #dee2e6; font-weight: 600; }
 .az-frei { background: #f1f3f5; }

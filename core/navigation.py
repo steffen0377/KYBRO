@@ -80,6 +80,7 @@ MENUE = (
         (
             Eintrag("Benutzer", "bi-person", "accounts:benutzer_liste", "accounts:benutzer", nur_admin=True),
             Eintrag("Gruppen und Rechte", "bi-shield-lock", "accounts:gruppe_liste", "accounts:gruppe", nur_admin=True),
+            Eintrag("Personal", "bi-person-badge", "personal:einstellungen", "personal:einstellungen", nur_admin=True),
             Eintrag("Firma und Dokumente", "bi-building-gear", "einstellungen:firma", "einstellungen:", nur_admin=True),
         ),
         nur_admin=True,

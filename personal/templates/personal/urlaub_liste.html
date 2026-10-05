@@ -19,7 +19,7 @@
     <tr>
       <td><a href="{% url 'personal:mitarbeiter_detail' a.mitarbeiter.pk %}">{{ a.mitarbeiter.anzeigename }}</a></td>
       <td>{{ a.von|date:"d.m.Y" }} – {{ a.bis|date:"d.m.Y" }}</td>
-      <td>{{ a.tage }}</td>
+      <td>{{ a.tage|floatformat:"-1" }}</td>
       <td>{{ a.get_status_display }}</td>
       <td>{{ a.bemerkung }}</td>
       <td class="text-end text-nowrap">

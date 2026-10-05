@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>{{ seitentitel }}</h4>
+<form method="post" class="card p-4" style="max-width:600px;">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  {% include "core/feld.html" with feld=form.name %}
+  <div class="row g-3">
+    <div class="col-4">{% include "core/feld.html" with feld=form.tag %}</div>
+    <div class="col-4">{% include "core/feld.html" with feld=form.monat %}</div>
+    <div class="col-4">{% include "core/feld.html" with feld=form.jahr %}</div>
+  </div>
+  {% include "core/feld.html" with feld=form.urlaubsanteil %}
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% url 'personal:einstellungen' %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

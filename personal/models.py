@@ -8,6 +8,7 @@ import datetime
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 import uuid
 
@@ -223,3 +224,49 @@ class Anwesenheit(models.Model):
         d = datetime.date.today()
         diff = datetime.datetime.combine(d, self.bis) - datetime.datetime.combine(d, self.von)
         return round(diff.total_seconds() / 3600, 2)
+
+
+class PersonalEinstellung(models.Model):
+    """Einstellungen der Personalverwaltung (genau ein Datensatz)."""
+
+    bundesland = models.CharField(
+        "Bundesland", max_length=2, blank=True,
+        help_text="Bestimmt die gesetzlichen Feiertage. Leer = keine gesetzlichen Feiertage.",
+    )
+
+    class Meta:
+        verbose_name = "Personal-Einstellung"
+        verbose_name_plural = "Personal-Einstellungen"
+
+    @classmethod
+    def laden(cls) -> "PersonalEinstellung":
+        return cls.objects.get_or_create(pk=1)[0]
+
+
+class Sondertag(models.Model):
+    """Eigener Feiertag (kostet keinen Urlaub) oder halber Tag (kostet 0,5 Urlaubstage), jährlich oder einmalig."""
+
+    ANTEILE = [(0, "Feiertag (kein Urlaubstag)"), (0.5, "Halber Tag (0,5 Urlaubstage)")]
+
+    name = models.CharField("Bezeichnung", max_length=100)
+    tag = models.PositiveSmallIntegerField("Tag", validators=[MinValueValidator(1), MaxValueValidator(31)])
+    monat = models.PositiveSmallIntegerField("Monat", validators=[MinValueValidator(1), MaxValueValidator(12)])
+    jahr = models.PositiveSmallIntegerField(
+        "Nur im Jahr", null=True, blank=True, help_text="Leer = jedes Jahr.",
+    )
+    urlaubsanteil = models.DecimalField("Urlaubsanteil", max_digits=2, decimal_places=1, default=0)
+
+    class Meta:
+        verbose_name = "Sondertag"
+        verbose_name_plural = "Sondertage"
+        ordering = ["monat", "tag", "jahr"]
+
+    def __str__(self):
+        return f"{self.name} ({self.tag}.{self.monat}.)"
+
+    def clean(self):
+        if self.tag and self.monat:
+            try:
+                datetime.date(self.jahr or 2000, self.monat, self.tag)
+            except ValueError:
+                raise ValidationError("Dieses Datum gibt es nicht.")

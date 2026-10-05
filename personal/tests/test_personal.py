@@ -87,7 +87,7 @@ class UrlaubServiceTests(TestCase):
 
     def test_antrag_ueber_jahreswechsel_wird_geteilt(self):
         Urlaubsantrag.objects.create(mitarbeiter=self.m, von=D(2026, 12, 28), bis=D(2027, 1, 5), status="genehmigt")
-        self.assertEqual(services.urlaubskonto(self.m, 2026)["genommen"], 4)
+        self.assertEqual(services.urlaubskonto(self.m, 2026)["genommen"], Decimal("3.5"))  # 31.12. ist ein halber Tag
         self.assertEqual(services.urlaubskonto(self.m, 2027)["genommen"], 3)
 
     def test_ueberschneidender_antrag_abgelehnt(self):
@@ -243,3 +243,90 @@ class RechteTests(TestCase):
         self.assertNotContains(r, "Meine Zeiten")
         mitarbeiter(benutzer=self.user)
         self.assertContains(self.client.get(reverse("core:dashboard")), "Meine Zeiten")
+
+
+class KalenderTests(TestCase):
+    def test_ostern_und_feiertage_nrw(self):
+        from personal.kalender import gesetzliche_feiertage, ostersonntag
+
+        self.assertEqual(ostersonntag(2026), D(2026, 4, 5))
+        f = gesetzliche_feiertage(2026, "NW")
+        self.assertIn(D(2026, 4, 3), f)  # Karfreitag
+        self.assertIn(D(2026, 6, 4), f)  # Fronleichnam
+        self.assertIn(D(2026, 11, 1), f)  # Allerheiligen
+        self.assertNotIn(D(2026, 10, 31), f)
+
+    def test_laenderunterschiede(self):
+        from personal.kalender import gesetzliche_feiertage
+
+        self.assertIn(D(2026, 10, 31), gesetzliche_feiertage(2026, "SN"))
+        self.assertIn(D(2026, 11, 18), gesetzliche_feiertage(2026, "SN"))  # Buß- und Bettag
+        self.assertIn(D(2026, 3, 8), gesetzliche_feiertage(2026, "BE"))
+        self.assertNotIn(D(2026, 3, 8), gesetzliche_feiertage(2026, "BY"))
+        self.assertEqual(gesetzliche_feiertage(2026, ""), {})
+
+    def test_standard_halbe_tage(self):
+        from personal.kalender import Kalender
+
+        k = Kalender()
+        self.assertEqual(k.anteil(D(2026, 12, 24)), Decimal("0.5"))
+        self.assertEqual(k.anteil(D(2026, 12, 31)), Decimal("0.5"))
+        self.assertEqual(k.anteil(D(2026, 12, 23)), Decimal("1"))
+
+    def test_feiertag_kostet_keinen_urlaub(self):
+        from personal.models import PersonalEinstellung
+
+        PersonalEinstellung.objects.update_or_create(pk=1, defaults={"bundesland": "NW"})
+        m = mitarbeiter()
+        vertrag(m)
+        # Do 1.5.2025 (Tag der Arbeit), Fr 2.5.2025
+        Urlaubsantrag.objects.create(mitarbeiter=m, von=D(2025, 4, 30), bis=D(2025, 5, 2), status="genehmigt")
+        self.assertEqual(services.urlaubskonto(m, 2025)["genommen"], Decimal("2"))
+
+    def test_sondertag_ueberschreibt_und_einmalig(self):
+        from personal.kalender import Kalender
+        from personal.models import Sondertag
+
+        Sondertag.objects.create(name="Betriebsfest", tag=15, monat=6, jahr=2026, urlaubsanteil=0)
+        k = Kalender()
+        self.assertEqual(k.anteil(D(2026, 6, 15)), 0)
+        self.assertEqual(k.anteil(D(2027, 6, 15)), 1)
+
+
+class EinstellungenViewTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser("admin", password=PW)
+        self.client.force_login(self.admin)
+
+    def test_bundesland_speichern(self):
+        from personal.models import PersonalEinstellung
+
+        r = self.client.post(reverse("personal:einstellungen"), {"bundesland": "BY"})
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(PersonalEinstellung.laden().bundesland, "BY")
+        self.assertContains(self.client.get(reverse("personal:einstellungen")), "Heilige Drei Könige")
+
+    def test_ungueltiges_bundesland(self):
+        r = self.client.post(reverse("personal:einstellungen"), {"bundesland": "XX"})
+        self.assertEqual(r.status_code, 200)
+
+    def test_sondertag_anlegen_aendern_loeschen(self):
+        from personal.models import Sondertag
+
+        r = self.client.post(reverse("personal:sondertag_neu"), {"name": "Brückentag", "tag": 15, "monat": 5, "urlaubsanteil": "0"})
+        self.assertEqual(r.status_code, 302)
+        s = Sondertag.objects.get(name="Brückentag")
+        self.client.post(reverse("personal:sondertag_bearbeiten", args=[s.pk]), {"name": "Brückentag", "tag": 15, "monat": 5, "urlaubsanteil": "0.5"})
+        s.refresh_from_db()
+        self.assertEqual(s.urlaubsanteil, Decimal("0.5"))
+        self.client.post(reverse("personal:sondertag_loeschen", args=[s.pk]))
+        self.assertFalse(Sondertag.objects.filter(name="Brückentag").exists())
+
+    def test_ungueltiges_datum(self):
+        r = self.client.post(reverse("personal:sondertag_neu"), {"name": "X", "tag": 31, "monat": 2, "urlaubsanteil": "0"})
+        self.assertEqual(r.status_code, 200)
+
+    def test_nur_admin(self):
+        u = User.objects.create_user("u", password=PW)
+        self.client.force_login(u)
+        self.assertEqual(self.client.get(reverse("personal:einstellungen")).status_code, 403)
