@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load rechte %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Urlaubsanträge</h4>
+  {% if user|darf:"personal:schreiben" %}<a href="{% url 'personal:urlaub_neu' %}" class="btn btn-app-primary"><i class="bi bi-plus"></i> Urlaub eintragen</a>{% endif %}
+</div>
+<div class="mb-3 small">
+  <a href="?status=offen" class="me-2 {% if status == 'offen' %}fw-bold{% endif %}">Offen</a>
+  {% for wert, name in stati %}<a href="?status={{ wert }}" class="me-2 {% if status == wert %}fw-bold{% endif %}">{{ name }}</a>{% endfor %}
+  <a href="?status=alle" class="{% if status == 'alle' %}fw-bold{% endif %}">Alle</a>
+</div>
+<div class="card p-3"><div class="table-responsive">
+<table class="table align-middle">
+  <thead><tr><th>Mitarbeiter</th><th>Zeitraum</th><th>Tage</th><th>Status</th><th>Bemerkung</th><th></th></tr></thead>
+  <tbody>
+  {% for a in antraege %}
+    <tr>
+      <td><a href="{% url 'personal:mitarbeiter_detail' a.mitarbeiter.pk %}">{{ a.mitarbeiter.anzeigename }}</a></td>
+      <td>{{ a.von|date:"d.m.Y" }} – {{ a.bis|date:"d.m.Y" }}</td>
+      <td>{{ a.tage }}</td>
+      <td>{{ a.get_status_display }}</td>
+      <td>{{ a.bemerkung }}</td>
+      <td class="text-end text-nowrap">
+        {% if user|darf:"personal:schreiben" %}
+        <form method="post" action="{% url 'personal:urlaub_entscheiden' a.pk %}" class="d-inline">{% csrf_token %}
+          {% if a.status == 'beantragt' %}
+            <button class="btn btn-sm btn-app-primary" name="aktion" value="genehmigen">Genehmigen</button>
+            <button class="btn btn-sm btn-app-outline-danger" name="aktion" value="ablehnen">Ablehnen</button>
+          {% elif a.status == 'genehmigt' %}
+            <button class="btn btn-sm btn-app-outline-danger" name="aktion" value="stornieren" onclick="return confirm('Genehmigten Urlaub stornieren?')">Stornieren</button>
+          {% endif %}
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Keine Anträge.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

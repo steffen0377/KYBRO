@@ -1,0 +1,33 @@
+{% load rechte %}
+<div class="card p-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Nr.</th><th>Name</th><th>Position / Abteilung</th><th>Eintritt</th><th>Login</th><th></th></tr></thead>
+    <tbody>
+    {% for m in mitarbeiter %}
+      <tr style="cursor:pointer;" data-href="{% url 'personal:mitarbeiter_detail' m.pk %}">
+        <td>{{ m.personalnummer }}</td>
+        <td>{{ m.nachname }}, {{ m.vorname }}{% if not m.ist_aktiv %} <span class="badge text-bg-secondary">nicht aktiv</span>{% endif %}</td>
+        <td>{{ m.position }}{% if m.position and m.abteilung %} / {% endif %}{{ m.abteilung }}</td>
+        <td>{{ m.eintrittsdatum|date:"d.m.Y"|default:"–" }}</td>
+        <td>{% if m.benutzer %}<i class="bi bi-link-45deg"></i> {{ m.benutzer.username }}{% else %}<span class="text-muted">–</span>{% endif %}</td>
+        <td class="text-end">
+          {% if user|darf:"personal:schreiben" %}
+          <form method="post" action="{% url 'personal:mitarbeiter_loeschen' m.pk %}" class="d-inline" onsubmit="return confirm('Mitarbeiter samt Verträgen, Urlaub und Anwesenheiten wirklich löschen?')">
+            {% csrf_token %}<button class="btn btn-sm btn-app-outline-danger" type="submit">Löschen</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="text-muted text-center py-3">Keine Mitarbeiter gefunden.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('#ergebnis tr[data-href]').forEach(function (zeile) {
+    zeile.addEventListener('click', function (e) { if (!e.target.closest('a,button,form,input')) { window.location = zeile.dataset.href; } });
+  });
+</script>

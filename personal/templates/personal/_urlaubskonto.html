@@ -1,0 +1,7 @@
+<div class="row text-center g-2">
+  <div class="col"><div class="small text-muted">Anspruch</div><div class="fs-5">{{ konto.anspruch|floatformat:"-1" }}</div></div>
+  <div class="col"><div class="small text-muted">Übertrag</div><div class="fs-5">{{ konto.uebertrag|floatformat:"-1" }}</div></div>
+  <div class="col"><div class="small text-muted">Genommen</div><div class="fs-5">{{ konto.genommen }}</div></div>
+  <div class="col"><div class="small text-muted">Beantragt</div><div class="fs-5">{{ konto.beantragt }}</div></div>
+  <div class="col"><div class="small text-muted">Resturlaub</div><div class="fs-5 fw-bold">{{ konto.rest|floatformat:"-1" }}</div></div>
+</div>

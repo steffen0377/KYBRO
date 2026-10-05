@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load rechte %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Anwesenheit {{ monat_datum|date:"F Y" }}</h4>
+  <div>
+    <a class="btn btn-app-secondary" href="?monat={{ zurueck }}">&laquo;</a>
+    <a class="btn btn-app-secondary" href="?monat={{ heute|date:'Y-m' }}">Heute</a>
+    <a class="btn btn-app-secondary" href="?monat={{ weiter }}">&raquo;</a>
+  </div>
+</div>
+<div class="card p-3 mb-3">{% include "personal/_matrix.html" with verlinken=True %}</div>
+{% if user|darf:"personal:schreiben" %}{% include "personal/_eintragen.html" %}{% endif %}
+{% endblock %}

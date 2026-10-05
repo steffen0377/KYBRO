@@ -3,7 +3,7 @@
 Gelöscht werden alle Geschäftsdaten (Belege, Abonnements, Lager, Artikel, Kunden, Lieferanten) samt
 hochgeladener Unterschriften sowie die Belegnummern-Zähler und Protokolle der Mobile-API.
 Erhalten bleiben Firmendaten, Briefbogen-Elemente, SMTP, Formulareinstellungen, Lizenzen, die
-Anmeldeeinstellungen (LDAP) sowie Benutzer und Gruppen.
+Anmeldeeinstellungen (LDAP), Benutzer und Gruppen sowie die Personalverwaltung.
 """
 
 import logging

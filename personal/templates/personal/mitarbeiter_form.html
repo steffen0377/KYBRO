@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>{% if object %}{{ object.anzeigename }}{% else %}Neuer Mitarbeiter{% endif %}</h4>
+<form method="post" class="card p-4" style="max-width:900px;">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  <div class="row g-3">
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.vorname %}</div>
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.nachname %}</div>
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.geburtsdatum %}</div>
+    <div class="col-md-8">{% include "core/feld.html" with feld=form.strasse %}</div>
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.plz %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.ort %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.telefon %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.email %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.position %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.abteilung %}</div>
+    <div class="col-md-3">{% include "core/feld.html" with feld=form.eintrittsdatum %}</div>
+    <div class="col-md-3">{% include "core/feld.html" with feld=form.austrittsdatum %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.notfallkontakt_name %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.notfallkontakt_telefon %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.benutzer %}</div>
+    <div class="col-12">{% include "core/feld.html" with feld=form.notizen %}</div>
+  </div>
+  <div class="mt-2">
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% if object %}{% url 'personal:mitarbeiter_detail' object.pk %}{% else %}{% url 'personal:mitarbeiter_liste' %}{% endif %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,19 @@
+<div class="table-responsive">
+<table class="table table-sm table-bordered text-center align-middle anwesenheit-matrix mb-2">
+  <thead>
+    <tr><th class="text-start">Mitarbeiter</th>{% for t in uebersicht.tage %}<th class="{% if t.weekday > 4 %}we{% endif %}">{{ t.day }}<div class="small text-muted">{{ t|date:"D" }}</div></th>{% endfor %}</tr>
+  </thead>
+  <tbody>
+  {% for zeile in uebersicht.zeilen %}
+    <tr>
+      <td class="text-start text-nowrap">{% if verlinken %}<a href="{% url 'personal:mitarbeiter_detail' zeile.mitarbeiter.pk %}">{{ zeile.mitarbeiter.anzeigename }}</a>{% else %}{{ zeile.mitarbeiter.anzeigename }}{% endif %}</td>
+      {% for z in zeile.zellen %}<td class="az az-{{ z.status|default:'leer' }}" title="{{ z.datum|date:'d.m.Y' }} {{ z.text }}">{% if z.status == 'anwesend' %}A{% elif z.status == 'homeoffice' %}H{% elif z.status == 'dienstreise' %}D{% elif z.status == 'krank' %}K{% elif z.status == 'sonderurlaub' %}S{% elif z.status == 'freizeitausgleich' %}Z{% elif z.status == 'urlaub' or z.status == 'urlaub_offen' %}U{% endif %}</td>{% endfor %}
+    </tr>
+  {% empty %}<tr><td colspan="32" class="text-muted py-3">Keine Mitarbeiter in diesem Monat.</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="small text-muted mb-3">
+  <span class="az az-anwesend px-2">A</span> Anwesend &nbsp; <span class="az az-homeoffice px-2">H</span> Homeoffice &nbsp; <span class="az az-dienstreise px-2">D</span> Dienstreise &nbsp;
+  <span class="az az-krank px-2">K</span> Krank &nbsp; <span class="az az-urlaub px-2">U</span> Urlaub &nbsp; <span class="az az-sonderurlaub px-2">S</span> Sonderurlaub &nbsp; <span class="az az-freizeitausgleich px-2">Z</span> Freizeitausgleich
+</div>

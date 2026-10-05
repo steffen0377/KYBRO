@@ -290,3 +290,16 @@ html, body { height: 100%; }
   box-shadow: 0 1rem 3rem rgba(0, 0, 0, .3);
 }
 .overlay-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+
+/* Personal: Anwesenheits-Monatsübersicht */
+.anwesenheit-matrix th, .anwesenheit-matrix td { min-width: 1.9rem; padding: .2rem .25rem; font-size: .8rem; }
+.anwesenheit-matrix th.we { background: #f1f3f5; }
+.az-anwesend { background: #d1e7dd; }
+.az-homeoffice { background: #cff4fc; }
+.az-dienstreise { background: #e2d9f3; }
+.az-krank { background: #f8d7da; }
+.az-urlaub { background: #fff3cd; }
+.az-urlaub_offen { background: repeating-linear-gradient(45deg, #fff3cd, #fff3cd 4px, #fff 4px, #fff 8px); }
+.az-sonderurlaub { background: #ffe5d0; }
+.az-freizeitausgleich { background: #e9ecef; }
+.az-frei { background: #f1f3f5; }

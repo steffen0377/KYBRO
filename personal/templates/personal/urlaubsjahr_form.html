@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>Urlaubsjahr {{ object.jahr }} – {{ mitarbeiter.anzeigename }}</h4>
+<form method="post" class="card p-4" style="max-width:600px;">
+  {% csrf_token %}
+  {% include "core/feld.html" with feld=form.anspruch %}
+  {% include "core/feld.html" with feld=form.uebertrag %}
+  {% include "core/feld.html" with feld=form.notiz %}
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% url 'personal:mitarbeiter_detail' mitarbeiter.pk %}?jahr={{ object.jahr }}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

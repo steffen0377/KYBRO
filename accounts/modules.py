@@ -19,6 +19,7 @@ MODULE = {
     "rechnungen": "Rechnungen",
     "abos": "Abonnements",
     "kategorien": "Kategorien",
+    "personal": "Personal",
     "einstellungen": "Einstellungen",
 }
 

@@ -26,6 +26,8 @@ class Eintrag:
     praefix: str = ""
     modul: str | None = None
     nur_admin: bool = False
+    # Nur für Benutzer, die mit einem Mitarbeiter verknüpft sind (Self-Service).
+    nur_mitarbeiter: bool = False
 
 
 @dataclass(frozen=True)
@@ -61,6 +63,17 @@ MENUE = (
         (Eintrag("Lieferanten", "bi-truck", "stammdaten:lieferanten_liste", "stammdaten:lieferanten", "lieferanten"),),
     ),
     Gruppe(
+        "personal",
+        "Personal",
+        "bi-person-badge",
+        (
+            Eintrag("Mitarbeiter", "bi-people", "personal:mitarbeiter_liste", "personal:mitarbeiter", "personal"),
+            Eintrag("Anwesenheit", "bi-calendar-check", "personal:anwesenheit", "personal:anwesenheit", "personal"),
+            Eintrag("Urlaub", "bi-sun", "personal:urlaub_liste", "personal:urlaub", "personal"),
+            Eintrag("Meine Zeiten", "bi-clock-history", "personal:meine_zeiten", "personal:mein", nur_mitarbeiter=True),
+        ),
+    ),
+    Gruppe(
         "einstellungen",
         "Einstellungen",
         "bi-gear",
@@ -74,8 +87,16 @@ MENUE = (
 )
 
 
+def _hat_mitarbeiter(user) -> bool:
+    from personal.models import Mitarbeiter
+
+    return Mitarbeiter.objects.filter(benutzer=user).exists()
+
+
 def _sichtbar(element, user) -> bool:
     if element.nur_admin and not user.ist_admin:
+        return False
+    if getattr(element, "nur_mitarbeiter", False) and not _hat_mitarbeiter(user):
         return False
     modul = getattr(element, "modul", None)
     if modul and not user.hat_modulrecht(modul, AKTION_LESEN):

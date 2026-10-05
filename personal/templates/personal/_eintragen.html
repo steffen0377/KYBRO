@@ -1,0 +1,18 @@
+<form method="post" class="card p-3 mb-3">
+  {% csrf_token %}
+  <h6>Anwesenheit eintragen</h6>
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  <div class="row g-2">
+    {% if form.mitarbeiter %}<div class="col-md-4">{% include "core/feld.html" with feld=form.mitarbeiter %}</div>{% endif %}
+    <div class="col-md-2">{% include "core/feld.html" with feld=form.datum %}</div>
+    <div class="col-md-2">{% include "core/feld.html" with feld=form.datum_bis %}</div>
+    <div class="col-md-2">{% include "core/feld.html" with feld=form.status %}</div>
+    <div class="col-md-1">{% include "core/feld.html" with feld=form.von %}</div>
+    <div class="col-md-1">{% include "core/feld.html" with feld=form.bis %}</div>
+    <div class="col-md-4">{% include "core/feld.html" with feld=form.notiz %}</div>
+    <div class="col-md-3 align-self-center">
+      <div class="form-check"><input type="checkbox" class="form-check-input" id="{{ form.entfernen.id_for_label }}" name="entfernen"><label class="form-check-label" for="{{ form.entfernen.id_for_label }}">{{ form.entfernen.label }}</label></div>
+    </div>
+  </div>
+  <div><button class="btn btn-app-primary" type="submit">Speichern</button></div>
+</form>

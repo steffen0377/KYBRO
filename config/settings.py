@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "stammdaten",
     "belege",
     "lager",
+    "personal",
     "api",
 ]
 

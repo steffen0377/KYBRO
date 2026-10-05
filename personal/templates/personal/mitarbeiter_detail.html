@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load rechte %}
+
+{% block content %}
+{% with schreiben=user|darf:"personal:schreiben" %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">{{ object.anzeigename }} <small class="text-muted">{{ object.personalnummer }}</small>{% if not object.ist_aktiv %} <span class="badge text-bg-secondary">nicht aktiv</span>{% endif %}</h4>
+  <div>
+    <a href="{% url 'personal:mitarbeiter_liste' %}" class="btn btn-app-secondary">Zur Liste</a>
+    {% if schreiben %}<a href="{% url 'personal:mitarbeiter_bearbeiten' object.pk %}" class="btn btn-app-primary">Bearbeiten</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card p-3 h-100">
+      <h6>Stammdaten</h6>
+      <dl class="row mb-0 small">
+        <dt class="col-5">Position</dt><dd class="col-7">{{ object.position|default:"–" }}</dd>
+        <dt class="col-5">Abteilung</dt><dd class="col-7">{{ object.abteilung|default:"–" }}</dd>
+        <dt class="col-5">Eintritt</dt><dd class="col-7">{{ object.eintrittsdatum|date:"d.m.Y"|default:"–" }}</dd>
+        <dt class="col-5">Austritt</dt><dd class="col-7">{{ object.austrittsdatum|date:"d.m.Y"|default:"–" }}</dd>
+        <dt class="col-5">Geburtsdatum</dt><dd class="col-7">{{ object.geburtsdatum|date:"d.m.Y"|default:"–" }}</dd>
+        <dt class="col-5">Adresse</dt><dd class="col-7">{{ object.strasse }}{% if object.strasse %}, {% endif %}{{ object.plz }} {{ object.ort }}</dd>
+        <dt class="col-5">Telefon</dt><dd class="col-7">{{ object.telefon|default:"–" }}</dd>
+        <dt class="col-5">E-Mail</dt><dd class="col-7">{{ object.email|default:"–" }}</dd>
+        <dt class="col-5">Notfallkontakt</dt><dd class="col-7">{{ object.notfallkontakt_name|default:"–" }} {{ object.notfallkontakt_telefon }}</dd>
+        <dt class="col-5">Login</dt><dd class="col-7">{% if object.benutzer %}{{ object.benutzer.anzeigename }} ({{ object.benutzer.username }}, {{ object.benutzer.get_auth_source_display }}){% else %}nicht verknüpft{% endif %}</dd>
+      </dl>
+      {% if object.notizen %}<hr><div class="small" style="white-space:pre-line;">{{ object.notizen }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0">Urlaub {{ jahr }}</h6>
+        <div class="small">
+          <a href="?jahr={{ jahr|add:-1 }}">&laquo; {{ jahr|add:-1 }}</a> &nbsp; <a href="?jahr={{ jahr|add:1 }}">{{ jahr|add:1 }} &raquo;</a>
+          {% if schreiben %}&nbsp; <a href="{% url 'personal:urlaubsjahr' object.pk jahr %}">Anspruch/Übertrag</a>{% endif %}
+        </div>
+      </div>
+      {% include "personal/_urlaubskonto.html" %}
+      {% if urlaubsjahr and urlaubsjahr.notiz %}<div class="small text-muted mt-2">{{ urlaubsjahr.notiz }}</div>{% endif %}
+      <hr>
+      <table class="table table-sm mb-2">
+        <tbody>
+        {% for a in antraege %}
+          <tr><td>{{ a.von|date:"d.m.Y" }} – {{ a.bis|date:"d.m.Y" }}</td><td>{{ a.tage }} Tag(e)</td><td>{{ a.get_status_display }}</td></tr>
+        {% empty %}<tr><td class="text-muted">Keine Urlaubsanträge in {{ jahr }}.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      {% if schreiben %}<a class="btn btn-sm btn-app-outline-secondary" href="{% url 'personal:urlaub_neu' %}?mitarbeiter={{ object.pk }}">Urlaub eintragen</a>{% endif %}
+    </div>
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0">Verträge</h6>
+        {% if schreiben %}<a class="btn btn-sm btn-app-outline-secondary" href="{% url 'personal:vertrag_neu' object.pk %}">Neuer Vertragsstand</a>{% endif %}
+      </div>
+      <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead><tr><th>Gültig</th><th>Art</th><th>Std./Woche</th><th>Arbeitstage</th><th>Urlaub</th><th></th></tr></thead>
+        <tbody>
+        {% for v in vertraege %}
+          <tr>
+            <td>{{ v.gueltig_ab|date:"d.m.Y" }} – {{ v.gueltig_bis|date:"d.m.Y"|default:"unbefristet" }}</td>
+            <td>{{ v.get_art_display }}{% if v.befristet_bis %}<br><small class="text-muted">befristet bis {{ v.befristet_bis|date:"d.m.Y" }}</small>{% endif %}{% if v.probezeit_ende %}<br><small class="text-muted">Probezeit bis {{ v.probezeit_ende|date:"d.m.Y" }}</small>{% endif %}</td>
+            <td>{{ v.wochenstunden|floatformat:"-2" }}</td>
+            <td>{{ v.arbeitstage_text }}</td>
+            <td>{{ v.urlaubstage_pro_jahr|floatformat:"-1" }}</td>
+            <td class="text-end text-nowrap">{% if schreiben %}
+              <a class="btn btn-sm btn-app-outline-secondary" href="{% url 'personal:vertrag_bearbeiten' v.pk %}">Bearbeiten</a>
+              <form method="post" action="{% url 'personal:vertrag_loeschen' v.pk %}" class="d-inline" onsubmit="return confirm('Vertragsstand wirklich löschen?')">{% csrf_token %}<button class="btn btn-sm btn-app-outline-danger" type="submit">Löschen</button></form>
+            {% endif %}</td>
+          </tr>
+        {% empty %}<tr><td colspan="6" class="text-muted">Noch kein Vertrag erfasst. Ohne Vertrag gilt Montag bis Freitag und es entsteht kein Urlaubsanspruch.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endblock %}

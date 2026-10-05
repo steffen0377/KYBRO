@@ -18,6 +18,7 @@ Alle sechs Phasen der Ablösung sind umgesetzt. Offen sind nur die Abnahme durch
 | 4 | PDF (WeasyPrint) und E-Rechnung (ZUGFeRD EN 16931) | fertig |
 | 5 | Abonnements, Einstellungen, Lizenzen, LDAP, Mobile-API | fertig |
 | 6 | Abnahme und Betrieb (Dokumentation, Dienste) | fertig, Abnahme offen |
+| 7 | Personalverwaltung (Mitarbeiter, Verträge, Urlaub, Anwesenheit) | fertig |
 
 Geplante Erweiterungen: Zahlungsabgleich, Versand von Angeboten und Rechnungen per E-Mail aus der
 Anwendung (die SMTP-Einstellungen und der Versandbaustein `einstellungen/mail.py` sind vorbereitet).

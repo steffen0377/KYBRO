@@ -20,7 +20,12 @@ def alle_eintraege():
 class RauchTests(TestCase):
     def test_alle_menuepunkte_sind_verlinkbar_und_laden(self):
         Lizenz.objects.create(referenz="Test", gueltig_ab=timezone.localdate(), module=["warenwirtschaft"])
-        self.client.force_login(User.objects.create_superuser("admin", password="Sehr-geheim-2026"))
+        admin = User.objects.create_superuser("admin", password="Sehr-geheim-2026")
+        # "Meine Zeiten" gibt es nur für Benutzer, die mit einem Mitarbeiter verknüpft sind.
+        from personal.models import Mitarbeiter
+
+        Mitarbeiter.objects.create(vorname="Ad", nachname="Min", benutzer=admin)
+        self.client.force_login(admin)
         for eintrag in alle_eintraege():
             antwort = self.client.get(reverse(eintrag.url_name))
             self.assertEqual(antwort.status_code, 200, eintrag.url_name)

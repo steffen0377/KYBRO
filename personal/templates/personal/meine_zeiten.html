@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Meine Zeiten – {{ mitarbeiter.anzeigename }}</h4>
+  <a href="{% url 'personal:mein_urlaub_neu' %}" class="btn btn-app-primary">Urlaub beantragen</a>
+</div>
+<div class="card p-3 mb-3">
+  <h6>Urlaub {{ konto.jahr }}</h6>
+  {% include "personal/_urlaubskonto.html" %}
+</div>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h6 class="mb-0">{{ monat_datum|date:"F Y" }}</h6>
+  <div><a class="btn btn-sm btn-app-secondary" href="?monat={{ zurueck }}">&laquo;</a> <a class="btn btn-sm btn-app-secondary" href="?monat={{ weiter }}">&raquo;</a></div>
+</div>
+<div class="card p-3 mb-3">{% include "personal/_matrix.html" %}</div>
+{% include "personal/_eintragen.html" %}
+<div class="card p-3">
+  <h6>Meine Urlaubsanträge</h6>
+  <table class="table table-sm mb-0">
+    {% for a in antraege %}
+    <tr>
+      <td>{{ a.von|date:"d.m.Y" }} – {{ a.bis|date:"d.m.Y" }}</td><td>{{ a.tage }} Tag(e)</td><td>{{ a.get_status_display }}</td><td>{{ a.bemerkung }}</td>
+      <td class="text-end">{% if a.status == 'beantragt' %}<form method="post" action="{% url 'personal:mein_urlaub_stornieren' a.pk %}">{% csrf_token %}<button class="btn btn-sm btn-app-outline-danger">Zurückziehen</button></form>{% endif %}</td>
+    </tr>
+    {% empty %}<tr><td class="text-muted">Keine Anträge.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

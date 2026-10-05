@@ -98,7 +98,7 @@ Vorher eine Datenbanksicherung erstellen (`mysqldump --single-transaction kybro 
 Bestätigung (Haken und das Wort LIVE) werden gelöscht: Angebote, Aufträge, Rechnungen, Abonnements,
 Artikel, Kategorien, Kunden, Lieferanten, Lagerbewegungen, Seriennummern, Unterschriften, Belegnummern-Zähler und
 API-Anmeldeprotokolle. Erhalten bleiben Firmendaten, Briefbogen-Elemente, Präfixe, SMTP, Formulare, Lizenzen, LDAP,
-Benutzer und Gruppen. Danach verschwindet der Hinweis, und die Funktion ist nicht mehr aufrufbar. Nur
+Benutzer, Gruppen und die Personalverwaltung (Mitarbeiter, Verträge, Urlaub, Anwesenheit). Danach verschwindet der Hinweis, und die Funktion ist nicht mehr aufrufbar. Nur
 Administratoren können den Wechsel auslösen. Das Ergebnis steht im Protokoll (`journalctl -u kybro`, Eintrag `[LIVE]`).
 
 ## 6. Sicherung und Aktualisierung

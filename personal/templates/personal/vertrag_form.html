@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>{{ seitentitel }} – {{ mitarbeiter.anzeigename }}</h4>
+<form method="post" class="card p-4" style="max-width:900px;">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  <div class="row g-3">
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.gueltig_ab %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.gueltig_bis %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.art %}</div>
+    <div class="col-md-3">{% include "core/feld.html" with feld=form.wochenstunden %}</div>
+    <div class="col-md-3">{% include "core/feld.html" with feld=form.urlaubstage_pro_jahr %}</div>
+    <div class="col-12">
+      <label class="form-label">{{ form.arbeitstage.label }}</label>
+      <div class="d-flex flex-wrap gap-3">{% for box in form.arbeitstage %}<div class="form-check">{{ box.tag }} <label class="form-check-label" for="{{ box.id_for_label }}">{{ box.choice_label }}</label></div>{% endfor %}</div>
+      {% for fehler in form.arbeitstage.errors %}<div class="text-app-danger small">{{ fehler }}</div>{% endfor %}
+    </div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.probezeit_ende %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.befristet_bis %}</div>
+    <div class="col-12">{% include "core/feld.html" with feld=form.kuendigungsfrist %}</div>
+    <div class="col-12">{% include "core/feld.html" with feld=form.notizen %}</div>
+  </div>
+  <div class="mt-2">
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% url 'personal:mitarbeiter_detail' mitarbeiter.pk %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}
