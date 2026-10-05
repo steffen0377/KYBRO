@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h4>Einstellungen</h4>
+  <div>
+    <a href="{% url 'einstellungen:briefbogen_vorschau' %}" target="_blank" class="btn btn-app-outline-secondary"><i class="bi bi-eye"></i> Vorschau (PDF)</a>
+    <a href="{% url 'einstellungen:briefbogen_neu' %}" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neues Element</a>
+  </div></div>
+{% include "einstellungen/_register.html" %}
+<p class="text-muted small">Logo, Firmenblock und Fußzeile der PDFs bestehen aus frei platzierbaren Bildern und Textblöcken. Positionen sind
+  Millimeter vom linken Blatt- und vom oberen Papierrand. Die Elemente erscheinen auf jeder Seite von Angeboten, Aufträgen und Rechnungen.</p>
+<div class="card p-3">
+  <table class="table align-middle mb-0">
+    <thead><tr><th>Element</th><th>Typ</th><th>Position (X / Y, mm)</th><th>Breite (mm)</th><th>Reihenfolge</th><th></th></tr></thead>
+    <tbody>
+    {% for el in elemente %}
+      <tr><td><a href="{% url 'einstellungen:briefbogen_bearbeiten' el.pk %}">{{ el }}</a></td><td>{{ el.get_typ_display }}</td>
+        <td>{{ el.x_mm }} / {{ el.y_mm }} ({{ el.get_vertikale_ausrichtung_display|lower }})</td><td>{{ el.breite_mm }}</td><td>{{ el.reihenfolge }}</td>
+        <td><form method="post" action="{% url 'einstellungen:briefbogen_loeschen' el.pk %}" onsubmit="return confirm('Element löschen?')">{% csrf_token %}<button class="btn btn-sm btn-app-outline-danger" type="submit">Löschen</button></form></td></tr>
+    {% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Noch keine Elemente. Lege ein Logo (Bild) und Textblöcke für Anschrift und Bankverbindung an.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

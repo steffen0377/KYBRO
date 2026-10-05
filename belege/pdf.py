@@ -4,16 +4,14 @@ Layout und Texte kommen aus den Formulareinstellungen (Belegart -> global ->
 Vorgabe). Rechnungen erhalten zusätzlich das ZUGFeRD-XML (EN 16931).
 """
 
-import io
 import logging
 from decimal import Decimal
 from pathlib import Path
 
-import pikepdf
 from django.template.loader import render_to_string
 from weasyprint import HTML
 
-from einstellungen import formulare
+from einstellungen import briefbogen, formulare
 from einstellungen.models import Firma
 
 from . import zugferd
@@ -77,39 +75,18 @@ def kontext(beleg) -> dict:
     empfaenger += [kunde.strasse, f"{kunde.plz} {kunde.ort}".strip()]
     if kunde.land and kunde.land.lower() not in ("deutschland", "germany"):
         empfaenger.append(kunde.land)
-    briefbogen_bild = None
-    if e["briefbogen_verwenden"] == "1" and firma.briefbogen and Path(firma.briefbogen.name).suffix.lower() != ".pdf":
-        try:
-            briefbogen_bild = Path(firma.briefbogen.path).as_uri()
-        except Exception:  # Datei fehlt
-            log.warning("Briefbogen nicht lesbar: %s", firma.briefbogen.name)
-    logo = None
-    if firma.logo:
-        try:
-            logo = Path(firma.logo.path).as_uri()
-        except Exception:
-            log.warning("Logo nicht lesbar: %s", firma.logo.name)
+    rand_unten = briefbogen.unterer_rand_mm(firma, float(e["rand_unten"]))
+    elemente = briefbogen.elemente_fuer_pdf(firma, float(e["rand_links"]), float(e["rand_oben"]), rand_unten)
     return {
         "art": art, "beleg": beleg, "firma": firma, "e": e,
         "titel": e["titel"], "positionen": positionen, "summen": summen, "spalten": spalten,
         "empfaenger": [z for z in empfaenger if z], "infos": _beleginfos(beleg, art),
         "schrift": formulare.SCHRIFTARTEN.get(e["schriftart"], formulare.SCHRIFTARTEN["Helvetica"]),
-        "briefbogen_bild": briefbogen_bild, "logo": logo,
+        "briefbogen": elemente, "rand_unten": rand_unten,
         "mehrere_steuersaetze": len(summen.gruppen) > 1,
         "befreiung": kunde.steuerbefreit, "befreiungsgrund": (kunde.befreiungsgrund or "").strip(),
         "rand_oben": e["rand_oben"],
     }
-
-
-def _briefbogen_pdf_unterlegen(pdf: bytes, pfad: str) -> bytes:
-    """Legt die erste Seite eines PDF-Briefbogens als Hintergrund unter jede Seite."""
-    with pikepdf.open(io.BytesIO(pdf)) as inhalt, pikepdf.open(pfad) as bogen:
-        vorlage = pikepdf.Page(bogen.pages[0])
-        for seite in inhalt.pages:
-            pikepdf.Page(seite).add_underlay(vorlage)
-        ausgabe = io.BytesIO()
-        inhalt.save(ausgabe)
-    return ausgabe.getvalue()
 
 
 def beleg_pdf(beleg) -> bytes:
@@ -117,15 +94,21 @@ def beleg_pdf(beleg) -> bytes:
     ctx = kontext(beleg)
     html = render_to_string("belege/pdf/beleg.html", ctx)
     pdf = HTML(string=html, base_url=str(Path.cwd())).write_pdf()
-    firma = ctx["firma"]
-    if ctx["e"]["briefbogen_verwenden"] == "1" and firma.briefbogen and Path(firma.briefbogen.name).suffix.lower() == ".pdf":
-        try:
-            pdf = _briefbogen_pdf_unterlegen(pdf, firma.briefbogen.path)
-        except Exception:
-            log.exception("PDF-Briefbogen konnte nicht eingebettet werden")
     if isinstance(beleg, Rechnung):
         pdf = zugferd.in_pdf_einbetten(pdf, zugferd.rechnung_xml(beleg))
     return pdf
+
+
+def briefbogen_vorschau() -> bytes:
+    """Leere A4-Seite nur mit den Briefbogen-Elementen (zum Prüfen der Positionen)."""
+    e = formulare.alle("rechnung")
+    firma = Firma.holen()
+    rand_unten = briefbogen.unterer_rand_mm(firma, float(e["rand_unten"]))
+    ctx = {
+        "e": e, "firma": firma, "rand_unten": rand_unten, "vorschau": True,
+        "briefbogen": briefbogen.elemente_fuer_pdf(firma, float(e["rand_links"]), float(e["rand_oben"]), rand_unten),
+    }
+    return HTML(string=render_to_string("belege/pdf/briefbogen_vorschau.html", ctx)).write_pdf()
 
 
 def dateiname(beleg) -> str:

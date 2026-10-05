@@ -7,7 +7,7 @@ Punkte lassen sich in einer frisch eingerichteten Testinstallation durchspielen
 ## A. Einrichtung und Rechte
 
 - [ ] Lizenzprüfung ist standardmäßig aus (Fachseiten ohne Lizenz nutzbar). Optional: `LIZENZ_PRUEFUNG=True` setzen; ohne Lizenz „Warenwirtschaft“ erscheint „Keine gültige Lizenz“, Einstellungen bleiben erreichbar.
-- [ ] Firmendaten, Logo und Briefbogen (einmal als PNG, einmal als PDF) hinterlegen; Präfixe und Zahlungsziel ändern.
+- [ ] Firmendaten hinterlegen; unter Einstellungen › Briefbogen Logo (Bild) und Textblöcke (Anschrift, Bankverbindung, Fußzeile, mit Platzhaltern) anlegen und per Vorschau (PDF) positionieren; Präfixe und Zahlungsziel ändern.
 - [ ] Benutzer und Gruppe anlegen; Gruppe mit nur „Artikel: Lesen“ sieht nur Artikel und kann nichts ändern (403 beim Aufruf von Schreibseiten).
 - [ ] Ein Administrator kann sich nicht selbst die Rolle entziehen oder das eigene Konto deaktivieren.
 - [ ] LDAP (falls genutzt): Anmeldung, automatische Anlage des Benutzers, „Verbindung testen“; bei „Nur LDAP“ und abgeschaltetem Server Notfallzugang nur für lokale Administratoren.
@@ -32,7 +32,7 @@ Punkte lassen sich in einer frisch eingerichteten Testinstallation durchspielen
 
 ## D. PDF und E-Rechnung
 
-- [ ] PDF von Angebot, Auftrag und Rechnung: Briefbogen, Logo, Empfängerfeld im Fensterumschlag, Spalten, Texte, Fußzeile, Seitenzahl.
+- [ ] PDF von Angebot, Auftrag und Rechnung: Briefbogen-Elemente (auch auf Folgeseiten, Inhalt läuft nicht in die Fußzeile), Logo, Empfängerfeld im Fensterumschlag, Spalten, Texte, Fußzeile, Seitenzahl.
 - [ ] Formulareinstellungen: Änderung pro Belegart und global wirkt im PDF (Titel, Texte, Akzentfarbe, Spalten).
 - [ ] Mehrseitige Rechnung (viele Positionen): Kopfzeile der Tabelle, Seitenzahlen.
 - [ ] ZUGFeRD: PDF der Rechnung öffnen und das eingebettete XML (`factur-x.xml`) prüfen, am besten mit dem KoSIT-Validator oder dem Prüfdienst Ihres Steuerberaters/Empfängers; Profil EN 16931.
@@ -75,4 +75,5 @@ Punkte lassen sich in einer frisch eingerichteten Testinstallation durchspielen
 * Die Steuer wird je Steuersatz auf die Summe der gerundeten Zeilen berechnet (wie in der E-Rechnung gefordert), nicht je Zeile.
 * PDF-Erzeugung mit WeasyPrint statt dompdf/FPDI; E-Rechnung im Profil EN 16931 (PHP: BASIC) mit Schema-Prüfung.
 * Die Mobile-API prüft die Modulrechte der Gruppen (PHP: jeder angemeldete Benutzer) und verwendet deutsche Feldnamen.
+* Der Briefbogen besteht aus frei platzierbaren Bildern und Textblöcken statt einem hochgeladenen Hintergrund-PDF (Konzept aus dem Projekt „rechnung“); Logo und Briefbogen-Upload der Firma entfallen.
 * Unterschriften und Briefbogen werden nicht öffentlich ausgeliefert, sondern nur über die Anwendung nach Anmeldung.

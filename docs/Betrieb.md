@@ -76,8 +76,11 @@ Die Entwürfe müssen anschließend in der Anwendung geprüft und freigegeben we
 2. **Lizenzen (optional):** Die Lizenzprüfung ist vorbereitet, aber standardmäßig abgeschaltet; es ist keine Lizenz
    nötig. Zum Aktivieren `LIZENZ_PRUEFUNG=True` in die `.env` setzen und unter Einstellungen › Lizenzen eine Lizenz
    mit dem Modul „Warenwirtschaft“ anlegen, sonst sind die Fachmodule gesperrt (Hinweis „Keine gültige Lizenz“).
-3. **Einstellungen › Firma:** Firmen- und Bankdaten, Logo, Briefbogen (PNG/JPG oder PDF), Präfixe, Zahlungsziel.
-   Die Firmendaten gehen in die PDFs und in die E-Rechnung (ZUGFeRD) ein.
+3. **Einstellungen › Firma:** Firmen- und Bankdaten, Präfixe, Zahlungsziel. Die Firmendaten gehen in die PDFs und in die
+   E-Rechnung (ZUGFeRD) ein. **Einstellungen › Briefbogen:** Logo und Textblöcke (Anschrift, Bankverbindung, Fußzeile) als frei
+   platzierbare Elemente anlegen; „Vorschau (PDF)“ zeigt die Positionen. Platzhalter wie `%CompanyName%` oder `%CompanyIban%`
+   werden bei jedem PDF durch die aktuellen Firmendaten ersetzt. Wer den eingebauten Firmenblock in der Fußzeile nicht
+   braucht, schaltet ihn unter Einstellungen › Formulare („Firmenblock in der Fußzeile“) ab.
 4. **Einstellungen › E-Mail:** SMTP-Zugang eintragen und mit „Testmail“ prüfen.
 5. **Einstellungen › Formulare:** Layout und Texte der PDFs.
 6. **Einstellungen › Anmeldung:** optional LDAP. „Nur LDAP“ lässt lokale Administratoren nur dann zu,
@@ -94,13 +97,13 @@ Zum Produktivstart unter **Einstellungen › Firma** (oder über den Hinweis) au
 Vorher eine Datenbanksicherung erstellen (`mysqldump --single-transaction kybro > vor-livegang.sql`). Nach der
 Bestätigung (Haken und das Wort LIVE) werden gelöscht: Angebote, Aufträge, Rechnungen, Abonnements,
 Artikel, Kategorien, Kunden, Lieferanten, Lagerbewegungen, Seriennummern, Unterschriften, Belegnummern-Zähler und
-API-Anmeldeprotokolle. Erhalten bleiben Firmendaten, Logo, Briefbogen, Präfixe, SMTP, Formulare, Lizenzen, LDAP,
+API-Anmeldeprotokolle. Erhalten bleiben Firmendaten, Briefbogen-Elemente, Präfixe, SMTP, Formulare, Lizenzen, LDAP,
 Benutzer und Gruppen. Danach verschwindet der Hinweis, und die Funktion ist nicht mehr aufrufbar. Nur
 Administratoren können den Wechsel auslösen. Das Ergebnis steht im Protokoll (`journalctl -u kybro`, Eintrag `[LIVE]`).
 
 ## 6. Sicherung und Aktualisierung
 
-* Sichern: Datenbank (`mysqldump --single-transaction kybro`), Ordner `media/` (Logo, Briefbogen, Unterschriften)
+* Sichern: Datenbank (`mysqldump --single-transaction kybro`), Ordner `media/` (Briefbogen-Bilder, Unterschriften)
   und die Datei `.env` (enthält den `SECRET_KEY`).
 * Aktualisieren:
 

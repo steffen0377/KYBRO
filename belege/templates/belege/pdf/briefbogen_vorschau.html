@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Briefbogen-Vorschau</title>
+<style>
+  @page { size: A4; margin: {{ e.rand_oben }}mm {{ e.rand_rechts }}mm {{ rand_unten }}mm {{ e.rand_links }}mm; }
+  body { margin: 0; font-size: 9pt; color: #999; }
+  .bb { position: fixed; margin: 0; }
+</style>
+</head>
+<body>
+{% include "belege/pdf/_briefbogen.html" %}
+<p>Vorschau: nur die Briefbogen-Elemente. Beleginhalt (Empfänger, Tabelle) erscheint hier nicht.</p>
+</body>
+</html>

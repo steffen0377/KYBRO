@@ -6,6 +6,11 @@ app_name = "einstellungen"
 
 urlpatterns = [
     path("", views.FirmaView.as_view(), name="firma"),
+    path("briefbogen/", views.BriefbogenListeView.as_view(), name="briefbogen"),
+    path("briefbogen/neu/", views.BriefbogenNeuView.as_view(), name="briefbogen_neu"),
+    path("briefbogen/vorschau/", views.BriefbogenVorschauView.as_view(), name="briefbogen_vorschau"),
+    path("briefbogen/<int:pk>/", views.BriefbogenBearbeitenView.as_view(), name="briefbogen_bearbeiten"),
+    path("briefbogen/<int:pk>/loeschen/", views.BriefbogenLoeschenView.as_view(), name="briefbogen_loeschen"),
     path("nummernkreise/", views.NummernkreiseView.as_view(), name="nummernkreise"),
     path("mail/", views.MailView.as_view(), name="mail"),
     path("formulare/", views.FormulareView.as_view(), name="formulare"),

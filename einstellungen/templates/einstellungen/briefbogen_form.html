@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Einstellungen</h4>
+{% include "einstellungen/_register.html" %}
+<form method="post" enctype="multipart/form-data" class="card p-4" style="max-width:640px;">
+  {% csrf_token %}
+  <h5>Briefbogen-Element</h5>
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  {% for feld in form %}
+    <div data-typ="{% if feld.name in bild_felder %}bild{% elif feld.name in text_felder %}textbox{% endif %}">
+      {% if feld.name == "seitenverhaeltnis_beibehalten" %}
+        <div class="form-check mb-3"><input type="checkbox" class="form-check-input" id="{{ feld.id_for_label }}" name="{{ feld.html_name }}" {% if feld.value %}checked{% endif %}>
+          <label class="form-check-label" for="{{ feld.id_for_label }}">{{ feld.label }}</label></div>
+      {% else %}
+        {% include "core/feld.html" with feld=feld %}
+      {% endif %}
+    </div>
+  {% endfor %}
+  <div>
+    <button class="btn btn-app-primary" type="submit">Speichern</button>
+    <a href="{% url 'einstellungen:briefbogen' %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+<script>
+  (function () {
+    var typ = document.getElementById("id_typ");
+    var zeilen = document.querySelectorAll("[data-typ]");
+    function aktualisieren() {
+      zeilen.forEach(function (z) { z.hidden = z.dataset.typ !== "" && z.dataset.typ !== typ.value; });
+    }
+    typ.addEventListener("change", aktualisieren);
+    aktualisieren();
+  })();
+</script>
+{% endblock %}

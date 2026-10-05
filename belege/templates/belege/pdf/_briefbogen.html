@@ -1,0 +1,1 @@
+{% for el in briefbogen %}{% if el.typ == "bild" %}<img class="bb" src="{{ el.bild }}" style="{{ el.stil }}" alt="">{% else %}<div class="bb" style="{{ el.stil }}">{{ el.text }}</div>{% endif %}{% endfor %}

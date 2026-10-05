@@ -1,6 +1,7 @@
 """Einstellungen (nur Administratoren): Firma, Nummernkreise, E-Mail, Formulare, Lizenzen, Anmeldung."""
 
 from django.contrib import messages
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -13,6 +14,7 @@ from accounts.mixins import AdminRequiredMixin
 from . import live, mail
 from .forms import (
     AuthentifizierungForm,
+    BriefbogenElementForm,
     FirmaForm,
     FormulareForm,
     LiveAktivierenForm,
@@ -20,10 +22,10 @@ from .forms import (
     MailForm,
     NummernkreisFormSet,
 )
-from .models import Authentifizierung, Firma, Lizenz, Nummernkreis
+from .models import Authentifizierung, BriefbogenElement, Firma, Lizenz, Nummernkreis
 
 REGISTER = (
-    ("firma", "Firma"), ("nummernkreise", "Nummernkreise"), ("mail", "E-Mail"),
+    ("firma", "Firma"), ("briefbogen", "Briefbogen"), ("nummernkreise", "Nummernkreise"), ("mail", "E-Mail"),
     ("formulare", "Formulare"), ("lizenzen", "Lizenzen"), ("anmeldung", "Anmeldung"),
 )
 
@@ -58,7 +60,7 @@ class FirmaView(EinzeleintragView):
     register = "firma"
     modell = Firma
     form_class = FirmaForm
-    extra_context = {"mehrteilig": True, "titel": "Firmendaten"}
+    extra_context = {"titel": "Firmendaten"}
 
 
 class MailView(EinzeleintragView):
@@ -160,6 +162,59 @@ class FormulareView(EinstellungenMixin, FormView):
         form.speichern()
         messages.success(self.request, "Formulareinstellungen gespeichert.")
         return super().form_valid(form)
+
+
+class BriefbogenListeView(EinstellungenMixin, ListView):
+    register = "briefbogen"
+    model = BriefbogenElement
+    context_object_name = "elemente"
+    template_name = "einstellungen/briefbogen_liste.html"
+
+
+class BriefbogenFormMixin(EinstellungenMixin):
+    register = "briefbogen"
+    model = BriefbogenElement
+    form_class = BriefbogenElementForm
+    template_name = "einstellungen/briefbogen_form.html"
+    success_url = reverse_lazy("einstellungen:briefbogen")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Briefbogen-Element gespeichert.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        kontext = super().get_context_data(**kwargs)
+        kontext["bild_felder"] = BriefbogenElementForm.BILD_FELDER
+        kontext["text_felder"] = BriefbogenElementForm.TEXT_FELDER
+        return kontext
+
+
+class BriefbogenNeuView(BriefbogenFormMixin, CreateView):
+    pass
+
+
+class BriefbogenBearbeitenView(BriefbogenFormMixin, UpdateView):
+    pass
+
+
+class BriefbogenLoeschenView(AdminRequiredMixin, View):
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        get_object_or_404(BriefbogenElement, pk=pk).delete()
+        messages.success(request, "Briefbogen-Element gelöscht.")
+        return redirect("einstellungen:briefbogen")
+
+
+class BriefbogenVorschauView(AdminRequiredMixin, View):
+    """PDF-Vorschau: leere Seite nur mit den Briefbogen-Elementen."""
+
+    def get(self, request):
+        from belege.pdf import briefbogen_vorschau
+
+        antwort = HttpResponse(briefbogen_vorschau(), content_type="application/pdf")
+        antwort["Content-Disposition"] = 'inline; filename="briefbogen-vorschau.pdf"'
+        return antwort
 
 
 class LizenzListeView(EinstellungenMixin, ListView):

@@ -25,14 +25,6 @@ class Firma(models.Model):
     betriebsmodus = models.CharField("Betriebsmodus", max_length=4, choices=Betrieb.choices, default=Betrieb.TEST)
 
     firmenname = models.CharField("Firmenname", max_length=150, blank=True)
-    logo = models.ImageField(
-        "Logo", upload_to="firma/", blank=True,
-        validators=[FileExtensionValidator(["png", "jpg", "jpeg"])],
-    )
-    briefbogen = models.FileField(
-        "Briefbogen (Hintergrund der PDFs)", upload_to="firma/", blank=True,
-        validators=[FileExtensionValidator(["png", "jpg", "jpeg", "pdf"])],
-    )
     strasse = models.CharField("Straße & Nr.", max_length=150, blank=True)
     plz = models.CharField("PLZ", max_length=20, blank=True)
     ort = models.CharField("Ort", max_length=100, blank=True)
@@ -80,6 +72,80 @@ class Firma(models.Model):
     @property
     def adresszeile(self) -> str:
         return ", ".join(t for t in (self.strasse, f"{self.plz} {self.ort}".strip()) if t)
+
+
+class BriefbogenElement(models.Model):
+    """Frei platzierbares Element (Bild oder Textblock) auf dem Briefbogen der PDFs.
+
+    Positionen sind Millimeter von der linken und oberen Papierkante. Die Elemente werden von WeasyPrint
+    auf jede Seite gezeichnet und liegen als echter Inhalt im PDF (kein Hintergrundbild), was für
+    ZUGFeRD-Rechnungen besser geeignet ist. In Textblöcken werden Platzhalter wie %CompanyName% bei
+    jedem PDF-Export durch die aktuellen Firmendaten ersetzt (siehe einstellungen.briefbogen).
+    """
+
+    class Typ(models.TextChoices):
+        BILD = "bild", "Bild"
+        TEXTBOX = "textbox", "Textblock"
+
+    class Ausrichtung(models.TextChoices):
+        LINKS = "links", "Links"
+        MITTE = "mitte", "Zentriert"
+        RECHTS = "rechts", "Rechts"
+
+    class Vertikal(models.TextChoices):
+        OBEN = "oben", "Oben"
+        UNTEN = "unten", "Unten"
+
+    name = models.CharField(
+        "Name", max_length=100, blank=True,
+        help_text="Nur zur Wiedererkennung in der Liste, erscheint nicht im PDF.",
+    )
+    typ = models.CharField("Typ", max_length=10, choices=Typ.choices, default=Typ.BILD)
+    reihenfolge = models.PositiveIntegerField(
+        "Reihenfolge", default=0, help_text="Bei Überlappung liegen höhere Werte weiter oben."
+    )
+    x_mm = models.DecimalField("X-Position (mm)", max_digits=6, decimal_places=2, help_text="Abstand vom linken Blattrand.")
+    y_mm = models.DecimalField(
+        "Y-Position (mm)", max_digits=6, decimal_places=2,
+        help_text="Abstand von der Papieroberkante. Welche Kante des Elements das ist, bestimmt „Vertikale Ausrichtung“.",
+    )
+    breite_mm = models.DecimalField("Breite (mm)", max_digits=6, decimal_places=2)
+    hoehe_mm = models.DecimalField(
+        "Höhe (mm)", max_digits=6, decimal_places=2, null=True, blank=True,
+        help_text="Optional: leer = automatisch (Bild nach Seitenverhältnis, Text nach Umfang).",
+    )
+    vertikale_ausrichtung = models.CharField(
+        "Vertikale Ausrichtung", max_length=5, choices=Vertikal.choices, default=Vertikal.OBEN,
+        help_text="Oben: Y ist die Oberkante, Inhalt wächst nach unten. Unten: Y ist die Unterkante, Inhalt wächst nach oben "
+                  "(z. B. für bündige Fußzeilenblöcke).",
+    )
+    # Nur Typ Bild
+    bild = models.ImageField(
+        "Bild", upload_to="briefbogen/", blank=True,
+        validators=[FileExtensionValidator(["png", "jpg", "jpeg"])],
+    )
+    seitenverhaeltnis_beibehalten = models.BooleanField("Seitenverhältnis beibehalten", default=True)
+    # Nur Typ Textblock
+    text = models.TextField("Text", blank=True)
+    schriftart = models.CharField("Schriftart", max_length=30, blank=True, default="Helvetica")
+    schriftgroesse = models.PositiveIntegerField("Schriftgröße (pt)", default=10, null=True, blank=True)
+    schriftfarbe = models.CharField(
+        "Schriftfarbe", max_length=7, blank=True, help_text="Leer = Standardfarbe (dunkelgrau).",
+    )
+    ausrichtung = models.CharField("Ausrichtung", max_length=6, choices=Ausrichtung.choices, default=Ausrichtung.LINKS, blank=True)
+
+    class Meta:
+        verbose_name = "Briefbogen-Element"
+        verbose_name_plural = "Briefbogen-Elemente"
+        ordering = ["reihenfolge", "pk"]
+
+    def __str__(self):
+        if self.name:
+            return self.name
+        if self.typ == self.Typ.BILD:
+            return f"Bild ({self.bild.name or 'kein Bild'})"
+        erste = (self.text or "").strip().splitlines()[0] if self.text.strip() else ""
+        return f"Textblock „{erste[:30]}“"
 
 
 class Nummernkreis(models.Model):

@@ -109,15 +109,17 @@ class PdfTests(TestCase):
         self.assertEqual(self.client.get(reverse("belege:angebote_pdf", args=[r.angebot.pk])).status_code, 200)
         self.assertContains(self.client.get(reverse("belege:rechnungen_ansehen", args=[r.pk])), url)
 
-    def test_pdf_briefbogen_wird_unterlegt(self):
-        import tempfile
-        from django.core.files.base import ContentFile
-        from django.test import override_settings
-        with tempfile.TemporaryDirectory() as tmp, override_settings(MEDIA_ROOT=tmp):
-            vorlage = pikepdf.new()
-            vorlage.add_blank_page(page_size=(595, 842))
-            puffer = io.BytesIO(); vorlage.save(puffer)
-            r = rechnung()
-            firma = Firma.holen()
-            firma.briefbogen.save("bogen.pdf", ContentFile(puffer.getvalue()))
-            self.assertTrue(pdf.beleg_pdf(r).startswith(b"%PDF"))
+    def test_briefbogen_elemente_erscheinen_auf_jeder_seite_des_pdf(self):
+        from pypdf import PdfReader
+        from einstellungen.models import BriefbogenElement
+        BriefbogenElement.objects.create(
+            typ="textbox", x_mm=20, y_mm=280, breite_mm=170, text="Fuss %CompanyName%", schriftgroesse=8,
+            vertikale_ausrichtung="unten",
+        )
+        r = rechnung()
+        for i in range(60):  # erzwingt mehrere Seiten
+            r.positionen.create(position=10 + i, beschreibung=f"Zusatz {i}", menge=1, einzelpreis=1, steuersatz=19)
+        leser = PdfReader(io.BytesIO(pdf.beleg_pdf(r)))
+        self.assertGreater(len(leser.pages), 1)
+        for seite in leser.pages:
+            self.assertIn("Fuss IT-Dienst GmbH", seite.extract_text())

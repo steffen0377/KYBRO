@@ -3,7 +3,8 @@ from django import forms
 from core.forms import BootstrapFormMixin
 
 from . import formulare
-from .models import Authentifizierung, Firma, Lizenz, LIZENZ_MODULE, Nummernkreis
+from .briefbogen import PLATZHALTER as BRIEFBOGEN_PLATZHALTER
+from .models import Authentifizierung, BriefbogenElement, Firma, Lizenz, LIZENZ_MODULE, Nummernkreis
 
 
 class DatumWidget(forms.DateInput):
@@ -17,7 +18,7 @@ class FirmaForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Firma
         fields = [
-            "firmenname", "logo", "briefbogen", "strasse", "plz", "ort", "land", "email", "telefon",
+            "firmenname", "strasse", "plz", "ort", "land", "email", "telefon",
             "steuernummer", "ust_id", "iban", "bic", "bank", "kontoinhaber",
             "praefix_angebot", "praefix_auftrag", "praefix_rechnung", "standard_steuersatz", "zahlungsziel_tage",
         ]
@@ -109,6 +110,49 @@ class AuthentifizierungForm(BootstrapFormMixin, forms.ModelForm):
         return filter_
 
 
+class BriefbogenElementForm(BootstrapFormMixin, forms.ModelForm):
+    """Bild oder Textblock auf dem Briefbogen; je nach Typ sind nur die passenden Felder relevant."""
+
+    BILD_FELDER = ("bild", "seitenverhaeltnis_beibehalten")
+    TEXT_FELDER = ("text", "schriftart", "schriftgroesse", "schriftfarbe", "ausrichtung")
+
+    class Meta:
+        model = BriefbogenElement
+        fields = [
+            "typ", "name", "reihenfolge", "x_mm", "y_mm", "breite_mm", "hoehe_mm", "vertikale_ausrichtung",
+            "bild", "seitenverhaeltnis_beibehalten",
+            "text", "schriftart", "schriftgroesse", "schriftfarbe", "ausrichtung",
+        ]
+        widgets = {
+            "text": forms.Textarea(attrs={"rows": 5}),
+            "schriftfarbe": forms.TextInput(attrs={"type": "color"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["schriftart"] = forms.ChoiceField(
+            label="Schriftart", required=False, choices=[(k, k) for k in formulare.SCHRIFTARTEN]
+        )
+        self.fields["text"].help_text = (
+            "Platzhalter: " + ", ".join(BRIEFBOGEN_PLATZHALTER) + ". Sie werden bei jedem PDF durch die aktuellen "
+            "Firmendaten ersetzt."
+        )
+        self.fields["ausrichtung"].required = False
+        self.fields["schriftfarbe"].required = False
+        self.fields["schriftfarbe"].initial = ""
+
+    def clean(self):
+        daten = super().clean()
+        typ = daten.get("typ")
+        if typ == BriefbogenElement.Typ.BILD and not (daten.get("bild") or self.instance.bild):
+            self.add_error("bild", "Bei Typ „Bild“ muss eine Bilddatei hochgeladen werden.")
+        if typ == BriefbogenElement.Typ.TEXTBOX and not (daten.get("text") or "").strip():
+            self.add_error("text", "Bei Typ „Textblock“ muss ein Text angegeben werden.")
+        if daten.get("breite_mm") is not None and daten["breite_mm"] <= 0:
+            self.add_error("breite_mm", "Die Breite muss größer als 0 sein.")
+        return daten
+
+
 class LiveAktivierenForm(forms.Form):
     sicherung = forms.BooleanField(
         label="Ich habe eine Sicherung der Datenbank erstellt, falls ich Daten doch noch brauche.",
@@ -132,16 +176,15 @@ SPALTEN = [("pos", "Pos."), ("artikelnr", "Artikelnummer"), ("menge", "Menge"), 
 BEZEICHNUNGEN = {
     "schriftart": "Schriftart", "schriftgroesse": "Schriftgröße (pt)", "rand_oben": "Rand oben (mm)",
     "rand_unten": "Rand unten (mm)", "rand_links": "Rand links (mm)", "rand_rechts": "Rand rechts (mm)",
-    "briefbogen_verwenden": "Briefbogen verwenden", "logo_position": "Logo-Position", "logo_hoehe": "Logo-Höhe (mm)",
     "akzentfarbe": "Akzentfarbe", "fusszeile": "Fußzeilentext", "seitenzahl": "Seitenzahl anzeigen",
     "fusszeile_firmenblock": "Firmenblock in der Fußzeile", "spalten": "Tabellenspalten",
     "titel": "Titel", "einleitung": "Einleitungstext", "schluss": "Schlusstext", "termin_bezeichnung": "Bezeichnung des Termins",
     "termin_tage": "Termin nach (Tagen)", "spalten_abweichend": "Tabellenspalten (abweichend)",
     "steueraufschluesselung": "Steuer je Satz aufschlüsseln", "zwischensumme": "Nettosumme anzeigen",
 }
-BOOL = {"briefbogen_verwenden", "seitenzahl", "fusszeile_firmenblock", "steueraufschluesselung", "zwischensumme"}
+BOOL = {"seitenzahl", "fusszeile_firmenblock", "steueraufschluesselung", "zwischensumme"}
 TEXTAREA = {"fusszeile", "einleitung", "schluss"}
-ZAHL = {"schriftgroesse", "rand_oben", "rand_unten", "rand_links", "rand_rechts", "logo_hoehe", "termin_tage"}
+ZAHL = {"schriftgroesse", "rand_oben", "rand_unten", "rand_links", "rand_rechts", "termin_tage"}
 SPALTENFELDER = {"spalten", "spalten_abweichend"}
 
 
@@ -184,9 +227,6 @@ class FormulareForm(forms.Form):
         if key == "schriftart":
             return forms.ChoiceField(label=label, required=False, help_text=hilfe,
                                      choices=[("", "(Vorgabe)")] + [(k, k) for k in formulare.SCHRIFTARTEN])
-        if key == "logo_position":
-            return forms.ChoiceField(label=label, required=False, help_text=hilfe,
-                                     choices=[("", "(Vorgabe)"), ("links", "Links"), ("mitte", "Mitte"), ("rechts", "Rechts")])
         if key in SPALTENFELDER:
             return forms.MultipleChoiceField(label=label, choices=SPALTEN, required=False, widget=forms.CheckboxSelectMultiple,
                                              help_text="Beschreibung ist immer enthalten." + (" Keine Auswahl = global." if geerbt else ""))
