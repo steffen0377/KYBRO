@@ -83,11 +83,19 @@ class BriefbogenVerwaltungTests(TestCase):
         el = BriefbogenElement.objects.get()
         self.assertEqual((el.x_mm, el.vertikale_ausrichtung, el.ausrichtung), (Decimal("20"), "unten", "mitte"))
         daten["text"] = "Neu"
+        daten["zeilenhoehe"] = "1,4"
         self.client.post(reverse("einstellungen:briefbogen_bearbeiten", args=[el.pk]), daten)
         el.refresh_from_db()
         self.assertEqual(el.text, "Neu")
+        self.assertEqual(el.zeilenhoehe, Decimal("1.40"))
         self.assertContains(self.client.get(reverse("einstellungen:briefbogen")), "Neu")
         self.client.post(reverse("einstellungen:briefbogen_loeschen", args=[el.pk]))
+        self.assertFalse(BriefbogenElement.objects.exists())
+
+    def test_zeilenhoehe_grenzen(self):
+        daten = {"typ": "textbox", "x_mm": "20", "y_mm": "280", "breite_mm": "170", "vertikale_ausrichtung": "unten",
+                 "text": "x", "schriftart": "Helvetica", "schriftgroesse": "8", "reihenfolge": "1", "zeilenhoehe": "5"}
+        self.assertEqual(self.client.post(reverse("einstellungen:briefbogen_neu"), daten).status_code, 200)
         self.assertFalse(BriefbogenElement.objects.exists())
 
     def test_pflichtangaben_je_typ(self):
@@ -148,3 +156,18 @@ class BriefbogenRenderTests(TestCase):
         text = PdfReader(BytesIO(belege_pdf.briefbogen_vorschau())).pages[0].extract_text()
         for zeile in ("Eins", "Zwei", "Drei", "Vier", "Fünf"):
             self.assertIn(zeile, text)
+
+
+class ZeilenhoeheTests(TestCase):
+    def test_zeilenhoehe_im_stil_und_in_der_hoehenschaetzung(self):
+        eng = textbox(name="eng", text="a\nb\nc", schriftgroesse=10, zeilenhoehe=Decimal("1.0"))
+        weit = textbox(name="weit", text="a\nb\nc", schriftgroesse=10, zeilenhoehe=Decimal("2.0"))
+        firma = Firma.holen()
+        self.assertAlmostEqual(briefbogen.hoehe_mm(weit, firma), briefbogen.hoehe_mm(eng, firma) * 2)
+        stile = {e["stil"] for e in briefbogen.elemente_fuer_pdf(firma, 20, 20, 20)}
+        self.assertTrue(any("line-height:1;" in s for s in stile))
+        self.assertTrue(any("line-height:2;" in s for s in stile))
+
+    def test_standard_ohne_angabe(self):
+        el = textbox(zeilenhoehe=None)
+        self.assertEqual(briefbogen.zeilenhoehe(el), briefbogen.ZEILENABSTAND)

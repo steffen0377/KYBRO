@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 
 from core.fields import VerschluesseltesTextFeld
@@ -129,6 +129,11 @@ class BriefbogenElement(models.Model):
     text = models.TextField("Text", blank=True)
     schriftart = models.CharField("Schriftart", max_length=30, blank=True, default="Helvetica")
     schriftgroesse = models.PositiveIntegerField("Schriftgröße (pt)", default=10, null=True, blank=True)
+    zeilenhoehe = models.DecimalField(
+        "Zeilenhöhe (Faktor)", max_digits=3, decimal_places=2, default=Decimal("1.15"), null=True, blank=True,
+        validators=[MinValueValidator(0.8), MaxValueValidator(3)],
+        help_text="Zeilenabstand als Vielfaches der Schriftgröße: 1,0 = eng, 1,15 = Standard, 1,5 = weit.",
+    )
     schriftfarbe = models.CharField(
         "Schriftfarbe", max_length=7, blank=True, help_text="Leer = Standardfarbe (dunkelgrau).",
     )

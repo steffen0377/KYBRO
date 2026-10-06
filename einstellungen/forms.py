@@ -114,14 +114,14 @@ class BriefbogenElementForm(BootstrapFormMixin, forms.ModelForm):
     """Bild oder Textblock auf dem Briefbogen; je nach Typ sind nur die passenden Felder relevant."""
 
     BILD_FELDER = ("bild", "seitenverhaeltnis_beibehalten")
-    TEXT_FELDER = ("text", "schriftart", "schriftgroesse", "schriftfarbe", "ausrichtung")
+    TEXT_FELDER = ("text", "schriftart", "schriftgroesse", "zeilenhoehe", "schriftfarbe", "ausrichtung")
 
     class Meta:
         model = BriefbogenElement
         fields = [
             "typ", "name", "reihenfolge", "x_mm", "y_mm", "breite_mm", "hoehe_mm", "vertikale_ausrichtung",
             "bild", "seitenverhaeltnis_beibehalten",
-            "text", "schriftart", "schriftgroesse", "schriftfarbe", "ausrichtung",
+            "text", "schriftart", "schriftgroesse", "zeilenhoehe", "schriftfarbe", "ausrichtung",
         ]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 5}),

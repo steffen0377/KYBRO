@@ -68,6 +68,11 @@ def _bildhoehe_mm(element: BriefbogenElement) -> float:
         return float(element.breite_mm)
 
 
+def zeilenhoehe(element: BriefbogenElement) -> float:
+    """Zeilenabstand als Faktor der Schriftgröße (Standard 1,15)."""
+    return float(element.zeilenhoehe) if element.zeilenhoehe else ZEILENABSTAND
+
+
 def hoehe_mm(element: BriefbogenElement, firma: Firma) -> float:
     if element.typ == BriefbogenElement.Typ.BILD:
         return _bildhoehe_mm(element) if element.bild else 0.0
@@ -75,7 +80,7 @@ def hoehe_mm(element: BriefbogenElement, firma: Firma) -> float:
         return float(element.hoehe_mm)
     groesse = element.schriftgroesse or 10
     zeilen = _zeilen_schaetzen(platzhalter_ersetzen(element.text, firma), groesse, float(element.breite_mm))
-    return zeilen * groesse / 72 * 25.4 * ZEILENABSTAND
+    return zeilen * groesse / 72 * 25.4 * zeilenhoehe(element)
 
 
 def unterer_rand_mm(firma: Firma, minimum: float) -> float:
@@ -134,7 +139,7 @@ def elemente_fuer_pdf(firma: Firma, rand_links: float, rand_oben: float, rand_un
             schrift = formulare.SCHRIFTARTEN.get(element.schriftart or "", formulare.SCHRIFTARTEN["Helvetica"])
             stil += [
                 f"font-family:{schrift}", f"font-size:{element.schriftgroesse or 10}pt",
-                f"line-height:{ZEILENABSTAND}", "white-space:pre-wrap",
+                f"line-height:{zeilenhoehe(element):g}", "white-space:pre-wrap",
                 f"text-align:{ {'mitte': 'center', 'rechts': 'right'}.get(element.ausrichtung, 'left') }",
             ]
             if element.schriftfarbe:
