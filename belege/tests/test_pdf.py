@@ -62,6 +62,25 @@ class ZugferdTests(TestCase):
         self.assertEqual(wurzel.findtext(".//ram:ID", namespaces=ns), zugferd.PROFIL)
         self.assertEqual(len(wurzel.findall(".//ram:ApplicableHeaderTradeSettlement/ram:ApplicableTradeTax", ns)), 2)
 
+    def test_xml_mit_allen_optionalen_firmen_und_kundenfeldern_schemagueltig(self):
+        """Regression: E-Mail der Firma vor der Anschrift machte die XML ungültig (Fehler beim PDF-Aufruf)."""
+        kunde = Kunde.objects.create(
+            firma="Muster GmbH", strasse="Str. 2", plz="54321", ort="Dorf", email="kunde@example.com",
+            ust_id="DE987654321", telefon="0123",
+        )
+        r = rechnung(kunde=kunde)
+        firma = Firma.holen()
+        firma.email, firma.telefon, firma.steuernummer, firma.ust_id = "info@example.com", "0987", "123/456/78901", "DE123456789"
+        firma.kontoinhaber, firma.bank = "IT-Dienst GmbH", "Testbank"
+        firma.save()
+        xml = zugferd.rechnung_xml(r)
+        zugferd.pruefen(xml)
+        wurzel = etree.fromstring(xml)
+        verkaeufer = wurzel.find(".//ram:SellerTradeParty", namespaces=zugferd.NS)
+        reihenfolge = [etree.QName(k).localname for k in verkaeufer]
+        self.assertLess(reihenfolge.index("PostalTradeAddress"), reihenfolge.index("URIUniversalCommunication"))
+        self.assertLess(reihenfolge.index("URIUniversalCommunication"), reihenfolge.index("SpecifiedTaxRegistration"))
+
     def test_steuerbefreit_nutzt_kategorie_e_mit_grund(self):
         k = Kunde.objects.create(firma="Frei", steuerbefreit=True, befreiungsgrund="Drittland")
         a = Angebot.objects.create(nummer="X1", kunde=k, datum=date(2026, 3, 1))

@@ -109,13 +109,14 @@ def rechnung_xml(rechnung) -> bytes:
 
     verkaeufer = t.neu(vereinbarung, "ram:SellerTradeParty")
     t.neu(verkaeufer, "ram:Name", firma.firmenname or "Firma")
-    if firma.email:
-        t.neu(t.neu(verkaeufer, "ram:URIUniversalCommunication"), "ram:URIID", firma.email, schemeID="EM")
+    # Reihenfolge laut Schema: Name, Anschrift, Kommunikation (E-Mail), Steuerregistrierungen.
     adresse = t.neu(verkaeufer, "ram:PostalTradeAddress")
     t.neu(adresse, "ram:PostcodeCode", firma.plz)
     t.neu(adresse, "ram:LineOne", firma.strasse)
     t.neu(adresse, "ram:CityName", firma.ort)
     t.neu(adresse, "ram:CountryID", laendercode(firma.land))
+    if firma.email:
+        t.neu(t.neu(verkaeufer, "ram:URIUniversalCommunication"), "ram:URIID", firma.email, schemeID="EM")
     if firma.ust_id:
         t.neu(t.neu(verkaeufer, "ram:SpecifiedTaxRegistration"), "ram:ID", firma.ust_id, schemeID="VA")
     if firma.steuernummer:
