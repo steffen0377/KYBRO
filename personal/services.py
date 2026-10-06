@@ -37,7 +37,7 @@ def _halbe(wert: Decimal) -> Decimal:
 
 
 def urlaub_anspruch(mitarbeiter: Mitarbeiter, jahr: int) -> Decimal:
-    """Manueller Anspruch, sonst Vertragsanspruch (anteilig bei Eintritt oder Austritt im Jahr)."""
+    """Manueller Anspruch, sonst Vertragsanspruch (anteilig je vollem Beschäftigungsmonat bei Eintritt/Austritt im Jahr)."""
     manuell = Urlaubsjahr.objects.filter(mitarbeiter=mitarbeiter, jahr=jahr).first()
     if manuell and manuell.anspruch is not None:
         return manuell.anspruch
@@ -48,12 +48,16 @@ def urlaub_anspruch(mitarbeiter: Mitarbeiter, jahr: int) -> Decimal:
     )
     if not v:
         return Decimal("0")
-    monate = 12
-    if mitarbeiter.eintrittsdatum and mitarbeiter.eintrittsdatum > anfang and mitarbeiter.eintrittsdatum.year == jahr:
-        monate -= mitarbeiter.eintrittsdatum.month - 1
-    if mitarbeiter.austrittsdatum and mitarbeiter.austrittsdatum.year == jahr:
-        monate -= 12 - mitarbeiter.austrittsdatum.month
-    monate = max(monate, 0)
+    # Teilurlaub: 1/12 je VOLLEM Beschäftigungsmonat (§ 5 BUrlG). Wer mitten im Monat eintritt, bekommt diesen Monat
+    # noch nicht, wer mitten im Monat ausscheidet, ebenfalls nicht.
+    erster_monat, letzter_monat = 1, 12
+    ein, aus = mitarbeiter.eintrittsdatum, mitarbeiter.austrittsdatum
+    if ein and ein > anfang and ein.year == jahr:
+        erster_monat = ein.month if ein.day == 1 else ein.month + 1
+    if aus and aus.year == jahr:
+        ende_des_monats = (aus + datetime.timedelta(days=1)).day == 1
+        letzter_monat = aus.month if ende_des_monats else aus.month - 1
+    monate = max(letzter_monat - erster_monat + 1, 0)
     if monate == 12:
         return v.urlaubstage_pro_jahr
     return _halbe(v.urlaubstage_pro_jahr * monate / 12)

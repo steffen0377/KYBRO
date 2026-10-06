@@ -8,8 +8,8 @@ Menü **Personal** (Recht „Personal“ je Gruppe, lesen bzw. schreiben; Gruppe
 * **Verträge** haben einen Gültigkeitszeitraum (Historie): Beschäftigungsart, Wochenstunden, Arbeitstage, Urlaubstage pro Jahr,
   Probezeit, Befristung, Kündigungsfrist. Bei Änderungen (z. B. mehr Urlaub) wird ein neuer Stand angelegt; Zeiträume dürfen
   sich nicht überschneiden. Eintritts- und Austrittsdatum stehen am Mitarbeiter.
-* **Urlaub:** Anspruch = Urlaubstage des Vertrags am 1. Januar, bei Eintritt oder Austritt im Jahr anteilig (1/12 je Monat, auf halbe
-  Tage gerundet). Je Jahr kann der Anspruch manuell überschrieben und ein Übertrag erfasst werden. Gezählt werden nur Arbeitstage
+* **Urlaub:** Anspruch = Urlaubstage des Vertrags am 1. Januar, bei Eintritt oder Austritt im Jahr anteilig (1/12 je **voll beschäftigtem** Monat nach § 5 BUrlG, auf halbe
+  Tage gerundet; Eintritt am 21.09. zählt den September noch nicht). Je Jahr kann der Anspruch manuell überschrieben und ein Übertrag erfasst werden. Gezählt werden nur Arbeitstage
   laut Vertrag. Gesetzliche Feiertage des eingestellten Bundeslands kosten keinen Urlaub, ebenso eigene Feiertage; halbe Tage (standardmäßig 24.12. und 31.12.) kosten 0,5 Urlaubstage (siehe Einstellungen). Anträge: beantragt, genehmigt, abgelehnt,
   storniert. Wer Urlaub einträgt, genehmigt ihn zugleich.
 * **Anwesenheit:** Tagesstatus (anwesend, Homeoffice, Dienstreise, krank, Sonderurlaub, Freizeitausgleich, Berufsschule, Schulung) mit optionalen Zeiten;

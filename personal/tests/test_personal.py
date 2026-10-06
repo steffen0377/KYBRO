@@ -63,6 +63,24 @@ class UrlaubServiceTests(TestCase):
         vertrag(m, gueltig_ab=D(2026, 7, 1), urlaubstage_pro_jahr=30)
         self.assertEqual(services.urlaub_anspruch(m, 2026), Decimal("15.0"))
 
+    def test_anteil_nur_volle_monate_bei_eintritt(self):
+        # Eintritt 21.09.2026, 28 Tage: Sept. ist kein voller Monat -> Okt.-Dez. = 3/12 = 7 Tage
+        m = mitarbeiter(vorname="Spaet", eintrittsdatum=D(2026, 9, 21))
+        vertrag(m, gueltig_ab=D(2026, 9, 21), urlaubstage_pro_jahr=28)
+        self.assertEqual(services.urlaub_anspruch(m, 2026), Decimal("7"))
+        # Eintritt am Monatsersten zählt den Monat voll: Sept.-Dez. = 4/12 = 9,33 -> 9,5
+        m2 = mitarbeiter(vorname="Erster", eintrittsdatum=D(2026, 9, 1))
+        vertrag(m2, gueltig_ab=D(2026, 9, 1), urlaubstage_pro_jahr=28)
+        self.assertEqual(services.urlaub_anspruch(m2, 2026), Decimal("9.5"))
+
+    def test_anteil_bei_austritt(self):
+        m = mitarbeiter(vorname="Weg", austrittsdatum=D(2026, 6, 30))
+        vertrag(m, urlaubstage_pro_jahr=24)
+        self.assertEqual(services.urlaub_anspruch(m, 2026), Decimal("12"))  # Jan.-Juni
+        m.austrittsdatum = D(2026, 6, 15)
+        m.save()
+        self.assertEqual(services.urlaub_anspruch(m, 2026), Decimal("10"))  # Jan.-Mai
+
     def test_manueller_anspruch_hat_vorrang(self):
         Urlaubsjahr.objects.create(mitarbeiter=self.m, jahr=2026, anspruch=Decimal("28"), uebertrag=Decimal("3"))
         k = services.urlaubskonto(self.m, 2026)
