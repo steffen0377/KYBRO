@@ -348,3 +348,39 @@ class EinstellungenViewTests(TestCase):
         u = User.objects.create_user("u", password=PW)
         self.client.force_login(u)
         self.assertEqual(self.client.get(reverse("personal:einstellungen")).status_code, 403)
+
+
+class JahreszahlenTests(TestCase):
+    """Jahreszahlen dürfen kein Tausendertrennzeichen bekommen (USE_THOUSAND_SEPARATOR ist aktiv)."""
+
+    def test_keine_tausenderpunkte(self):
+        from personal.models import Sondertag
+
+        admin = User.objects.create_superuser("admin", password=PW)
+        self.client.force_login(admin)
+        m = mitarbeiter()
+        vertrag(m)
+        Urlaubsjahr.objects.create(mitarbeiter=m, jahr=2026, uebertrag=2)
+        fest = Sondertag.objects.create(name="Fest", tag=1, monat=6, jahr=2026, urlaubsanteil=0)
+        seiten = [
+            reverse("personal:mitarbeiter_detail", args=[m.pk]) + "?jahr=2026",
+            reverse("personal:urlaubsjahr", args=[m.pk, 2026]),
+            reverse("personal:einstellungen") + "?jahr=2026",
+            reverse("personal:sondertag_bearbeiten", args=[fest.pk]),
+        ]
+        for url in seiten:
+            html = self.client.get(url).content.decode()
+            self.assertNotIn("2.026", html, url)
+            self.assertNotIn("2.025", html, url)
+            self.assertNotIn("2.027", html, url)
+        detail = self.client.get(seiten[0]).content.decode()
+        self.assertIn("?jahr=2025", detail)
+        self.assertIn("?jahr=2027", detail)
+        self.assertIn('value="2026"', self.client.get(seiten[3]).content.decode())
+
+    def test_meine_zeiten(self):
+        u = User.objects.create_user("erika", password=PW)
+        self.client.force_login(u)
+        m = mitarbeiter(benutzer=u)
+        vertrag(m)
+        self.assertNotIn(f"{datetime.date.today().year // 1000}.{datetime.date.today().year % 1000}", self.client.get(reverse("personal:meine_zeiten")).content.decode())

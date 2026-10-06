@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% load rechte %}
 
 {% block content %}
@@ -32,9 +33,9 @@
   <div class="col-lg-7">
     <div class="card p-3 mb-3">
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="mb-0">Urlaub {{ jahr }}</h6>
+        <h6 class="mb-0">Urlaub {{ jahr|unlocalize }}</h6>
         <div class="small">
-          <a href="?jahr={{ jahr|add:-1 }}">&laquo; {{ jahr|add:-1 }}</a> &nbsp; <a href="?jahr={{ jahr|add:1 }}">{{ jahr|add:1 }} &raquo;</a>
+          <a href="?jahr={{ jahr|add:-1|unlocalize }}">&laquo; {{ jahr|add:-1|unlocalize }}</a> &nbsp; <a href="?jahr={{ jahr|add:1|unlocalize }}">{{ jahr|add:1|unlocalize }} &raquo;</a>
           {% if schreiben %}&nbsp; <a href="{% url 'personal:urlaubsjahr' object.pk jahr %}">Anspruch/Übertrag</a>{% endif %}
         </div>
       </div>
@@ -45,7 +46,7 @@
         <tbody>
         {% for a in antraege %}
           <tr><td>{{ a.von|date:"d.m.Y" }} – {{ a.bis|date:"d.m.Y" }}</td><td>{{ a.tage|floatformat:"-1" }} Tag(e)</td><td>{{ a.get_status_display }}</td></tr>
-        {% empty %}<tr><td class="text-muted">Keine Urlaubsanträge in {{ jahr }}.</td></tr>{% endfor %}
+        {% empty %}<tr><td class="text-muted">Keine Urlaubsanträge in {{ jahr|unlocalize }}.</td></tr>{% endfor %}
         </tbody>
       </table>
       {% if schreiben %}<a class="btn btn-sm btn-app-outline-secondary" href="{% url 'personal:urlaub_neu' %}?mitarbeiter={{ object.pk }}">Urlaub eintragen</a>{% endif %}
