@@ -11,10 +11,13 @@
     @bottom-right { content: "Seite " counter(page) " von " counter(pages); font-size: 8pt; color: #666; vertical-align: bottom; }
     {% endif %}
     @bottom-left { content: element(fusszeile); width: 80%; vertical-align: bottom; }
+    @top-left-corner { content: element(briefbogen); vertical-align: top; padding: 0; }
   }
   body { margin: 0; font-family: {{ schrift|safe }}; font-size: {{ e.schriftgroesse }}pt; color: #222; }
   #fusszeile { position: running(fusszeile); font-size: 8pt; color: #666; line-height: 1.3; }
-  .bb { position: fixed; margin: 0; }
+  #briefbogen { position: running(briefbogen); }
+  #briefbogen .bbw { position: relative; width: 0; height: 0; }
+  .bb { position: absolute; margin: 0; }
   .absender { position: absolute; top: calc(53mm - {{ e.rand_oben }}mm); left: 0; width: 85mm; font-size: 7pt; text-decoration: underline; }
   .empfaenger { position: absolute; top: calc(60mm - {{ e.rand_oben }}mm); left: 0; width: 85mm; height: 40mm; font-size: 11pt; }
   .abstand { height: calc(95mm - {{ e.rand_oben }}mm); }

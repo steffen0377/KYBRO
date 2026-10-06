@@ -46,17 +46,17 @@ class PlatzhalterTests(TestCase):
         textbox(y_mm=50, text="Kopf")  # Kopfbereich zählt nicht
         self.assertEqual(briefbogen.unterer_rand_mm(firma, 20), rand)
 
-    def test_position_relativ_zum_satzspiegel(self):
+    def test_position_ab_papierecke(self):
         textbox(x_mm=25, y_mm=10, name="oben")
         textbox(x_mm=20, y_mm=290, vertikale_ausrichtung="unten", name="unten")
         oben, unten = briefbogen.elemente_fuer_pdf(Firma.holen(), 20, 20, 20)
-        self.assertIn("left:5.00mm", oben["stil"])
-        self.assertIn("top:-10.00mm", oben["stil"])
+        self.assertIn("left:25.00mm", oben["stil"])
+        self.assertIn("top:10.00mm", oben["stil"])
         # "Unten" wird über Oberkante und feste Höhe positioniert (nicht über "bottom"), siehe elemente_fuer_pdf.
         self.assertNotIn("bottom:", unten["stil"])
         hoehe = briefbogen.hoehe_mm(BriefbogenElement.objects.get(name="unten"), Firma.holen())
         self.assertIn(f"height:{hoehe:.2f}mm", unten["stil"])
-        self.assertIn(f"top:{290 - hoehe - 20:.2f}mm", unten["stil"])
+        self.assertIn(f"top:{290 - hoehe:.2f}mm", unten["stil"])
         self.assertIn("justify-content:flex-end", unten["stil"])
 
 
@@ -117,3 +117,34 @@ class BriefbogenVerwaltungTests(TestCase):
         self.assertContains(antwort, reverse("einstellungen:briefbogen"))
         self.assertNotIn("logo", antwort.context["form"].fields)
         self.assertNotIn("briefbogen", antwort.context["form"].fields)
+
+
+class BriefbogenRenderTests(TestCase):
+    """Prüft das fertige PDF: Elemente im unteren Seitenrand dürfen nicht abgeschnitten werden."""
+
+    def test_mehrzeiliger_text_im_fussbereich_komplett(self):
+        from io import BytesIO
+
+        from pypdf import PdfReader
+
+        from belege import pdf as belege_pdf
+
+        textbox(
+            x_mm=27, y_mm=270, breite_mm=60, hoehe_mm=20, schriftgroesse=10,
+            text="Zeile eins\nZeile zwei\nZeile drei\nZeile vier",
+        )
+        text = PdfReader(BytesIO(belege_pdf.briefbogen_vorschau())).pages[0].extract_text()
+        for zeile in ("Zeile eins", "Zeile zwei", "Zeile drei", "Zeile vier"):
+            self.assertIn(zeile, text)
+
+    def test_unten_ausgerichteter_text_komplett(self):
+        from io import BytesIO
+
+        from pypdf import PdfReader
+
+        from belege import pdf as belege_pdf
+
+        textbox(x_mm=20, y_mm=290, breite_mm=100, vertikale_ausrichtung="unten", text="Eins\nZwei\nDrei\nVier\nFünf")
+        text = PdfReader(BytesIO(belege_pdf.briefbogen_vorschau())).pages[0].extract_text()
+        for zeile in ("Eins", "Zwei", "Drei", "Vier", "Fünf"):
+            self.assertIn(zeile, text)

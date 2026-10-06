@@ -96,20 +96,24 @@ def _mm(wert) -> str:
 
 
 def elemente_fuer_pdf(firma: Firma, rand_links: float, rand_oben: float, rand_unten: float) -> list[dict]:
-    """Elemente mit CSS (``stil``) für ``position: fixed``; Positionen sind relativ zum Satzspiegel der Seite."""
+    """Elemente mit CSS (``stil``); Positionen in mm ab der Papierecke oben links.
+
+    Die Elemente liegen in einem laufenden Element im Seitenrand-Feld oben links (siehe ``beleg.html``). Anders als
+    ``position: fixed`` werden sie dort nicht am Satzspiegel abgeschnitten, auch wenn sie im Seitenrand stehen
+    (Fußzeile, Absenderzeile). Die Randparameter bleiben nur aus Kompatibilitätsgründen in der Signatur.
+    """
     ergebnis = []
     for element in BriefbogenElement.objects.all():
-        links = float(element.x_mm) - float(rand_links)
+        links = float(element.x_mm)
         stil = [f"left:{links:.2f}mm", f"width:{_mm(element.breite_mm)}"]
         unten = element.vertikale_ausrichtung == BriefbogenElement.Vertikal.UNTEN
         if unten:
-            # Nicht mit "bottom" positionieren: Ragt das Element über den Satzspiegel hinaus (Fußzeile im unteren
-            # Seitenrand), landet es sonst zu tief. Stattdessen Oberkante aus der Höhe errechnen und die Höhe fest vorgeben.
+            # Oberkante aus der Höhe errechnen und die Höhe fest vorgeben.
             hoehe = hoehe_mm(element, firma)
-            stil.append(f"top:{float(element.y_mm) - hoehe - float(rand_oben):.2f}mm")
+            stil.append(f"top:{float(element.y_mm) - hoehe:.2f}mm")
             stil.append(f"height:{hoehe:.2f}mm")
         else:
-            stil.append(f"top:{float(element.y_mm) - float(rand_oben):.2f}mm")
+            stil.append(f"top:{float(element.y_mm):.2f}mm")
         eintrag = {"typ": element.typ}
         if element.typ == BriefbogenElement.Typ.BILD:
             if not element.bild:
