@@ -52,7 +52,12 @@ class PlatzhalterTests(TestCase):
         oben, unten = briefbogen.elemente_fuer_pdf(Firma.holen(), 20, 20, 20)
         self.assertIn("left:5.00mm", oben["stil"])
         self.assertIn("top:-10.00mm", oben["stil"])
-        self.assertIn("bottom:-13.00mm", unten["stil"])
+        # "Unten" wird über Oberkante und feste Höhe positioniert (nicht über "bottom"), siehe elemente_fuer_pdf.
+        self.assertNotIn("bottom:", unten["stil"])
+        hoehe = briefbogen.hoehe_mm(BriefbogenElement.objects.get(name="unten"), Firma.holen())
+        self.assertIn(f"height:{hoehe:.2f}mm", unten["stil"])
+        self.assertIn(f"top:{290 - hoehe - 20:.2f}mm", unten["stil"])
+        self.assertIn("justify-content:flex-end", unten["stil"])
 
 
 class BriefbogenVerwaltungTests(TestCase):

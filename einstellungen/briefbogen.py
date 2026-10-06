@@ -103,7 +103,11 @@ def elemente_fuer_pdf(firma: Firma, rand_links: float, rand_oben: float, rand_un
         stil = [f"left:{links:.2f}mm", f"width:{_mm(element.breite_mm)}"]
         unten = element.vertikale_ausrichtung == BriefbogenElement.Vertikal.UNTEN
         if unten:
-            stil.append(f"bottom:{SEITENHOEHE_MM - float(element.y_mm) - float(rand_unten):.2f}mm")
+            # Nicht mit "bottom" positionieren: Ragt das Element über den Satzspiegel hinaus (Fußzeile im unteren
+            # Seitenrand), landet es sonst zu tief. Stattdessen Oberkante aus der Höhe errechnen und die Höhe fest vorgeben.
+            hoehe = hoehe_mm(element, firma)
+            stil.append(f"top:{float(element.y_mm) - hoehe - float(rand_oben):.2f}mm")
+            stil.append(f"height:{hoehe:.2f}mm")
         else:
             stil.append(f"top:{float(element.y_mm) - float(rand_oben):.2f}mm")
         eintrag = {"typ": element.typ}
@@ -116,7 +120,8 @@ def elemente_fuer_pdf(firma: Firma, rand_links: float, rand_oben: float, rand_un
                 log.warning("Briefbogen-Bild nicht lesbar: %s", element.bild.name)
                 continue
             if element.hoehe_mm is not None:
-                stil.append(f"height:{_mm(element.hoehe_mm)}")
+                if not unten:
+                    stil.append(f"height:{_mm(element.hoehe_mm)}")
                 stil.append("object-fit:" + ("contain" if element.seitenverhaeltnis_beibehalten else "fill"))
         else:
             if not element.text.strip():
@@ -130,8 +135,11 @@ def elemente_fuer_pdf(firma: Firma, rand_links: float, rand_oben: float, rand_un
             ]
             if element.schriftfarbe:
                 stil.append(f"color:{element.schriftfarbe}")
-            if element.hoehe_mm is not None:
+            if element.hoehe_mm is not None and not unten:
                 stil.append(f"height:{_mm(element.hoehe_mm)}")
+            if unten:
+                # Text sitzt bündig an der Unterkante, auch wenn die geschätzte Höhe nicht genau stimmt.
+                stil += ["display:flex", "flex-direction:column", "justify-content:flex-end"]
         eintrag["stil"] = ";".join(stil)
         ergebnis.append(eintrag)
     return ergebnis
