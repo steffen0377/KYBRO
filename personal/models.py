@@ -187,6 +187,40 @@ class Urlaubsantrag(models.Model):
                     raise ValidationError("Für diesen Zeitraum gibt es bereits einen Urlaubsantrag.")
 
 
+class Stundenkorrektur(models.Model):
+    """Über-/Fehlstunden ohne Zeiterfassung: Stunden (auch negativ) mit Begründung, mit Genehmigung wie beim Urlaub."""
+
+    Status = Urlaubsantrag.Status
+
+    mitarbeiter = models.ForeignKey(Mitarbeiter, on_delete=models.CASCADE, related_name="stundenkorrekturen")
+    datum = models.DateField("Datum")
+    stunden = models.DecimalField(
+        "Stunden", max_digits=6, decimal_places=2,
+        help_text="Überstunden positiv, Fehlstunden negativ (z. B. -1,5). Dezimalstunden: 1,5 = 1 Std. 30 Min.",
+    )
+    bemerkung = models.CharField("Bemerkung", max_length=300)
+    status = models.CharField("Status", max_length=12, choices=Status.choices, default=Status.BEANTRAGT)
+    entschieden_von = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    entschieden_am = models.DateTimeField(null=True, blank=True)
+    erstellt = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Über-/Fehlstunden"
+        verbose_name_plural = "Über-/Fehlstunden"
+        ordering = ["-datum", "-pk"]
+
+    def __str__(self):
+        return f"{self.mitarbeiter}: {self.stunden} Std. am {self.datum:%d.%m.%Y}"
+
+    def clean(self):
+        if self.stunden is not None and self.stunden == 0:
+            raise ValidationError({"stunden": "Bitte eine Stundenzahl ungleich 0 angeben."})
+        if self.bemerkung is not None and not self.bemerkung.strip():
+            raise ValidationError({"bemerkung": "Die Bemerkung ist ein Pflichtfeld."})
+
+
 class Anwesenheit(models.Model):
     """Status eines Mitarbeiters an einem Tag. Urlaub ergibt sich aus genehmigten Urlaubsanträgen."""
 

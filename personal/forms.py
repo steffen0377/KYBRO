@@ -7,7 +7,7 @@ from django.db.models import Q
 from core.forms import BootstrapFormMixin, suchauswahl
 
 from .kalender import BUNDESLAENDER, Kalender
-from .models import WOCHENTAGE, Anwesenheit, Mitarbeiter, PersonalEinstellung, Sondertag, Urlaubsantrag, Urlaubsjahr, Vertrag
+from .models import WOCHENTAGE, Anwesenheit, Mitarbeiter, PersonalEinstellung, Sondertag, Stundenkorrektur, Urlaubsantrag, Urlaubsjahr, Vertrag
 from .services import ist_arbeitstag, tage_zwischen
 
 DATUM = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
@@ -91,6 +91,37 @@ class UrlaubsantragForm(BootstrapFormMixin, forms.ModelForm):
                 Q(austrittsdatum__isnull=True) | Q(austrittsdatum__gte=datetime.date.today())
             )
             suchauswahl(self.fields["mitarbeiter"])
+
+
+class StundenkorrekturForm(BootstrapFormMixin, forms.ModelForm):
+    stunden = forms.DecimalField(
+        label="Stunden", max_digits=6, decimal_places=2, localize=True,
+        help_text=Stundenkorrektur._meta.get_field("stunden").help_text,
+    )
+
+    class Meta:
+        model = Stundenkorrektur
+        fields = ["mitarbeiter", "datum", "stunden", "bemerkung"]
+        widgets = {"datum": DATUM}
+
+    def __init__(self, *args, mitarbeiter=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["datum"].initial = datetime.date.today
+        self.fields["bemerkung"].required = True
+        if mitarbeiter:
+            del self.fields["mitarbeiter"]
+            self.instance.mitarbeiter = mitarbeiter
+        else:
+            self.fields["mitarbeiter"].queryset = Mitarbeiter.objects.filter(
+                Q(austrittsdatum__isnull=True) | Q(austrittsdatum__gte=datetime.date.today())
+            )
+            suchauswahl(self.fields["mitarbeiter"])
+
+    def clean_stunden(self):
+        stunden = self.cleaned_data["stunden"]
+        if stunden == 0:
+            raise forms.ValidationError("Bitte eine Stundenzahl ungleich 0 angeben.")
+        return stunden
 
 
 class AnwesenheitForm(BootstrapFormMixin, forms.Form):

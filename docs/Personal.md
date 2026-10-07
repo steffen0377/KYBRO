@@ -12,6 +12,7 @@ Menü **Personal** (Recht „Personal“ je Gruppe, lesen bzw. schreiben; Gruppe
   Tage gerundet; Eintritt am 21.09. zählt den September noch nicht). Je Jahr kann der Anspruch manuell überschrieben und ein Übertrag erfasst werden. Gezählt werden nur Arbeitstage
   laut Vertrag. Gesetzliche Feiertage des eingestellten Bundeslands kosten keinen Urlaub, ebenso eigene Feiertage; halbe Tage (standardmäßig 24.12. und 31.12.) kosten 0,5 Urlaubstage (siehe Einstellungen). Anträge: beantragt, genehmigt, abgelehnt,
   storniert. Wer Urlaub einträgt, genehmigt ihn zugleich.
+* **Über-/Fehlstunden** (ohne Zeiterfassung): Mitarbeiter erfassen unter „Meine Zeiten“ mit „Über-/Fehlstunde(n) erfassen“ Datum, Stunden (Dezimalstunden, auch negativ, z. B. -1,5) und eine Bemerkung (Pflicht). Die Personalverwaltung genehmigt oder lehnt ab (Menü „Über-/Fehlstunden“); nur genehmigte Einträge zählen im Stundensaldo, der bei „Meine Zeiten“ und im Mitarbeiter angezeigt wird. Wer Stunden für andere einträgt, genehmigt sie zugleich; offene Einträge können zurückgezogen werden.
 * **Anwesenheit:** Tagesstatus (anwesend, Homeoffice, Dienstreise, krank, Sonderurlaub, Freizeitausgleich, Berufsschule, Schulung) mit optionalen Zeiten;
   ein Zeitraum lässt sich auf einmal eintragen (nur Arbeitstage). Urlaub kommt aus den Urlaubsanträgen und wird in der
   Monatsübersicht automatisch angezeigt.

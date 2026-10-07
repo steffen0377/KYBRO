@@ -16,11 +16,11 @@ from accounts.mixins import AdminRequiredMixin, ModulRechtMixin
 from core.views import LiveSucheMixin
 
 from .forms import (
-    AnwesenheitForm, MitarbeiterForm, PersonalEinstellungForm, SondertagForm, UrlaubsantragForm, UrlaubsjahrForm, VertragForm,
+    AnwesenheitForm, MitarbeiterForm, PersonalEinstellungForm, SondertagForm, StundenkorrekturForm, UrlaubsantragForm, UrlaubsjahrForm, VertragForm,
 )
 from .kalender import Kalender
-from .models import Anwesenheit, Mitarbeiter, PersonalEinstellung, Sondertag, Urlaubsantrag, Urlaubsjahr, Vertrag
-from .services import antrag_tage, monatsuebersicht, urlaubskonto
+from .models import Anwesenheit, Mitarbeiter, PersonalEinstellung, Sondertag, Stundenkorrektur, Urlaubsantrag, Urlaubsjahr, Vertrag
+from .services import antrag_tage, monatsuebersicht, stundensaldo, urlaubskonto
 
 
 def _monat(request) -> tuple[int, int]:
@@ -139,6 +139,8 @@ class MitarbeiterDetailView(PersonalMixin, DetailView):
             antraege=self._antraege(m, jahr, kalender),
             aktueller_vertrag=next((v for v in m.vertraege.all() if v.gueltig_bis is None or v.gueltig_bis >= datetime.date.today()), None),
             anwesenheiten=m.anwesenheiten.all()[:20],
+            stunden=m.stundenkorrekturen.all()[:20],
+            stundensaldo=stundensaldo(m),
         )
         return kontext
 
@@ -354,6 +356,68 @@ class UrlaubEntscheidenView(PersonalMixin, View):
         return redirect(request.POST.get("weiter") or "personal:urlaub_liste")
 
 
+# --- Über-/Fehlstunden ------------------------------------------------------------------------------
+
+
+class StundenListView(PersonalMixin, ListView):
+    model = Stundenkorrektur
+    template_name = "personal/stunden_liste.html"
+    context_object_name = "eintraege"
+    extra_context = {"seitentitel": "Über-/Fehlstunden"}
+
+    def get_queryset(self):
+        abfrage = Stundenkorrektur.objects.select_related("mitarbeiter")
+        status = self.request.GET.get("status", "offen")
+        if status == "offen":
+            abfrage = abfrage.filter(status=Stundenkorrektur.Status.BEANTRAGT)
+        elif status in Stundenkorrektur.Status.values:
+            abfrage = abfrage.filter(status=status)
+        return abfrage
+
+    def get_context_data(self, **kwargs):
+        kontext = super().get_context_data(**kwargs)
+        kontext["status"] = self.request.GET.get("status", "offen")
+        kontext["stati"] = Stundenkorrektur.Status.choices
+        return kontext
+
+
+class StundenNeuView(PersonalMixin, CreateView):
+    """Über-/Fehlstunden für beliebige Mitarbeiter eintragen. Wird direkt genehmigt."""
+
+    model = Stundenkorrektur
+    form_class = StundenkorrekturForm
+    template_name = "personal/stunden_form.html"
+    success_url = reverse_lazy("personal:stunden_liste")
+    extra_context = {"seitentitel": "Über-/Fehlstunden eintragen"}
+
+    def get_initial(self):
+        mid = self.request.GET.get("mitarbeiter", "")
+        return {"mitarbeiter": int(mid)} if mid.isdigit() else {}
+
+    def form_valid(self, form):
+        form.instance.status = Stundenkorrektur.Status.GENEHMIGT
+        form.instance.entschieden_von = self.request.user
+        form.instance.entschieden_am = timezone.now()
+        messages.success(self.request, "Über-/Fehlstunden eingetragen und genehmigt.")
+        return super().form_valid(form)
+
+
+class StundenEntscheidenView(PersonalMixin, View):
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        eintrag = get_object_or_404(Stundenkorrektur, pk=pk)
+        neu = {"genehmigen": Stundenkorrektur.Status.GENEHMIGT, "ablehnen": Stundenkorrektur.Status.ABGELEHNT,
+               "stornieren": Stundenkorrektur.Status.STORNIERT}.get(request.POST.get("aktion"))
+        if neu:
+            eintrag.status = neu
+            eintrag.entschieden_von = request.user
+            eintrag.entschieden_am = timezone.now()
+            eintrag.save(update_fields=["status", "entschieden_von", "entschieden_am"])
+            messages.success(request, f"Über-/Fehlstunden: {eintrag.get_status_display().lower()}.")
+        return redirect(request.POST.get("weiter") or "personal:stunden_liste")
+
+
 # --- Eigene Daten (Self-Service für verknüpfte Benutzer) --------------------------------------------
 
 
@@ -394,6 +458,7 @@ class MeineZeitenView(EigeneDatenMixin, FormView):
             seitentitel="Meine Zeiten", mitarbeiter=m, konto=urlaubskonto(m, datetime.date.today().year, kalender),
             uebersicht=monatsuebersicht([m], jahr, monat, kalender), monat_datum=datetime.date(jahr, monat, 1),
             zurueck=zurueck, weiter=weiter, antraege=antraege,
+            stunden=m.stundenkorrekturen.all()[:20], stundensaldo=stundensaldo(m),
         )
         return kontext
 
@@ -426,6 +491,37 @@ class MeinUrlaubStornierenView(EigeneDatenMixin, View):
             messages.success(request, "Antrag zurückgezogen.")
         else:
             messages.error(request, "Nur offene Anträge können zurückgezogen werden. Bitte wende dich an die Personalverwaltung.")
+        return redirect("personal:meine_zeiten")
+
+
+class MeineStundenNeuView(EigeneDatenMixin, CreateView):
+    model = Stundenkorrektur
+    form_class = StundenkorrekturForm
+    template_name = "personal/stunden_form.html"
+    success_url = reverse_lazy("personal:meine_zeiten")
+    extra_context = {"seitentitel": "Über-/Fehlstunden erfassen", "eigener": True}
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["mitarbeiter"] = self.mitarbeiter
+        return kwargs
+
+    def form_valid(self, form):
+        messages.success(self.request, "Über-/Fehlstunden zur Genehmigung eingereicht.")
+        return super().form_valid(form)
+
+
+class MeineStundenZurueckziehenView(EigeneDatenMixin, View):
+    http_method_names = ["post"]
+
+    def post(self, request, pk):
+        eintrag = get_object_or_404(Stundenkorrektur, pk=pk, mitarbeiter=self.mitarbeiter)
+        if eintrag.status == Stundenkorrektur.Status.BEANTRAGT:
+            eintrag.status = Stundenkorrektur.Status.STORNIERT
+            eintrag.save(update_fields=["status"])
+            messages.success(request, "Eintrag zurückgezogen.")
+        else:
+            messages.error(request, "Nur offene Einträge können zurückgezogen werden. Bitte wende dich an die Personalverwaltung.")
         return redirect("personal:meine_zeiten")
 
 

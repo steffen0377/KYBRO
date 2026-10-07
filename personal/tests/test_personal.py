@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from personal import services
-from personal.models import Anwesenheit, Mitarbeiter, Urlaubsantrag, Urlaubsjahr, Vertrag
+from personal.models import Anwesenheit, Mitarbeiter, Stundenkorrektur, Urlaubsantrag, Urlaubsjahr, Vertrag
 
 User = get_user_model()
 PW = "Sehr-geheim-2026"
@@ -384,3 +384,85 @@ class JahreszahlenTests(TestCase):
         m = mitarbeiter(benutzer=u)
         vertrag(m)
         self.assertNotIn(f"{datetime.date.today().year // 1000}.{datetime.date.today().year % 1000}", self.client.get(reverse("personal:meine_zeiten")).content.decode())
+
+
+class StundenkorrekturTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("erika", password=PW)
+        self.client.force_login(self.user)
+        self.m = mitarbeiter(benutzer=self.user)
+        vertrag(self.m)
+
+    def personalverantwortlich(self):
+        g = Group.objects.create(name="Personal")
+        g.permissions.set(Permission.objects.filter(codename__in=["personal_lesen", "personal_schreiben"]))
+        self.user.groups.add(g)
+        self.user = User.objects.get(pk=self.user.pk)
+        self.client.force_login(self.user)
+
+    def einreichen(self, **daten):
+        daten = {"datum": "2026-10-05", "stunden": "1,5", "bemerkung": "Kundentermin", **daten}
+        return self.client.post(reverse("personal:meine_stunden_neu"), daten)
+
+    def test_einreichen_mit_komma_und_negativ(self):
+        self.einreichen()
+        self.einreichen(stunden="-2", bemerkung="Arzttermin")
+        e = Stundenkorrektur.objects.order_by("pk")
+        self.assertEqual([x.stunden for x in e], [Decimal("1.5"), Decimal("-2")])
+        self.assertEqual({x.status for x in e}, {"beantragt"})
+        self.assertEqual({x.mitarbeiter for x in e}, {self.m})
+
+    def test_bemerkung_ist_pflicht_und_null_nicht_erlaubt(self):
+        for daten in ({"bemerkung": ""}, {"bemerkung": "   "}, {"stunden": "0"}):
+            antwort = self.einreichen(**daten)
+            self.assertEqual(antwort.status_code, 200)
+        self.assertFalse(Stundenkorrektur.objects.exists())
+
+    def test_saldo_zaehlt_nur_genehmigtes(self):
+        self.einreichen()
+        self.einreichen(stunden="-0,5", bemerkung="früher gegangen")
+        self.assertEqual(services.stundensaldo(self.m), {"saldo": Decimal("0"), "offen": Decimal("1.00")})
+        self.personalverantwortlich()
+        e1, e2 = Stundenkorrektur.objects.order_by("pk")
+        self.client.post(reverse("personal:stunden_entscheiden", args=[e1.pk]), {"aktion": "genehmigen"})
+        self.client.post(reverse("personal:stunden_entscheiden", args=[e2.pk]), {"aktion": "ablehnen"})
+        e1.refresh_from_db()
+        self.assertEqual((e1.status, e1.entschieden_von), ("genehmigt", self.user))
+        self.assertEqual(services.stundensaldo(self.m), {"saldo": Decimal("1.50"), "offen": Decimal("0")})
+
+    def test_entscheiden_nur_mit_schreibrecht(self):
+        self.einreichen()
+        e = Stundenkorrektur.objects.get()
+        antwort = self.client.post(reverse("personal:stunden_entscheiden", args=[e.pk]), {"aktion": "genehmigen"})
+        self.assertEqual(antwort.status_code, 403)
+        e.refresh_from_db()
+        self.assertEqual(e.status, "beantragt")
+
+    def test_zurueckziehen_nur_offen_und_nur_eigene(self):
+        self.einreichen()
+        e = Stundenkorrektur.objects.get()
+        fremd = Stundenkorrektur.objects.create(
+            mitarbeiter=mitarbeiter(vorname="Fremd"), datum=D(2026, 10, 5), stunden=1, bemerkung="x"
+        )
+        self.assertEqual(self.client.post(reverse("personal:meine_stunden_zurueckziehen", args=[fremd.pk])).status_code, 404)
+        self.client.post(reverse("personal:meine_stunden_zurueckziehen", args=[e.pk]))
+        e.refresh_from_db()
+        self.assertEqual(e.status, "storniert")
+
+    def test_personalverwaltung_traegt_direkt_genehmigt_ein(self):
+        self.personalverantwortlich()
+        andere = mitarbeiter(vorname="Anna")
+        self.client.post(reverse("personal:stunden_neu"), {
+            "mitarbeiter": andere.pk, "datum": "2026-10-02", "stunden": "-1", "bemerkung": "Fehlzeit",
+        })
+        e = Stundenkorrektur.objects.get()
+        self.assertEqual((e.mitarbeiter, e.status, e.stunden), (andere, "genehmigt", Decimal("-1")))
+
+    def test_seiten_und_anzeige(self):
+        self.einreichen()
+        self.assertContains(self.client.get(reverse("personal:meine_zeiten")), "Über-/Fehlstunde(n) erfassen")
+        self.assertContains(self.client.get(reverse("personal:meine_stunden_neu")), "Bemerkung")
+        self.personalverantwortlich()
+        self.assertContains(self.client.get(reverse("personal:stunden_liste")), "Kundentermin")
+        self.assertContains(self.client.get(reverse("personal:mitarbeiter_detail", args=[self.m.pk])), "Kundentermin")
+        self.assertContains(self.client.get(reverse("core:dashboard")), "Über-/Fehlstunden")

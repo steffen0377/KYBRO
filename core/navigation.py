@@ -70,6 +70,7 @@ MENUE = (
             Eintrag("Mitarbeiter", "bi-people", "personal:mitarbeiter_liste", "personal:mitarbeiter", "personal"),
             Eintrag("Anwesenheit", "bi-calendar-check", "personal:anwesenheit", "personal:anwesenheit", "personal"),
             Eintrag("Urlaub", "bi-sun", "personal:urlaub_liste", "personal:urlaub", "personal"),
+            Eintrag("Über-/Fehlstunden", "bi-plus-slash-minus", "personal:stunden_liste", "personal:stunden", "personal"),
             Eintrag("Meine Zeiten", "bi-clock-history", "personal:meine_zeiten", "personal:mein", nur_mitarbeiter=True),
         ),
     ),

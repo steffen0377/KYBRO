@@ -1,0 +1,8 @@
+<table class="table table-sm mb-2">
+  {% for e in stunden %}
+  <tr>
+    <td>{{ e.datum|date:"d.m.Y" }}</td><td class="text-end">{{ e.stunden|floatformat:"-2" }} Std.</td><td>{{ e.get_status_display }}</td><td>{{ e.bemerkung }}</td>
+    {% if eigener %}<td class="text-end">{% if e.status == 'beantragt' %}<form method="post" action="{% url 'personal:meine_stunden_zurueckziehen' e.pk %}">{% csrf_token %}<button class="btn btn-sm btn-app-outline-danger">Zurückziehen</button></form>{% endif %}</td>{% endif %}
+  </tr>
+  {% empty %}<tr><td class="text-muted">Keine Einträge.</td></tr>{% endfor %}
+</table>

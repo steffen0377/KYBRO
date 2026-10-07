@@ -18,6 +18,9 @@ urlpatterns = [
     path("urlaub/", views.UrlaubListView.as_view(), name="urlaub_liste"),
     path("urlaub/neu/", views.UrlaubNeuView.as_view(), name="urlaub_neu"),
     path("urlaub/<int:pk>/entscheiden/", views.UrlaubEntscheidenView.as_view(), name="urlaub_entscheiden"),
+    path("stunden/", views.StundenListView.as_view(), name="stunden_liste"),
+    path("stunden/neu/", views.StundenNeuView.as_view(), name="stunden_neu"),
+    path("stunden/<int:pk>/entscheiden/", views.StundenEntscheidenView.as_view(), name="stunden_entscheiden"),
     path("einstellungen/", views.EinstellungenView.as_view(), name="einstellungen"),
     path("einstellungen/sondertag/neu/", views.SondertagCreateView.as_view(), name="sondertag_neu"),
     path("einstellungen/sondertag/<int:pk>/", views.SondertagUpdateView.as_view(), name="sondertag_bearbeiten"),
@@ -25,4 +28,6 @@ urlpatterns = [
     path("meine-zeiten/", views.MeineZeitenView.as_view(), name="meine_zeiten"),
     path("meine-zeiten/urlaub/", views.MeinUrlaubNeuView.as_view(), name="mein_urlaub_neu"),
     path("meine-zeiten/urlaub/<int:pk>/zurueckziehen/", views.MeinUrlaubStornierenView.as_view(), name="mein_urlaub_stornieren"),
+    path("meine-zeiten/stunden/", views.MeineStundenNeuView.as_view(), name="meine_stunden_neu"),
+    path("meine-zeiten/stunden/<int:pk>/zurueckziehen/", views.MeineStundenZurueckziehenView.as_view(), name="meine_stunden_zurueckziehen"),
 ]

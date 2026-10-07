@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4>{{ seitentitel }}</h4>
+<form method="post" class="card p-4" style="max-width:600px;">
+  {% csrf_token %}
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  {% if form.mitarbeiter %}{% include "core/feld.html" with feld=form.mitarbeiter %}{% endif %}
+  <div class="row g-3">
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.datum %}</div>
+    <div class="col-md-6">{% include "core/feld.html" with feld=form.stunden %}</div>
+  </div>
+  {% include "core/feld.html" with feld=form.bemerkung %}
+  {% if eigener %}<p class="small text-muted">Der Eintrag wird der Personalverwaltung zur Genehmigung vorgelegt. Erst danach zählt er im Stundensaldo.</p>{% endif %}
+  <div>
+    <button class="btn btn-app-primary" type="submit">{% if eigener %}Einreichen{% else %}Eintragen und genehmigen{% endif %}</button>
+    <a href="{% if eigener %}{% url 'personal:meine_zeiten' %}{% else %}{% url 'personal:stunden_liste' %}{% endif %}" class="btn btn-app-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

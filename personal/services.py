@@ -4,7 +4,7 @@ import datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from .kalender import Kalender
-from .models import Anwesenheit, Mitarbeiter, Urlaubsantrag, Urlaubsjahr, Vertrag
+from .models import Anwesenheit, Mitarbeiter, Stundenkorrektur, Urlaubsantrag, Urlaubsjahr, Vertrag
 
 STANDARD_ARBEITSTAGE = [0, 1, 2, 3, 4]
 
@@ -135,3 +135,11 @@ def monatsuebersicht(mitarbeiter_liste, jahr: int, monat: int, kalender: Kalende
                 zellen.append({"datum": t, "status": "", "text": f"{halb[0]} (halber Tag)" if halb else ""})
         zeilen.append({"mitarbeiter": m, "zellen": zellen})
     return {"tage": tage, "zeilen": zeilen}
+
+
+def stundensaldo(mitarbeiter: Mitarbeiter) -> dict:
+    """Genehmigte Über-/Fehlstunden (Saldo) und noch offene Anträge."""
+    summe = lambda status: sum(  # noqa: E731
+        (k.stunden for k in mitarbeiter.stundenkorrekturen.filter(status=status)), Decimal("0")
+    )
+    return {"saldo": summe(Stundenkorrektur.Status.GENEHMIGT), "offen": summe(Stundenkorrektur.Status.BEANTRAGT)}

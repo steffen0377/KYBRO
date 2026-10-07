@@ -51,6 +51,11 @@
       </table>
       {% if schreiben %}<a class="btn btn-sm btn-app-outline-secondary" href="{% url 'personal:urlaub_neu' %}?mitarbeiter={{ object.pk }}">Urlaub eintragen</a>{% endif %}
     </div>
+    <div class="card p-3 mb-3">
+      <h6>Über-/Fehlstunden <small class="text-muted">Saldo genehmigt: {{ stundensaldo.saldo|floatformat:"-2" }} Std.{% if stundensaldo.offen %}, offen: {{ stundensaldo.offen|floatformat:"-2" }} Std.{% endif %}</small></h6>
+      {% include "personal/_stunden.html" %}
+      {% if schreiben %}<a class="btn btn-sm btn-app-outline-secondary" href="{% url 'personal:stunden_neu' %}?mitarbeiter={{ object.pk }}">Stunden eintragen</a>{% endif %}
+    </div>
     <div class="card p-3">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0">Verträge</h6>
