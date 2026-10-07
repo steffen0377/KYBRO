@@ -321,3 +321,7 @@ html, body { height: 100%; }
 .az-std::after { content: ""; position: absolute; bottom: 0; right: 0; border-bottom: .55rem solid #0d6efd; border-left: .55rem solid transparent; }
 .az-std-minus::after { border-bottom-color: #dc3545; }
 .az-std-offen::after { opacity: .45; }
+
+/* Anwesenheitsübersicht: Zeile beim Daraufzeigen etwas dunkler. Die Zellen haben eigene Hintergrundfarben,
+   deshalb wird die ganze Zeile per Filter abgedunkelt (Farben bleiben erkennbar). */
+.anwesenheit-matrix tbody tr:hover > * { filter: brightness(.9); }
