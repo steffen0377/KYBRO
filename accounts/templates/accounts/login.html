@@ -8,15 +8,15 @@
 <link href="{% static 'core/css/style.css' %}" rel="stylesheet">
 <style>
   .logo-kopf:not(.ohne-logo) #kybro-name { display: none; }
-  .logo-kopf.ohne-logo img { display: none; }
+  .logo-kopf.ohne-logo img { display: none !important; }
 </style>
 </head>
 <body class="bg-app-dark">
 <div class="container d-flex align-items-center justify-content-center" style="min-height:100vh;">
   <div class="card p-4 shadow-sm" style="max-width:380px; width:100%;">
-    <div class="text-center mb-3 logo-kopf">
+    <div class="text-center mb-4 logo-kopf">
       {# Feste Datei: core/static/core/img/logo.svg. Ist sie vorhanden, ersetzt sie den Schriftzug "KYBRO"; fehlt sie, erscheint der Schriftzug. #}
-      <img src="{% static 'core/img/logo.svg' %}" alt="KYBRO" class="mb-2" style="max-width:100%; max-height:150px; width:auto; height:auto;" onerror="this.parentNode.classList.add('ohne-logo')">
+      <img src="{% static 'core/img/logo.svg' %}" alt="KYBRO" class="d-block mx-auto mb-1" style="max-width:100%; max-height:150px; width:auto; height:auto;" onerror="this.parentNode.classList.add('ohne-logo')">
       <h4 class="mb-0" id="kybro-name">KYBRO</h4>
       <div class="text-muted">das Firmenportal</div>
     </div>

@@ -84,6 +84,7 @@ class AnmeldeSeiteTests(TestCase):
         self.assertContains(antwort, "das Firmenportal")
         self.assertContains(antwort, "core/img/logo.svg")
         self.assertContains(antwort, "max-height:150px")
+        self.assertContains(antwort, "d-block mx-auto mb-1")  # kein Zeilenabstand unter dem Bild, kleiner Abstand zum Untertitel
         # "KYBRO" ist per CSS ausgeblendet, solange das Logo da ist; fehlt es, blendet onerror den Schriftzug ein.
         self.assertContains(antwort, ".logo-kopf:not(.ohne-logo) #kybro-name { display: none; }")
         self.assertContains(antwort, "classList.add('ohne-logo')")
