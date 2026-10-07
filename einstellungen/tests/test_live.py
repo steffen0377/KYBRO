@@ -45,9 +45,10 @@ class LiveAktivierenTests(TestCase):
     def test_standard_ist_testbetrieb_mit_hinweis(self):
         self.assertEqual(Firma.holen().betriebsmodus, "test")
         self.client.force_login(self.admin)
-        antwort = self.client.get(reverse("core:dashboard"))
+        antwort = self.client.get(reverse("belege:rechnungen_liste"))
         self.assertContains(antwort, "Testbetrieb")
         self.assertContains(antwort, reverse("einstellungen:live"))
+        self.assertNotContains(self.client.get(reverse("core:dashboard")), "Alle Daten sind Testdaten")
         self.assertContains(self.client.get(reverse("einstellungen:firma")), "Live-Betrieb aktivieren")
 
     def test_nur_administratoren(self):
