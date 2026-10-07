@@ -129,4 +129,4 @@ Administratoren können den Wechsel auslösen. Das Ergebnis steht im Protokoll (
 
 Das Logo ist eine feste Datei und nicht in der Oberfläche änderbar: `core/static/core/img/logo.svg` (im Git-Projekt
 ablegen und einchecken). Fehlt die Datei, erscheint nur der Text „KYBRO – das Firmenportal“. Nach einem Austausch
-`collectstatic` ausführen und den Browser-Cache leeren. Das Bild wird auf höchstens 90 Pixel Höhe skaliert.
+`collectstatic` ausführen und den Browser-Cache leeren. Das Bild wird auf höchstens 150 Pixel Höhe skaliert; ist es vorhanden, ersetzt es den Schriftzug „KYBRO“.
