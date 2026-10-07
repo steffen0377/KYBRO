@@ -51,6 +51,11 @@ class Mitarbeiter(models.Model):
     def anzeigename(self) -> str:
         return f"{self.vorname} {self.nachname}".strip()
 
+    @property
+    def listenname(self) -> str:
+        """„Nachname, Vorname“ für Listen und Übersichten."""
+        return ", ".join(t for t in (self.nachname, self.vorname) if t)
+
     def ist_aktiv(self, tag: datetime.date | None = None) -> bool:
         tag = tag or datetime.date.today()
         if self.eintrittsdatum and self.eintrittsdatum > tag:

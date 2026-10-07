@@ -6,8 +6,8 @@
   <tbody>
   {% for zeile in uebersicht.zeilen %}
     <tr>
-      <td class="text-start text-nowrap">{% if verlinken %}<a href="{% url 'personal:mitarbeiter_detail' zeile.mitarbeiter.pk %}">{{ zeile.mitarbeiter.anzeigename }}</a>{% else %}{{ zeile.mitarbeiter.anzeigename }}{% endif %}</td>
-      {% for z in zeile.zellen %}<td class="az az-{{ z.status|default:'leer' }}" title="{{ z.datum|date:'d.m.Y' }} {{ z.text }}">{% if z.status == 'anwesend' %}A{% elif z.status == 'homeoffice' %}H{% elif z.status == 'dienstreise' %}D{% elif z.status == 'krank' %}K{% elif z.status == 'sonderurlaub' %}S{% elif z.status == 'freizeitausgleich' %}Z{% elif z.status == 'feiertag' %}F{% elif z.status == 'berufsschule' %}B{% elif z.status == 'schulung' %}T{% elif z.status == 'urlaub' or z.status == 'urlaub_offen' %}U{% endif %}</td>{% endfor %}
+      <td class="text-start text-nowrap">{% if verlinken %}<a href="{% url 'personal:mitarbeiter_detail' zeile.mitarbeiter.pk %}">{{ zeile.mitarbeiter.listenname }}</a>{% else %}{{ zeile.mitarbeiter.listenname }}{% endif %}</td>
+      {% for z in zeile.zellen %}<td class="az az-{{ z.status|default:'leer' }}{% if z.bemerkung %} az-bem{% endif %}{% if z.stunden %} az-std az-std-{{ z.stunden }}{% if z.stunden_offen %} az-std-offen{% endif %}{% endif %}" title="{{ z.titel }}">{% if z.status == 'anwesend' %}A{% elif z.status == 'homeoffice' %}H{% elif z.status == 'dienstreise' %}D{% elif z.status == 'krank' %}K{% elif z.status == 'sonderurlaub' %}S{% elif z.status == 'freizeitausgleich' %}Z{% elif z.status == 'feiertag' %}F{% elif z.status == 'berufsschule' %}B{% elif z.status == 'schulung' %}T{% elif z.status == 'urlaub' or z.status == 'urlaub_offen' %}U{% endif %}</td>{% endfor %}
     </tr>
   {% empty %}<tr><td colspan="32" class="text-muted py-3">Keine Mitarbeiter in diesem Monat.</td></tr>{% endfor %}
   </tbody>
@@ -15,5 +15,6 @@
 </div>
 <div class="small text-muted mb-3">
   <span class="az az-anwesend px-2">A</span> Anwesend &nbsp; <span class="az az-homeoffice px-2">H</span> Homeoffice &nbsp; <span class="az az-dienstreise px-2">D</span> Dienstreise &nbsp;
-  <span class="az az-krank px-2">K</span> Krank &nbsp; <span class="az az-urlaub px-2">U</span> Urlaub &nbsp; <span class="az az-sonderurlaub px-2">S</span> Sonderurlaub &nbsp; <span class="az az-freizeitausgleich px-2">Z</span> Freizeitausgleich &nbsp; <span class="az az-feiertag px-2">F</span> Feiertag &nbsp; <span class="az az-berufsschule px-2">B</span> Berufsschule &nbsp; <span class="az az-schulung px-2">T</span> Schulung
+  <span class="az az-krank px-2">K</span> Krank &nbsp; <span class="az az-urlaub px-2">U</span> Urlaub &nbsp; <span class="az az-sonderurlaub px-2">S</span> Sonderurlaub &nbsp; <span class="az az-freizeitausgleich px-2">Z</span> Freizeitausgleich &nbsp; <span class="az az-feiertag px-2">F</span> Feiertag &nbsp; <span class="az az-berufsschule px-2">B</span> Berufsschule &nbsp; <span class="az az-schulung px-2">T</span> Schulung<br>
+  <span class="az az-bem px-2" style="background:#fff3cd;display:inline-block;min-width:1.6rem;">&nbsp;</span> Urlaub mit Bemerkung &nbsp; <span class="az az-std az-std-plus px-2" style="display:inline-block;min-width:1.6rem;border:1px solid #dee2e6;">&nbsp;</span> Überstunden &nbsp; <span class="az az-std az-std-minus px-2" style="display:inline-block;min-width:1.6rem;border:1px solid #dee2e6;">&nbsp;</span> Fehlstunden &nbsp; <span class="small">(Details beim Daraufzeigen)</span>
 </div>

@@ -111,11 +111,19 @@ def monatsuebersicht(mitarbeiter_liste, jahr: int, monat: int, kalender: Kalende
         vertraege = list(m.vertraege.all())
         eintraege = {a.datum: a for a in m.anwesenheiten.filter(datum__range=(erster, letzter))}
         urlaub = {}
+        urlaub_bemerkung = {}
         for a in m.urlaubsantraege.filter(
             status__in=[Urlaubsantrag.Status.GENEHMIGT, Urlaubsantrag.Status.BEANTRAGT], von__lte=letzter, bis__gte=erster
         ):
             for t in tage_zwischen(max(a.von, erster), min(a.bis, letzter)):
                 urlaub[t] = a.status
+                if a.bemerkung.strip():
+                    urlaub_bemerkung[t] = a.bemerkung.strip()
+        stunden = {}
+        for k in m.stundenkorrekturen.filter(
+            status__in=[Stundenkorrektur.Status.GENEHMIGT, Stundenkorrektur.Status.BEANTRAGT], datum__range=(erster, letzter)
+        ).order_by("pk"):
+            stunden.setdefault(k.datum, []).append(k)
         zellen = []
         for t in tage:
             if t in eintraege:
@@ -133,8 +141,32 @@ def monatsuebersicht(mitarbeiter_liste, jahr: int, monat: int, kalender: Kalende
             else:
                 halb = kalender.info(t)
                 zellen.append({"datum": t, "status": "", "text": f"{halb[0]} (halber Tag)" if halb else ""})
+        for z in zellen:
+            _zusatz(z, urlaub_bemerkung.get(z["datum"]) if z["status"] in ("urlaub", "urlaub_offen") else "", stunden.get(z["datum"], []))
         zeilen.append({"mitarbeiter": m, "zellen": zellen})
     return {"tage": tage, "zeilen": zeilen}
+
+
+def _stunden_text(wert: Decimal) -> str:
+    text = f"{wert.normalize():f}".replace(".", ",")
+    return f"+{text}" if wert > 0 else text
+
+
+def _zusatz(zelle: dict, urlaub_bemerkung: str, korrekturen: list) -> None:
+    """Hinweis für die Mouseover-Anzeige und Markierungen für Urlaubsbemerkung und Über-/Fehlstunden."""
+    zeilen = [f"{zelle['datum']:%d.%m.%Y} {zelle['text']}".strip()]
+    zelle["bemerkung"] = bool(urlaub_bemerkung)
+    if urlaub_bemerkung:
+        zeilen.append(f"Bemerkung: {urlaub_bemerkung}")
+    zelle["stunden"] = ""
+    if korrekturen:
+        summe = sum((k.stunden for k in korrekturen), Decimal("0"))
+        zelle["stunden"] = "minus" if summe < 0 else "plus"
+        zelle["stunden_offen"] = any(k.status == Stundenkorrektur.Status.BEANTRAGT for k in korrekturen)
+        for k in korrekturen:
+            offen = " (beantragt)" if k.status == Stundenkorrektur.Status.BEANTRAGT else ""
+            zeilen.append(f"{_stunden_text(k.stunden)} Std.{offen}: {k.bemerkung}")
+    zelle["titel"] = "\n".join(zeilen)
 
 
 def stundensaldo(mitarbeiter: Mitarbeiter) -> dict:

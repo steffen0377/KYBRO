@@ -466,3 +466,50 @@ class StundenkorrekturTests(TestCase):
         self.assertContains(self.client.get(reverse("personal:stunden_liste")), "Kundentermin")
         self.assertContains(self.client.get(reverse("personal:mitarbeiter_detail", args=[self.m.pk])), "Kundentermin")
         self.assertContains(self.client.get(reverse("core:dashboard")), "Über-/Fehlstunden")
+
+
+class UebersichtMarkierungTests(TestCase):
+    def setUp(self):
+        self.m = mitarbeiter(vorname="Erika", nachname="Muster")
+        vertrag(self.m)
+        Urlaubsantrag.objects.create(
+            mitarbeiter=self.m, von=D(2026, 10, 5), bis=D(2026, 10, 6), status="genehmigt", bemerkung="Hochzeit der Schwester"
+        )
+        Urlaubsantrag.objects.create(mitarbeiter=self.m, von=D(2026, 10, 12), bis=D(2026, 10, 12), status="genehmigt")
+        Stundenkorrektur.objects.create(
+            mitarbeiter=self.m, datum=D(2026, 10, 8), stunden=Decimal("1.5"), bemerkung="Serverumzug", status="genehmigt"
+        )
+        Stundenkorrektur.objects.create(
+            mitarbeiter=self.m, datum=D(2026, 10, 9), stunden=Decimal("-2"), bemerkung="Arzt", status="beantragt"
+        )
+        Stundenkorrektur.objects.create(
+            mitarbeiter=self.m, datum=D(2026, 10, 14), stunden=Decimal("3"), bemerkung="abgelehnt", status="abgelehnt"
+        )
+
+    def zellen(self):
+        ue = services.monatsuebersicht([self.m], 2026, 10)
+        return {z["datum"].day: z for z in ue["zeilen"][0]["zellen"]}
+
+    def test_urlaub_mit_bemerkung_wird_markiert(self):
+        z = self.zellen()
+        self.assertTrue(z[5]["bemerkung"] and z[6]["bemerkung"])
+        self.assertIn("Bemerkung: Hochzeit der Schwester", z[5]["titel"])
+        self.assertFalse(z[12]["bemerkung"])
+        self.assertNotIn("Bemerkung", z[12]["titel"])
+
+    def test_stunden_werden_markiert_mit_zeit_und_bemerkung(self):
+        z = self.zellen()
+        self.assertEqual((z[8]["stunden"], z[8]["stunden_offen"]), ("plus", False))
+        self.assertIn("+1,5 Std.: Serverumzug", z[8]["titel"])
+        self.assertEqual((z[9]["stunden"], z[9]["stunden_offen"]), ("minus", True))
+        self.assertIn("-2 Std. (beantragt): Arzt", z[9]["titel"])
+        self.assertEqual(z[14]["stunden"], "")  # abgelehnte Einträge werden nicht markiert
+
+    def test_namen_als_nachname_vorname(self):
+        self.assertEqual(self.m.listenname, "Muster, Erika")
+        User.objects.create_superuser("chef", password=PW)
+        self.client.login(username="chef", password=PW)
+        antwort = self.client.get(reverse("personal:anwesenheit") + "?monat=2026-10")
+        self.assertContains(antwort, "Muster, Erika")
+        self.assertContains(antwort, "az-std-plus")
+        self.assertContains(antwort, "az-bem")

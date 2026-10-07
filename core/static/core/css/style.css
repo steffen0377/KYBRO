@@ -313,3 +313,11 @@ html, body { height: 100%; }
 .sidebar-brand a:not(.ohne-logo) .sidebar-logo-ersatz { display: none; }
 .sidebar-logo-box { background: #fff; border-radius: .5rem; padding: .5rem .75rem; }
 .sidebar-brand a.ohne-logo .sidebar-logo-box { display: none !important; }
+
+/* Anwesenheitsübersicht: Markierungen in der Zellenecke. Oben rechts: Urlaub mit Bemerkung; unten rechts: Über-/Fehlstunden
+   (blau = Überstunden, rot = Fehlstunden, schwächer = noch nicht genehmigt). Die Details stehen im Mouseover (title). */
+.anwesenheit-matrix td.az, .az-bem, .az-std { position: relative; }
+.az-bem::before { content: ""; position: absolute; top: 0; right: 0; border-top: .55rem solid #d9480f; border-left: .55rem solid transparent; }
+.az-std::after { content: ""; position: absolute; bottom: 0; right: 0; border-bottom: .55rem solid #0d6efd; border-left: .55rem solid transparent; }
+.az-std-minus::after { border-bottom-color: #dc3545; }
+.az-std-offen::after { opacity: .45; }
