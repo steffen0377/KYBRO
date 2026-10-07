@@ -141,3 +141,51 @@ class AnmeldeLogoTests(TestCase):
             "standard_steuersatz": "19", "zahlungsziel_tage": "14", "praefix_angebot": "A", "praefix_auftrag": "AB",
             "praefix_rechnung": "R"})
         self.assertEqual(antwort.status_code, 200)
+
+
+class AnmeldeLogoSvgTests(AnmeldeLogoTests):
+    SVG = b'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="40"><rect width="100" height="40" fill="#123"/></svg>'
+
+    def _firma_post(self, datei):
+        admin = User.objects.create_superuser("admin", password="Sehr-geheim-2026")
+        self.client.force_login(admin)
+        return self.client.post(reverse("einstellungen:firma"), {
+            "firmenname": "X", "portal_logo": datei, "land": "Deutschland", "standard_steuersatz": "19",
+            "zahlungsziel_tage": "14", "praefix_angebot": "A", "praefix_auftrag": "AB", "praefix_rechnung": "R"})
+
+    def test_svg_hochladen_und_ausliefern(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        from einstellungen.models import Firma
+
+        antwort = self._firma_post(SimpleUploadedFile("logo.svg", self.SVG, content_type="image/svg+xml"))
+        self.assertEqual(antwort.status_code, 302)
+        self.client.logout()
+        bild = self.client.get(reverse("accounts:login_logo"))
+        self.assertEqual(bild["Content-Type"], "image/svg+xml")
+        self.assertIn("sandbox", bild["Content-Security-Policy"])
+        self.assertEqual(bild["X-Content-Type-Options"], "nosniff")
+        self.assertIn(b"<svg", b"".join(bild.streaming_content))
+        self.assertContains(self.client.get(reverse("accounts:login")), reverse("accounts:login_logo"))
+
+    def test_svg_mit_skript_abgelehnt(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        for boese in (
+            b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+            b'<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"></svg>',
+            b'<svg xmlns="http://www.w3.org/2000/svg"><a href="javascript:alert(1)"><rect/></a></svg>',
+        ):
+            antwort = self._firma_post(SimpleUploadedFile("x.svg", boese, content_type="image/svg+xml"))
+            self.assertEqual(antwort.status_code, 200)
+            self.assertContains(antwort, "Skripte")
+            self.client.logout()
+            User.objects.all().delete()
+
+    def test_kaputte_dateien_abgelehnt(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.assertEqual(self._firma_post(SimpleUploadedFile("x.svg", b"kein xml")).status_code, 200)
+        self.client.logout()
+        User.objects.all().delete()
+        self.assertEqual(self._firma_post(SimpleUploadedFile("x.png", b"kein bild")).status_code, 200)

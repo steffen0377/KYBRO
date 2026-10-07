@@ -8,6 +8,39 @@ from django.db import models
 from core.fields import VerschluesseltesTextFeld
 
 
+def logo_pruefen(datei) -> None:
+    """Prüft das Logo: Bilder müssen lesbar sein, SVG-Dateien gültiges XML ohne Skripte und aktive Inhalte."""
+    import re
+    from xml.etree import ElementTree
+
+    from django.core.exceptions import ValidationError
+    from PIL import Image
+
+    name = (datei.name or "").lower()
+    datei.seek(0)
+    if name.endswith(".svg"):
+        inhalt = datei.read(2_000_001)
+        datei.seek(0)
+        if len(inhalt) > 2_000_000:
+            raise ValidationError("Die SVG-Datei ist größer als 2 MB.")
+        try:
+            wurzel = ElementTree.fromstring(inhalt)
+        except ElementTree.ParseError:
+            raise ValidationError("Die Datei ist keine gültige SVG-Datei.")
+        if not wurzel.tag.lower().endswith("svg"):
+            raise ValidationError("Die Datei ist keine gültige SVG-Datei.")
+        text = inhalt.decode("utf-8", "ignore").lower()
+        if re.search(r"<\s*(script|foreignobject|iframe)|\bon[a-z]+\s*=|javascript:|<!entity", text):
+            raise ValidationError("Die SVG-Datei enthält Skripte oder aktive Inhalte und wird aus Sicherheitsgründen abgelehnt.")
+        return
+    try:
+        Image.open(datei).verify()
+    except Exception:
+        raise ValidationError("Die Datei ist kein lesbares Bild.")
+    finally:
+        datei.seek(0)
+
+
 class Firma(models.Model):
     """Die eigene Firma (Einzeleintrag): Briefkopf, Bank, Nummernkreise, E-Mail-Versand."""
 
@@ -24,10 +57,10 @@ class Firma(models.Model):
     # einstellungen.live.live_aktivieren (löscht die Testdaten) und ist in der Oberfläche nicht umkehrbar.
     betriebsmodus = models.CharField("Betriebsmodus", max_length=4, choices=Betrieb.choices, default=Betrieb.TEST)
 
-    portal_logo = models.ImageField(
+    portal_logo = models.FileField(
         "Logo für die Anmeldeseite", upload_to="portal/", blank=True,
-        validators=[FileExtensionValidator(["png", "jpg", "jpeg"])],
-        help_text="Erscheint über „KYBRO“ auf der Anmeldeseite (PNG oder JPG, am besten mit transparentem oder weißem Hintergrund).",
+        validators=[FileExtensionValidator(["png", "jpg", "jpeg", "svg"]), logo_pruefen],
+        help_text="Erscheint über „KYBRO“ auf der Anmeldeseite (PNG, JPG oder SVG; SVG ohne Skripte).",
     )
     firmenname = models.CharField("Firmenname", max_length=150, blank=True)
     strasse = models.CharField("Straße & Nr.", max_length=150, blank=True)

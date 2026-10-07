@@ -190,4 +190,7 @@ def anmeldelogo(request):
         raise Http404
     antwort = FileResponse(datei, content_type=mimetypes.guess_type(logo.name)[0] or "image/png")
     antwort["Cache-Control"] = "public, max-age=300"
+    # SVG darf auch bei direktem Aufruf nichts ausführen.
+    antwort["Content-Security-Policy"] = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
+    antwort["X-Content-Type-Options"] = "nosniff"
     return antwort
