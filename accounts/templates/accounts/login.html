@@ -16,9 +16,9 @@
   <div class="card p-4 shadow-sm" style="max-width:380px; width:100%;">
     <div class="text-center mb-4 logo-kopf">
       {# Feste Datei: core/static/core/img/logo.svg. Ist sie vorhanden, ersetzt sie den Schriftzug "KYBRO"; fehlt sie, erscheint der Schriftzug. #}
-      <img src="{% static 'core/img/logo.svg' %}" alt="KYBRO" class="d-block mx-auto mb-1" style="max-width:100%; max-height:150px; width:auto; height:auto;" onerror="this.parentNode.classList.add('ohne-logo')">
+      <img src="{% static 'core/img/logo.svg' %}" alt="KYBRO" class="d-block mx-auto mb-0" style="max-width:100%; max-height:150px; width:auto; height:auto;" onerror="this.parentNode.classList.add('ohne-logo')">
       <h4 class="mb-0" id="kybro-name">KYBRO</h4>
-      <div class="text-muted">das Firmenportal</div>
+      <div class="text-muted" style="letter-spacing:0.35em; margin-right:-0.35em;">das Firmenportal</div>
     </div>
     {% for fehler in form.non_field_errors %}
       <div class="alert alert-app-danger">{{ fehler }}</div>

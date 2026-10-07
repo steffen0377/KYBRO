@@ -82,9 +82,10 @@ class AnmeldeSeiteTests(TestCase):
     def test_untertitel_und_festes_logo(self):
         antwort = self.client.get(reverse("accounts:login"))
         self.assertContains(antwort, "das Firmenportal")
+        self.assertContains(antwort, "letter-spacing:0.35em")
         self.assertContains(antwort, "core/img/logo.svg")
         self.assertContains(antwort, "max-height:150px")
-        self.assertContains(antwort, "d-block mx-auto mb-1")  # kein Zeilenabstand unter dem Bild, kleiner Abstand zum Untertitel
+        self.assertContains(antwort, "d-block mx-auto mb-0")  # kein Zeilenabstand unter dem Bild, Untertitel direkt unter dem Logo
         # "KYBRO" ist per CSS ausgeblendet, solange das Logo da ist; fehlt es, blendet onerror den Schriftzug ein.
         self.assertContains(antwort, ".logo-kopf:not(.ohne-logo) #kybro-name { display: none; }")
         self.assertContains(antwort, "classList.add('ohne-logo')")
