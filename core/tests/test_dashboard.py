@@ -28,6 +28,8 @@ class DashboardTests(TestCase):
         antwort = self.client.get(reverse("core:dashboard"))
         self.assertContains(antwort, "core/img/logo.svg")
         self.assertContains(antwort, "sidebar-logo-box")
+        self.assertContains(antwort, "core/img/favicon/favicon.ico")
+        self.assertContains(antwort, "core/img/favicon/apple-touch-icon.png")
         self.assertContains(antwort, "classList.add('ohne-logo')")
 
     def test_angemeldeter_benutzer_sieht_das_dashboard_mit_namen(self):

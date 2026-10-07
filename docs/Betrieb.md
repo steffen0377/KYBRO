@@ -130,3 +130,13 @@ Administratoren können den Wechsel auslösen. Das Ergebnis steht im Protokoll (
 Das Logo ist eine feste Datei und nicht in der Oberfläche änderbar: `core/static/core/img/logo.svg` (im Git-Projekt
 ablegen und einchecken). Fehlt die Datei, erscheint nur der Text „KYBRO – das Firmenportal“. Nach einem Austausch
 `collectstatic` ausführen und den Browser-Cache leeren. Das Bild wird auf höchstens 150 Pixel Höhe skaliert; ist es vorhanden, ersetzt es den Schriftzug „KYBRO“.
+
+## Favicons
+
+Die Favicons sind feste Dateien im Git-Projekt (Ordner `core/static/core/img/favicon/`), nicht in der Oberfläche änderbar:
+
+* `favicon.ico` – 48×48 Pixel (für ältere Browser und Tabs),
+* `favicon.svg` – skalierbares Symbol (moderne Browser bevorzugen es),
+* `apple-touch-icon.png` – 180×180 Pixel (iPhone/iPad-Startbildschirm, nicht transparent).
+
+Einzelne Dateien dürfen fehlen. Nach einem Austausch `collectstatic` ausführen und den Browser-Cache leeren (Favicons werden hartnäckig gecacht).
