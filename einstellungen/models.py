@@ -9,7 +9,7 @@ from core.fields import VerschluesseltesTextFeld
 
 
 def logo_pruefen(datei) -> None:
-    """Prüft das Logo: Bilder müssen lesbar sein, SVG-Dateien gültiges XML ohne Skripte und aktive Inhalte."""
+    """Nur noch für die Migration 0008 vorhanden (das Logo ist jetzt eine feste Datei, siehe Anmeldeseite). Prüft das Logo: Bilder müssen lesbar sein, SVG-Dateien gültiges XML ohne Skripte und aktive Inhalte."""
     import re
     from xml.etree import ElementTree
 
@@ -57,11 +57,6 @@ class Firma(models.Model):
     # einstellungen.live.live_aktivieren (löscht die Testdaten) und ist in der Oberfläche nicht umkehrbar.
     betriebsmodus = models.CharField("Betriebsmodus", max_length=4, choices=Betrieb.choices, default=Betrieb.TEST)
 
-    portal_logo = models.FileField(
-        "Logo für die Anmeldeseite", upload_to="portal/", blank=True,
-        validators=[FileExtensionValidator(["png", "jpg", "jpeg", "svg"]), logo_pruefen],
-        help_text="Erscheint über „KYBRO“ auf der Anmeldeseite (PNG, JPG oder SVG; SVG ohne Skripte).",
-    )
     firmenname = models.CharField("Firmenname", max_length=150, blank=True)
     strasse = models.CharField("Straße & Nr.", max_length=150, blank=True)
     plz = models.CharField("PLZ", max_length=20, blank=True)

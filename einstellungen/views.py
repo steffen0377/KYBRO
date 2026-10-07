@@ -60,7 +60,7 @@ class FirmaView(EinzeleintragView):
     register = "firma"
     modell = Firma
     form_class = FirmaForm
-    extra_context = {"titel": "Firmendaten", "mehrteilig": True}
+    extra_context = {"titel": "Firmendaten"}
 
 
 class MailView(EinzeleintragView):

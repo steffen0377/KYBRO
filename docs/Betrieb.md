@@ -124,3 +124,9 @@ Administratoren können den Wechsel auslösen. Das Ergebnis steht im Protokoll (
 * `/media` nicht veröffentlichen: Briefbogen und Unterschriften werden nur über die Anwendung ausgeliefert.
 * Die Mobile-API (`/api/v1/`) nutzt Token-Anmeldung mit Sperre nach 5 Fehlversuchen je Benutzer und IP-Adresse.
   Beschreibung: `api/README.md`.
+
+## Logo der Anmeldeseite
+
+Das Logo ist eine feste Datei und nicht in der Oberfläche änderbar: `core/static/core/img/logo.svg` (im Git-Projekt
+ablegen und einchecken). Fehlt die Datei, erscheint nur der Text „KYBRO – das Firmenportal“. Nach einem Austausch
+`collectstatic` ausführen und den Browser-Cache leeren. Das Bild wird auf höchstens 90 Pixel Höhe skaliert.
