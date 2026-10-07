@@ -311,4 +311,5 @@ html, body { height: 100%; }
 /* Sidebar-Logo: feste Datei core/img/logo.svg, ersatzweise Symbol + Schriftzug */
 .sidebar-logo { max-width: 100%; max-height: 80px; width: auto; height: auto; }
 .sidebar-brand a:not(.ohne-logo) .sidebar-logo-ersatz { display: none; }
-.sidebar-brand a.ohne-logo .sidebar-logo { display: none !important; }
+.sidebar-logo-box { background: #fff; border-radius: .5rem; padding: .5rem .75rem; }
+.sidebar-brand a.ohne-logo .sidebar-logo-box { display: none !important; }
