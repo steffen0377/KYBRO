@@ -513,3 +513,72 @@ class UebersichtMarkierungTests(TestCase):
         self.assertContains(antwort, "Muster, Erika")
         self.assertContains(antwort, "az-std-plus")
         self.assertContains(antwort, "az-bem")
+
+
+class UrlaubAufteilenTests(TestCase):
+    """Urlaub um bereits eingetragene Tage herum: nur die freien Tage werden eingereicht."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("erika", password=PW)
+        self.m = mitarbeiter(benutzer=self.user)
+        vertrag(self.m)
+        # Mi 7.10.2026 ist schon genehmigt
+        Urlaubsantrag.objects.create(mitarbeiter=self.m, von=D(2026, 10, 7), bis=D(2026, 10, 7), status="genehmigt")
+        self.client.force_login(self.user)
+
+    def beantragen(self, von, bis, **extra):
+        return self.client.post(reverse("personal:mein_urlaub_neu"), {"von": von, "bis": bis, "bemerkung": "Familie", **extra})
+
+    def test_abschnitte_um_belegten_tag(self):
+        antwort = self.beantragen("2026-10-05", "2026-10-09")
+        self.assertEqual(antwort.status_code, 302)
+        neu = Urlaubsantrag.objects.filter(status="beantragt").order_by("von")
+        self.assertEqual([(a.von, a.bis) for a in neu], [(D(2026, 10, 5), D(2026, 10, 6)), (D(2026, 10, 8), D(2026, 10, 9))])
+        self.assertEqual({a.bemerkung for a in neu}, {"Familie"})
+        self.assertEqual(Urlaubsantrag.objects.get(status="genehmigt").von, D(2026, 10, 7))  # bleibt unberührt
+
+    def test_anhaengen_an_bestehenden_urlaub(self):
+        self.beantragen("2026-10-07", "2026-10-09")
+        neu = Urlaubsantrag.objects.get(status="beantragt")
+        self.assertEqual((neu.von, neu.bis), (D(2026, 10, 8), D(2026, 10, 9)))
+
+    def test_alles_belegt_bleibt_fehler(self):
+        antwort = self.beantragen("2026-10-07", "2026-10-07")
+        self.assertEqual(antwort.status_code, 200)
+        self.assertContains(antwort, "bereits Urlaub beantragt oder genehmigt")
+        self.assertEqual(Urlaubsantrag.objects.count(), 1)
+
+    def test_luecke_nur_wochenende_wird_nicht_beantragt(self):
+        Urlaubsantrag.objects.create(mitarbeiter=self.m, von=D(2026, 10, 9), bis=D(2026, 10, 9), status="beantragt")
+        Urlaubsantrag.objects.create(mitarbeiter=self.m, von=D(2026, 10, 12), bis=D(2026, 10, 12), status="beantragt")
+        antwort = self.beantragen("2026-10-09", "2026-10-12")  # Fr und Mo belegt, dazwischen nur das Wochenende
+        self.assertEqual(antwort.status_code, 200)
+        self.assertEqual(Urlaubsantrag.objects.filter(status="beantragt").count(), 2)
+        # Freie Tage vor dem belegten Freitag und das Wochenende danach gehören zusammen zu einem Abschnitt.
+        self.beantragen("2026-10-08", "2026-10-11")
+        neu = Urlaubsantrag.objects.filter(status="beantragt", von=D(2026, 10, 8))
+        self.assertEqual([(a.von, a.bis) for a in neu], [(D(2026, 10, 8), D(2026, 10, 8))])
+
+    def test_ohne_ueberschneidung_bleibt_ein_antrag(self):
+        self.beantragen("2026-10-12", "2026-10-14")
+        self.assertEqual(Urlaubsantrag.objects.filter(status="beantragt").count(), 1)
+
+    def test_abgelehnter_urlaub_blockiert_nicht(self):
+        Urlaubsantrag.objects.create(mitarbeiter=self.m, von=D(2026, 10, 14), bis=D(2026, 10, 14), status="abgelehnt")
+        self.beantragen("2026-10-13", "2026-10-15")
+        neu = Urlaubsantrag.objects.get(status="beantragt")
+        self.assertEqual((neu.von, neu.bis), (D(2026, 10, 13), D(2026, 10, 15)))
+
+    def test_personalverwaltung_traegt_freie_tage_genehmigt_ein(self):
+        g = Group.objects.create(name="Personal")
+        g.permissions.set(Permission.objects.filter(codename__in=["personal_lesen", "personal_schreiben"]))
+        self.user.groups.add(g)
+        self.client.force_login(User.objects.get(pk=self.user.pk))
+        self.client.post(reverse("personal:urlaub_neu"), {"mitarbeiter": self.m.pk, "von": "2026-10-06", "bis": "2026-10-08"})
+        neu = Urlaubsantrag.objects.exclude(von=D(2026, 10, 7)).order_by("von")
+        self.assertEqual([(a.von, a.status) for a in neu], [(D(2026, 10, 6), "genehmigt"), (D(2026, 10, 8), "genehmigt")])
+        self.assertEqual({a.entschieden_von for a in neu}, {User.objects.get(pk=self.user.pk)})
+
+    def test_ende_vor_beginn_bleibt_fehler(self):
+        antwort = self.beantragen("2026-10-09", "2026-10-05")
+        self.assertEqual(antwort.status_code, 200)

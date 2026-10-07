@@ -83,6 +83,8 @@ class UrlaubsantragForm(BootstrapFormMixin, forms.ModelForm):
 
     def __init__(self, *args, mitarbeiter=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # Überschneidungen mit vorhandenem Urlaub löst die View durch Aufteilen des Antrags.
+        self.instance.ueberschneidung_pruefen = False
         if mitarbeiter:
             del self.fields["mitarbeiter"]
             self.instance.mitarbeiter = mitarbeiter

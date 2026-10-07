@@ -175,3 +175,25 @@ def stundensaldo(mitarbeiter: Mitarbeiter) -> dict:
         (k.stunden for k in mitarbeiter.stundenkorrekturen.filter(status=status)), Decimal("0")
     )
     return {"saldo": summe(Stundenkorrektur.Status.GENEHMIGT), "offen": summe(Stundenkorrektur.Status.BEANTRAGT)}
+
+
+def freie_abschnitte(mitarbeiter: Mitarbeiter, von: datetime.date, bis: datetime.date) -> list[tuple[datetime.date, datetime.date]]:
+    """Zusammenhängende Abschnitte von ``von`` bis ``bis``, die noch nicht von einem beantragten oder genehmigten
+    Urlaubsantrag belegt sind. Abschnitte ohne Arbeitstag (z. B. nur ein Wochenende) entfallen."""
+    belegt = set()
+    for a in mitarbeiter.urlaubsantraege.filter(
+        status__in=[Urlaubsantrag.Status.BEANTRAGT, Urlaubsantrag.Status.GENEHMIGT], von__lte=bis, bis__gte=von
+    ):
+        belegt.update(tage_zwischen(max(a.von, von), min(a.bis, bis)))
+    abschnitte, anfang = [], None
+    for tag in list(tage_zwischen(von, bis)) + [None]:
+        if tag is not None and tag not in belegt:
+            anfang = anfang or tag
+            ende = tag
+        elif anfang:
+            abschnitte.append((anfang, ende))
+            anfang = None
+    if not belegt:
+        return abschnitte  # keine Überschneidung: Antrag unverändert (auch ohne Arbeitstag wie bisher)
+    vertraege = list(mitarbeiter.vertraege.all())
+    return [(a, e) for a, e in abschnitte if any(ist_arbeitstag(vertraege, t) for t in tage_zwischen(a, e))]

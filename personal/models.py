@@ -183,7 +183,10 @@ class Urlaubsantrag(models.Model):
         if self.von and self.bis:
             if self.bis < self.von:
                 raise ValidationError({"bis": "Das Ende liegt vor dem Beginn."})
-            if self.mitarbeiter_id and self.status in (self.Status.BEANTRAGT, self.Status.GENEHMIGT):
+            # Das Antragsformular teilt Anträge selbst an bereits belegten Tagen auf (ueberschneidung_pruefen = False).
+            if getattr(self, "ueberschneidung_pruefen", True) and self.mitarbeiter_id and self.status in (
+                self.Status.BEANTRAGT, self.Status.GENEHMIGT
+            ):
                 ueberschneidung = Urlaubsantrag.objects.filter(
                     mitarbeiter_id=self.mitarbeiter_id, von__lte=self.bis, bis__gte=self.von,
                     status__in=[self.Status.BEANTRAGT, self.Status.GENEHMIGT],

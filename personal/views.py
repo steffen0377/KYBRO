@@ -20,7 +20,7 @@ from .forms import (
 )
 from .kalender import Kalender
 from .models import Anwesenheit, Mitarbeiter, PersonalEinstellung, Sondertag, Stundenkorrektur, Urlaubsantrag, Urlaubsjahr, Vertrag
-from .services import antrag_tage, monatsuebersicht, stundensaldo, urlaubskonto
+from .services import antrag_tage, freie_abschnitte, monatsuebersicht, stundensaldo, urlaubskonto
 
 
 def _monat(request) -> tuple[int, int]:
@@ -288,6 +288,43 @@ def monthrange(jahr: int, monat: int) -> int:
 # --- Urlaub -------------------------------------------------------------------------------------
 
 
+def _zeitraum(von: datetime.date, bis: datetime.date) -> str:
+    return f"{von:%d.%m.%Y}" if von == bis else f"{von:%d.%m.}–{bis:%d.%m.%Y}"
+
+
+class UrlaubAufteilenMixin:
+    """Neue Urlaubsanträge: Liegt im Zeitraum schon Urlaub (beantragt oder genehmigt), wird nur für die noch freien
+    Tage ein Antrag gestellt, bei Lücken in mehreren Abschnitten."""
+
+    def form_valid(self, form):
+        antrag = form.instance
+        abschnitte = freie_abschnitte(antrag.mitarbeiter, antrag.von, antrag.bis)
+        if not abschnitte:
+            form.add_error(None, "Im gewählten Zeitraum ist bereits Urlaub beantragt oder genehmigt.")
+            return self.form_invalid(form)
+        ganz = abschnitte == [(antrag.von, antrag.bis)]
+        angelegt = []
+        for von, bis in abschnitte:
+            neu = Urlaubsantrag(
+                mitarbeiter=antrag.mitarbeiter, von=von, bis=bis, bemerkung=antrag.bemerkung, status=self.neuer_status(),
+                **self.entscheidung(),
+            )
+            neu.save()
+            angelegt.append(neu)
+        self.object = angelegt[0]
+        self.nachricht(ganz, angelegt)
+        return redirect(self.get_success_url())
+
+    def neuer_status(self):
+        return Urlaubsantrag.Status.BEANTRAGT
+
+    def entscheidung(self) -> dict:
+        return {}
+
+    def nachricht(self, ganz, angelegt):
+        raise NotImplementedError
+
+
 class UrlaubListView(PersonalMixin, ListView):
     model = Urlaubsantrag
     template_name = "personal/urlaub_liste.html"
@@ -313,7 +350,7 @@ class UrlaubListView(PersonalMixin, ListView):
         return kontext
 
 
-class UrlaubNeuView(PersonalMixin, CreateView):
+class UrlaubNeuView(UrlaubAufteilenMixin, PersonalMixin, CreateView):
     """Urlaub für beliebige Mitarbeiter eintragen. Wird direkt genehmigt."""
 
     model = Urlaubsantrag
@@ -326,12 +363,21 @@ class UrlaubNeuView(PersonalMixin, CreateView):
         mid = self.request.GET.get("mitarbeiter", "")
         return {"mitarbeiter": int(mid)} if mid.isdigit() else {}
 
-    def form_valid(self, form):
-        form.instance.status = Urlaubsantrag.Status.GENEHMIGT
-        form.instance.entschieden_von = self.request.user
-        form.instance.entschieden_am = timezone.now()
-        messages.success(self.request, "Urlaub eingetragen und genehmigt.")
-        return super().form_valid(form)
+    def neuer_status(self):
+        return Urlaubsantrag.Status.GENEHMIGT
+
+    def entscheidung(self):
+        return {"entschieden_von": self.request.user, "entschieden_am": timezone.now()}
+
+    def nachricht(self, ganz, angelegt):
+        if ganz:
+            messages.success(self.request, "Urlaub eingetragen und genehmigt.")
+        else:
+            messages.success(
+                self.request,
+                "Teile des Zeitraums waren bereits belegt. Eingetragen und genehmigt: "
+                + ", ".join(_zeitraum(a.von, a.bis) for a in angelegt) + ".",
+            )
 
 
 class UrlaubEntscheidenView(PersonalMixin, View):
@@ -463,7 +509,7 @@ class MeineZeitenView(EigeneDatenMixin, FormView):
         return kontext
 
 
-class MeinUrlaubNeuView(EigeneDatenMixin, CreateView):
+class MeinUrlaubNeuView(UrlaubAufteilenMixin, EigeneDatenMixin, CreateView):
     model = Urlaubsantrag
     form_class = UrlaubsantragForm
     template_name = "personal/urlaub_form.html"
@@ -475,9 +521,15 @@ class MeinUrlaubNeuView(EigeneDatenMixin, CreateView):
         kwargs["mitarbeiter"] = self.mitarbeiter
         return kwargs
 
-    def form_valid(self, form):
-        messages.success(self.request, "Urlaubsantrag gestellt.")
-        return super().form_valid(form)
+    def nachricht(self, ganz, angelegt):
+        if ganz:
+            messages.success(self.request, "Urlaubsantrag gestellt.")
+        else:
+            messages.success(
+                self.request,
+                "Für einen Teil des Zeitraums bestand bereits Urlaub. Zur Genehmigung eingereicht: "
+                + ", ".join(_zeitraum(a.von, a.bis) for a in angelegt) + ".",
+            )
 
 
 class MeinUrlaubStornierenView(EigeneDatenMixin, View):
