@@ -76,3 +76,68 @@ class AnmeldungTests(TestCase):
 
         self.assertEqual(settings.SESSION_COOKIE_AGE, 8 * 60 * 60)
         self.assertTrue(settings.SESSION_SAVE_EVERY_REQUEST)
+
+
+class AnmeldeLogoTests(TestCase):
+    """Logo und Untertitel auf der Anmeldeseite."""
+
+    def setUp(self):
+        import tempfile
+
+        from django.test import override_settings
+
+        self._media = override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+        self._media.enable()
+        self.addCleanup(self._media.disable)
+
+    def _png(self):
+        import io
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from PIL import Image
+
+        puffer = io.BytesIO()
+        Image.new("RGB", (200, 80), (30, 60, 150)).save(puffer, "PNG")
+        return SimpleUploadedFile("logo.png", puffer.getvalue(), content_type="image/png")
+
+    def test_untertitel_immer_ohne_logo_ohne_bild(self):
+        antwort = self.client.get(reverse("accounts:login"))
+        self.assertContains(antwort, "das Firmenportal")
+        self.assertNotContains(antwort, "anmelden/logo/")
+        self.assertEqual(self.client.get(reverse("accounts:login_logo")).status_code, 404)
+
+    def test_logo_wird_oeffentlich_angezeigt(self):
+        from einstellungen.models import Firma
+
+        firma = Firma.holen()
+        firma.portal_logo = self._png()
+        firma.save()
+        antwort = self.client.get(reverse("accounts:login"))  # nicht angemeldet
+        self.assertContains(antwort, reverse("accounts:login_logo"))
+        bild = self.client.get(reverse("accounts:login_logo"))
+        self.assertEqual(bild.status_code, 200)
+        self.assertEqual(bild["Content-Type"], "image/png")
+        self.assertTrue(b"".join(bild.streaming_content).startswith(b"\x89PNG"))
+
+    def test_upload_ueber_firmeneinstellungen(self):
+        from einstellungen.models import Firma
+
+        admin = User.objects.create_superuser("admin", password="Sehr-geheim-2026")
+        self.client.force_login(admin)
+        antwort = self.client.post(reverse("einstellungen:firma"), {"firmenname": "BilSE", "portal_logo": self._png(),
+                                                                     "land": "Deutschland", "standard_steuersatz": "19",
+                                                                     "zahlungsziel_tage": "14", "praefix_angebot": "A",
+                                                                     "praefix_auftrag": "AB", "praefix_rechnung": "R"})
+        self.assertEqual(antwort.status_code, 302, getattr(antwort, "context", None) and antwort.context["form"].errors)
+        self.assertTrue(Firma.holen().portal_logo)
+
+    def test_nur_bilddateien(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        admin = User.objects.create_superuser("admin", password="Sehr-geheim-2026")
+        self.client.force_login(admin)
+        antwort = self.client.post(reverse("einstellungen:firma"), {
+            "firmenname": "X", "portal_logo": SimpleUploadedFile("x.exe", b"MZ"), "land": "Deutschland",
+            "standard_steuersatz": "19", "zahlungsziel_tage": "14", "praefix_angebot": "A", "praefix_auftrag": "AB",
+            "praefix_rechnung": "R"})
+        self.assertEqual(antwort.status_code, 200)

@@ -24,6 +24,11 @@ class Firma(models.Model):
     # einstellungen.live.live_aktivieren (löscht die Testdaten) und ist in der Oberfläche nicht umkehrbar.
     betriebsmodus = models.CharField("Betriebsmodus", max_length=4, choices=Betrieb.choices, default=Betrieb.TEST)
 
+    portal_logo = models.ImageField(
+        "Logo für die Anmeldeseite", upload_to="portal/", blank=True,
+        validators=[FileExtensionValidator(["png", "jpg", "jpeg"])],
+        help_text="Erscheint über „KYBRO“ auf der Anmeldeseite (PNG oder JPG, am besten mit transparentem oder weißem Hintergrund).",
+    )
     firmenname = models.CharField("Firmenname", max_length=150, blank=True)
     strasse = models.CharField("Straße & Nr.", max_length=150, blank=True)
     plz = models.CharField("PLZ", max_length=20, blank=True)

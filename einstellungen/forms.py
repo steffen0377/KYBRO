@@ -18,7 +18,7 @@ class FirmaForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Firma
         fields = [
-            "firmenname", "strasse", "plz", "ort", "land", "email", "telefon",
+            "firmenname", "portal_logo", "strasse", "plz", "ort", "land", "email", "telefon",
             "steuernummer", "ust_id", "iban", "bic", "bank", "kontoinhaber",
             "praefix_angebot", "praefix_auftrag", "praefix_rechnung", "standard_steuersatz", "zahlungsziel_tage",
         ]

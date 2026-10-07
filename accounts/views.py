@@ -2,6 +2,7 @@
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.views import LoginView
 from django.contrib.auth.models import Group
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
@@ -10,7 +11,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
-from .forms import BenutzerForm, GruppeForm
+from .forms import AnmeldeForm, BenutzerForm, GruppeForm
 from .mixins import AdminRequiredMixin
 from .modules import AKTION_SCHREIBEN, APP_LABEL, MODULE
 
@@ -155,3 +156,38 @@ class GruppeLoeschenView(AdminRequiredMixin, View):
         gruppe.delete()
         messages.success(request, "Gruppe gelöscht.")
         return redirect("accounts:gruppe_liste")
+
+
+class AnmeldeView(LoginView):
+    """Anmeldeseite mit optionalem Firmenlogo (hochgeladen unter Einstellungen › Firma)."""
+
+    template_name = "accounts/login.html"
+    authentication_form = AnmeldeForm
+    redirect_authenticated_user = True
+
+    def get_context_data(self, **kwargs):
+        from einstellungen.models import Firma
+
+        kontext = super().get_context_data(**kwargs)
+        kontext["hat_logo"] = bool(Firma.holen().portal_logo)
+        return kontext
+
+
+def anmeldelogo(request):
+    """Liefert das Logo der Anmeldeseite. Öffentlich, denn die Anmeldeseite wird ohne Login angezeigt."""
+    import mimetypes
+
+    from django.http import FileResponse, Http404
+
+    from einstellungen.models import Firma
+
+    logo = Firma.holen().portal_logo
+    if not logo:
+        raise Http404
+    try:
+        datei = logo.open("rb")
+    except FileNotFoundError:
+        raise Http404
+    antwort = FileResponse(datei, content_type=mimetypes.guess_type(logo.name)[0] or "image/png")
+    antwort["Cache-Control"] = "public, max-age=300"
+    return antwort
