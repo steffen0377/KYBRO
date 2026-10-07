@@ -307,3 +307,8 @@ html, body { height: 100%; }
 .az-schulung, .anwesenheit-matrix td.az-schulung { background: #d9f2d0; }
 .az-feiertag, .anwesenheit-matrix td.az-feiertag { background: #dee2e6; font-weight: 600; }
 .az-frei, .anwesenheit-matrix td.az-frei { background: #f1f3f5; }
+
+/* Sidebar-Logo: feste Datei core/img/logo.svg, ersatzweise Symbol + Schriftzug */
+.sidebar-logo { max-width: 100%; max-height: 80px; width: auto; height: auto; }
+.sidebar-brand a:not(.ohne-logo) .sidebar-logo-ersatz { display: none; }
+.sidebar-brand a.ohne-logo .sidebar-logo { display: none !important; }

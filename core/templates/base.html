@@ -16,8 +16,12 @@
   <nav class="sidebar sidebar-bg text-white p-3 d-none d-md-block" id="sidebar">
     <div class="sidebar-brand text-center mb-4">
       <a href="{% url 'core:dashboard' %}" class="text-white text-decoration-none">
-        <div class="fs-2 mb-1"><i class="bi bi-box-seam"></i></div>
-        <div class="fw-bold">KYBRO</div>
+        {# Feste Datei: core/static/core/img/logo.svg (fehlt sie, erscheint Symbol und Schriftzug) #}
+        <img src="{% static 'core/img/logo.svg' %}" alt="KYBRO" class="sidebar-logo d-block mx-auto" onerror="this.parentNode.classList.add('ohne-logo')">
+        <div class="sidebar-logo-ersatz">
+          <div class="fs-2 mb-1"><i class="bi bi-box-seam"></i></div>
+          <div class="fw-bold">KYBRO</div>
+        </div>
       </a>
     </div>
     <ul class="nav nav-pills flex-column gap-1">

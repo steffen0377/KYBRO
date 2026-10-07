@@ -22,6 +22,14 @@ class DashboardTests(TestCase):
             antwort, f"{reverse('accounts:login')}?next={reverse('core:dashboard')}"
         )
 
+    def test_sidebar_zeigt_festes_logo(self):
+        user = User.objects.create_user("lena", password="geheim-1234")
+        self.client.force_login(user)
+        antwort = self.client.get(reverse("core:dashboard"))
+        self.assertContains(antwort, "core/img/logo.svg")
+        self.assertContains(antwort, "sidebar-logo")
+        self.assertContains(antwort, "classList.add('ohne-logo')")
+
     def test_angemeldeter_benutzer_sieht_das_dashboard_mit_namen(self):
         user = User.objects.create_user(
             "anna", password="geheim-1234", first_name="Anna", last_name="Beispiel"
