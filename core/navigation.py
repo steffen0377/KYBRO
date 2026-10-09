@@ -65,6 +65,12 @@ MENUE = (
     Abschnitt(),
     Eintrag("Dashboard", "bi-speedometer2", "core:dashboard", praefix="core:dashboard"),
     Gruppe(
+        "zusammenarbeit",
+        "Zusammenarbeit",
+        "bi-diagram-3",
+        (Eintrag("Kalender", "bi-calendar3", "kalender:monat", "kalender:", "kalender"),),
+    ),
+    Gruppe(
         "warenwirtschaft",
         "Warenwirtschaft",
         "bi-shop",
@@ -93,12 +99,6 @@ MENUE = (
                 (Eintrag("Lieferanten", "bi-truck", "stammdaten:lieferanten_liste", "stammdaten:lieferanten", "lieferanten"),),
             ),
         ),
-    ),
-    Gruppe(
-        "zusammenarbeit",
-        "Zusammenarbeit",
-        "bi-diagram-3",
-        (Eintrag("Kalender", "bi-calendar3", "kalender:monat", "kalender:", "kalender"),),
     ),
     Gruppe(
         "personal",
