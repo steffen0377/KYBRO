@@ -10,6 +10,8 @@ def beschriftungen(menue):
     """Alle Beschriftungen des Menüs, Gruppen samt ihren Kindern."""
     ergebnis = []
     for punkt in menue:
+        if punkt["typ"] == "abschnitt" or punkt.get("id") == "benutzer":
+            continue  # Zwischenüberschriften und persönlicher Bereich zählen nicht
         ergebnis.append(punkt["label"])
         ergebnis.extend(kind["label"] for kind in punkt.get("kinder", []))
     return ergebnis
@@ -57,6 +59,22 @@ class DashboardTests(TestCase):
 
 
 class MenueTests(TestCase):
+    def test_persoenlicher_bereich_mit_abmelden_trenner_und_abschnitten(self):
+        admin = User.objects.create_superuser("admin", password="geheim-1234", first_name="Ad", last_name="Min")
+        menue = self.menue_fuer(admin)
+        self.assertEqual(menue[0]["id"], "benutzer")
+        self.assertEqual(menue[0]["label"], "Ad Min")
+        self.assertEqual(menue[0]["kinder"][-1]["label"], "Abmelden")
+        self.assertEqual(menue[1], {"typ": "abschnitt", "label": ""})
+        self.assertIn("Stammdaten", [m["label"] for m in menue if m["typ"] == "abschnitt"])
+        antwort = self.client.get(reverse("core:dashboard"))
+        self.assertContains(antwort, f'action="{reverse("accounts:logout")}"')
+
+    def test_abschnitt_ohne_sichtbare_punkte_entfaellt(self):
+        user = User.objects.create_user("anna", password="geheim-1234")
+        menue = self.menue_fuer(user)
+        self.assertEqual([m["label"] for m in menue if m["typ"] == "abschnitt"], [""])
+
     def menue_fuer(self, user):
         self.client.force_login(user)
         return self.client.get(reverse("core:dashboard")).context["navigation"]
@@ -102,5 +120,5 @@ class MenueTests(TestCase):
 
     def test_dashboard_ist_als_aktiv_markiert(self):
         admin = User.objects.create_superuser("admin", password="geheim-1234")
-        dashboard = self.menue_fuer(admin)[0]
+        dashboard = next(m for m in self.menue_fuer(admin) if m.get("label") == "Dashboard")
         self.assertTrue(dashboard["aktiv"])

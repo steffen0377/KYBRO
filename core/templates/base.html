@@ -26,7 +26,9 @@
     </div>
     <ul class="nav nav-pills flex-column gap-1">
       {% for punkt in navigation %}
-        {% if punkt.typ == "eintrag" %}
+        {% if punkt.typ == "abschnitt" %}
+          {% if punkt.label %}<li class="nav-abschnitt">{{ punkt.label }}</li>{% else %}<li class="nav-trenner" role="separator"></li>{% endif %}
+        {% elif punkt.typ == "eintrag" %}
           <li class="nav-item">
             {% if punkt.verfuegbar %}
               <a class="nav-link text-white {% if punkt.aktiv %}active{% endif %}" href="{{ punkt.url }}"><i class="bi {{ punkt.icon }} me-2"></i>{{ punkt.label }}</a>
@@ -44,7 +46,9 @@
               <ul class="nav flex-column ms-3">
                 {% for kind in punkt.kinder %}
                   <li class="nav-item">
-                    {% if kind.verfuegbar %}
+                    {% if kind.post %}
+                      <form method="post" action="{{ kind.url }}" class="m-0">{% csrf_token %}<button type="submit" class="nav-link text-white-50 w-100 text-start border-0 bg-transparent"><i class="bi {{ kind.icon }} me-2"></i>{{ kind.label }}</button></form>
+                    {% elif kind.verfuegbar %}
                       <a class="nav-link text-white-50 {% if kind.aktiv %}active{% endif %}" href="{{ kind.url }}"><i class="bi {{ kind.icon }} me-2"></i>{{ kind.label }}</a>
                     {% else %}
                       <span class="nav-link disabled text-white-50" title="Folgt in einer späteren Phase"><i class="bi {{ kind.icon }} me-2"></i>{{ kind.label }}</span>
@@ -60,17 +64,10 @@
   </nav>
 
   <div class="flex-grow-1" style="min-width:0;">
-    <div class="topbar d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-white">
+    <div class="topbar d-flex d-md-none align-items-center px-3 py-2 border-bottom bg-white">
       <button class="btn btn-app-outline-secondary d-md-none" type="button" data-toggle-sidebar aria-label="Menü ein- oder ausblenden">
         <i class="bi bi-list"></i>
       </button>
-      <span class="d-none d-md-inline"></span>
-      <div class="d-flex align-items-center">
-        <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-app-outline-secondary btn-sm">Abmelden</button>
-        </form>
-      </div>
     </div>
     <div class="container-fluid p-4">
       {% if testdaten_hinweis %}

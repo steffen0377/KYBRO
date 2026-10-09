@@ -28,6 +28,16 @@ class Eintrag:
     nur_admin: bool = False
     # Nur für Benutzer, die mit einem Mitarbeiter verknüpft sind (Self-Service).
     nur_mitarbeiter: bool = False
+    # Wird als POST-Formular mit Knopf dargestellt (z. B. Abmelden).
+    post: bool = False
+
+
+@dataclass(frozen=True)
+class Abschnitt:
+    """Zwischenüberschrift im Menü; ohne Beschriftung eine Trennlinie.
+    Wird nur angezeigt, wenn darunter mindestens ein sichtbarer Punkt folgt."""
+
+    label: str = ""
 
 
 @dataclass(frozen=True)
@@ -46,15 +56,21 @@ MENUE = (
         "benutzer",
         "",
         "bi-person-circle",
-        (Eintrag("Meine Zeiten", "bi-clock-history", "personal:meine_zeiten", "personal:mein", nur_mitarbeiter=True),),
+        (
+            Eintrag("Meine Zeiten", "bi-clock-history", "personal:meine_zeiten", "personal:mein", nur_mitarbeiter=True),
+            Eintrag("Abmelden", "bi-box-arrow-right", "accounts:logout", "accounts:logout", post=True),
+        ),
         benutzername=True,
     ),
+    Abschnitt(),
     Eintrag("Dashboard", "bi-speedometer2", "core:dashboard", praefix="core:dashboard"),
+    Eintrag("Kalender", "bi-calendar3", "kalender:monat", "kalender:", "kalender"),
+    Abschnitt("Stammdaten"),
+    Eintrag("Kunden", "bi-people", "stammdaten:kunden_liste", "stammdaten:kunden", "kunden"),
     Eintrag("Artikel", "bi-box-seam", "stammdaten:artikel_liste", "stammdaten:artikel", "artikel"),
     Eintrag("Kategorien", "bi-tags", "stammdaten:kategorien_liste", "stammdaten:kategorien", "kategorien"),
     Eintrag("Lager", "bi-archive", "lager:uebersicht", "lager:", "lager"),
-    Eintrag("Kunden", "bi-people", "stammdaten:kunden_liste", "stammdaten:kunden", "kunden"),
-    Eintrag("Kalender", "bi-calendar3", "kalender:monat", "kalender:", "kalender"),
+    Abschnitt("Geschäft"),
     Gruppe(
         "verkauf",
         "Verkauf",
@@ -72,6 +88,7 @@ MENUE = (
         "bi-bag",
         (Eintrag("Lieferanten", "bi-truck", "stammdaten:lieferanten_liste", "stammdaten:lieferanten", "lieferanten"),),
     ),
+    Abschnitt("Verwaltung"),
     Gruppe(
         "personal",
         "Personal",
@@ -124,6 +141,7 @@ def _eintrag(eintrag: Eintrag, aktuelle_view: str) -> dict:
     return {
         "label": eintrag.label,
         "icon": eintrag.icon,
+        "post": eintrag.post,
         "url": url,
         "verfuegbar": url is not None,
         "aktiv": url is not None and aktuelle_view.startswith(praefix),
@@ -133,21 +151,24 @@ def _eintrag(eintrag: Eintrag, aktuelle_view: str) -> dict:
 def baue_menue(user, aktuelle_view: str) -> list[dict]:
     """Liefert das Menü für ``user`` als Liste von Dictionaries für das Template."""
     ergebnis = []
+    offen = None  # noch nicht ausgegebener Abschnitt
     for element in MENUE:
+        if isinstance(element, Abschnitt):
+            offen = {"typ": "abschnitt", "label": element.label}
+            continue
         if not _sichtbar(element, user):
             continue
         if isinstance(element, Eintrag):
-            ergebnis.append({"typ": "eintrag", **_eintrag(element, aktuelle_view)})
-            continue
-        kinder = [
-            _eintrag(kind, aktuelle_view)
-            for kind in element.kinder
-            if _sichtbar(kind, user)
-        ]
-        if not kinder:
-            continue
-        ergebnis.append(
-            {
+            neu = {"typ": "eintrag", **_eintrag(element, aktuelle_view)}
+        else:
+            kinder = [
+                _eintrag(kind, aktuelle_view)
+                for kind in element.kinder
+                if _sichtbar(kind, user)
+            ]
+            if not kinder:
+                continue
+            neu = {
                 "typ": "gruppe",
                 "id": element.id,
                 "label": user.anzeigename if element.benutzername else element.label,
@@ -155,5 +176,8 @@ def baue_menue(user, aktuelle_view: str) -> list[dict]:
                 "kinder": kinder,
                 "aktiv": any(kind["aktiv"] for kind in kinder),
             }
-        )
+        if offen is not None:
+            ergebnis.append(offen)
+            offen = None
+        ergebnis.append(neu)
     return ergebnis

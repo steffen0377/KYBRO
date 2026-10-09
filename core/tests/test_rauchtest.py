@@ -5,7 +5,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from core.navigation import MENUE, Eintrag
+from core.navigation import MENUE, Abschnitt, Eintrag
 from einstellungen.models import Lizenz
 
 User = get_user_model()
@@ -13,7 +13,9 @@ User = get_user_model()
 
 def alle_eintraege():
     for e in MENUE:
-        yield from ([e] if isinstance(e, Eintrag) else e.kinder)
+        if isinstance(e, Abschnitt):
+            continue
+        yield from (k for k in ([e] if isinstance(e, Eintrag) else e.kinder) if not k.post)
 
 
 @override_settings(LIZENZ_PRUEFUNG=True)
@@ -30,5 +32,5 @@ class RauchTests(TestCase):
             antwort = self.client.get(reverse(eintrag.url_name))
             self.assertEqual(antwort.status_code, 200, eintrag.url_name)
         menue = self.client.get(reverse("core:dashboard")).context["navigation"]
-        gruppen = [k for m in menue for k in (m.get("kinder") or [m])]
+        gruppen = [k for m in menue if m["typ"] != "abschnitt" for k in (m.get("kinder") or [m])]
         self.assertTrue(all(k["verfuegbar"] for k in gruppen), "ein Menüpunkt ist noch ausgegraut")
