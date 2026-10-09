@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Kalender abonnieren</h4>
+  <a href="{% url 'kalender:monat' %}" class="btn btn-app-secondary">Zur Übersicht</a>
+</div>
+<div class="alert alert-warning small">
+  Diese Adressen enthalten deinen <strong>persönlichen Schlüssel</strong>. Wer sie kennt, kann die Kalender lesen (nicht ändern). Gib sie nicht weiter.
+  Die Kalender erscheinen in deinem Kalenderprogramm schreibgeschützt und aktualisieren sich nach dessen Abrufintervall (meist etwa stündlich).
+</div>
+{% if alle %}
+<div class="card p-3 mb-3">
+  <h6>Alle meine Kalender in einem</h6>
+  <div class="input-group mb-1"><input class="form-control" readonly value="{{ alle.webcal }}" onclick="this.select()"><a class="btn btn-app-primary" href="{{ alle.webcal }}">Abonnieren</a></div>
+  <div class="small text-muted">https-Adresse für Programme ohne webcal: <code>{{ alle.https }}</code></div>
+</div>
+{% endif %}
+<div class="card p-3 mb-3"><div class="table-responsive">
+<table class="table align-middle mb-0">
+  <thead><tr><th>Kalender</th><th>Adresse</th></tr></thead>
+  <tbody>
+  {% for e in eintraege %}
+    <tr>
+      <td class="text-nowrap"><span class="kal-punkt" style="background:{{ e.quelle.farbe }}"></span> {{ e.quelle.name }}</td>
+      <td><div class="input-group input-group-sm"><input class="form-control" readonly value="{{ e.webcal }}" onclick="this.select()"><a class="btn btn-app-outline-secondary" href="{{ e.webcal }}">Abonnieren</a></div></td>
+    </tr>
+  {% empty %}<tr><td colspan="2" class="text-muted text-center py-3">Keine Kalender sichtbar.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+<form method="post" onsubmit="return confirm('Alle bisherigen Abo-Adressen verlieren ihre Gültigkeit. Fortfahren?')">
+  {% csrf_token %}
+  <button class="btn btn-app-outline-danger btn-sm">Schlüssel erneuern (alte Adressen sperren)</button>
+</form>
+{% endblock %}

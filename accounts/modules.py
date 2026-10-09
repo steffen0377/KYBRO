@@ -20,6 +20,7 @@ MODULE = {
     "abos": "Abonnements",
     "kategorien": "Kategorien",
     "personal": "Personal",
+    "kalender": "Kalender",
     "einstellungen": "Einstellungen",
 }
 

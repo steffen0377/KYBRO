@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "belege",
     "lager",
     "personal",
+    "kalender",
     "api",
 ]
 

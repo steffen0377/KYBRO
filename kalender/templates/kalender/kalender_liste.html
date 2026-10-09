@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Kalender verwalten</h4>
+  <div>
+    <a href="{% url 'kalender:monat' %}" class="btn btn-app-secondary">Zur Übersicht</a>
+    <a href="{% url 'kalender:kalender_neu' %}" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neuer Kalender</a>
+  </div>
+</div>
+<div class="card p-3 mb-3"><div class="table-responsive">
+<table class="table align-middle mb-0">
+  <thead><tr><th>Name</th><th>Beschreibung</th><th class="text-end">Termine</th><th></th></tr></thead>
+  <tbody>
+  {% for k in kalender %}
+    <tr>
+      <td><span class="kal-punkt" style="background:{{ k.farbe }}"></span> {{ k.name }}</td>
+      <td>{{ k.beschreibung }}</td>
+      <td class="text-end">{{ k.termine.count }}</td>
+      <td class="text-end text-nowrap"><a class="btn btn-sm btn-app-outline-secondary" href="{% url 'kalender:kalender_bearbeiten' k.pk %}">Bearbeiten</a></td>
+    </tr>
+  {% empty %}<tr><td colspan="4" class="text-muted text-center py-3">Noch kein eigener Kalender.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+<div class="card p-3">
+  <h6>Systemkalender</h6>
+  <p class="small text-muted">Werden automatisch aus der Personalverwaltung erzeugt und nur Benutzern mit Personal-Leserecht angezeigt. Krankheit, Über-/Fehlstunden und Bemerkungen sind nie enthalten.</p>
+  {% for q in systemkalender %}<div><span class="kal-punkt" style="background:{{ q.farbe }}"></span> <strong>{{ q.name }}</strong> – {{ q.beschreibung }}</div>{% endfor %}
+</div>
+{% endblock %}

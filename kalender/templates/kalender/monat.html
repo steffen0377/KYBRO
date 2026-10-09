@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load rechte %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="mb-0">Kalender {{ monatsname }}</h4>
+  <div class="d-flex gap-2 flex-wrap">
+    <div>
+      <a class="btn btn-app-secondary" href="?monat={{ zurueck }}{% for n, w in auswahl %}&{{ n }}={{ w }}{% endfor %}">&laquo;</a>
+      <a class="btn btn-app-secondary" href="?monat={{ heute_monat }}{% for n, w in auswahl %}&{{ n }}={{ w }}{% endfor %}">Heute</a>
+      <a class="btn btn-app-secondary" href="?monat={{ weiter }}{% for n, w in auswahl %}&{{ n }}={{ w }}{% endfor %}">&raquo;</a>
+    </div>
+    {% if darf_schreiben %}
+      <a class="btn btn-app-primary" href="{% url 'kalender:termin_neu' %}"><i class="bi bi-plus"></i> Termin</a>
+      <a class="btn btn-app-outline-secondary" href="{% url 'kalender:kalender_liste' %}">Kalender verwalten</a>
+    {% endif %}
+    <a class="btn btn-app-outline-secondary" href="{% url 'kalender:abo' %}"><i class="bi bi-rss"></i> Abonnieren</a>
+  </div>
+</div>
+
+<form method="get" class="mb-3 small">
+  <input type="hidden" name="monat" value="{{ monat_param }}">
+  {% for q in quellen %}
+    <label class="me-3"><input type="checkbox" name="k" value="{{ q.schluessel }}" {% if q.schluessel in aktive %}checked{% endif %} onchange="this.form.submit()">
+      <span class="kal-punkt" style="background:{{ q.farbe }}"></span> {{ q.name }}</label>
+  {% empty %}<span class="text-muted">Keine Kalender sichtbar.</span>{% endfor %}
+</form>
+
+<div class="card p-2">
+<table class="kal-grid">
+  <thead><tr><th>Mo</th><th>Di</th><th>Mi</th><th>Do</th><th>Fr</th><th>Sa</th><th>So</th></tr></thead>
+  <tbody>
+  {% for woche in wochen %}
+    <tr>
+      {% for tag in woche %}
+        <td class="{% if not tag.im_monat %}kal-aussen{% endif %} {% if tag.heute %}kal-heute{% endif %}">
+          <div class="kal-tag">
+            {% if darf_schreiben %}<a href="{% url 'kalender:termin_neu' %}?datum={{ tag.datum|date:'Y-m-d' }}" class="kal-neu" title="Termin an diesem Tag">+</a>{% endif %}
+            {{ tag.datum.day }}
+          </div>
+          {% for e in tag.ereignisse %}
+            <div class="kal-ereignis" style="border-left-color:{{ e.farbe }}; background: color-mix(in srgb, {{ e.farbe }} 15%, white);"
+                 title="{{ e.kalendername }}: {{ e.titel }}{% if not e.ganztaegig %} ({{ e.beginn|date:'H:i' }}–{{ e.ende|date:'H:i' }}){% endif %}{% if e.ort %}, {{ e.ort }}{% endif %}">
+              {% if not e.ganztaegig %}<span class="text-muted">{{ e.beginn|date:"H:i" }}</span> {% endif %}
+              {% if e.termin_pk and darf_schreiben %}<a href="{% url 'kalender:termin_bearbeiten' e.termin_pk %}">{{ e.titel }}</a>{% else %}{{ e.titel }}{% endif %}
+            </div>
+          {% endfor %}
+        </td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

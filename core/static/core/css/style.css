@@ -325,3 +325,17 @@ html, body { height: 100%; }
 /* Anwesenheitsübersicht: Zeile beim Daraufzeigen etwas dunkler. Die Zellen haben eigene Hintergrundfarben,
    deshalb wird die ganze Zeile per Filter abgedunkelt (Farben bleiben erkennbar). */
 .anwesenheit-matrix tbody tr:hover > * { filter: brightness(.9); }
+
+/* Kalender: Monatsansicht */
+.kal-grid { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.kal-grid th { text-align: center; font-size: .8rem; padding: .3rem; color: #6c757d; }
+.kal-grid td { vertical-align: top; border: 1px solid #dee2e6; height: 6.5rem; padding: .2rem .3rem; overflow: hidden; }
+.kal-grid td.kal-aussen { background: #f8f9fa; color: #adb5bd; }
+.kal-grid td.kal-heute { box-shadow: inset 0 0 0 2px #0d6efd; }
+.kal-tag { font-size: .75rem; font-weight: 600; display: flex; justify-content: space-between; flex-direction: row-reverse; }
+.kal-neu { visibility: hidden; text-decoration: none; font-weight: 400; }
+.kal-grid td:hover .kal-neu { visibility: visible; }
+.kal-ereignis { font-size: .72rem; line-height: 1.2; margin-top: 2px; padding: 1px 4px; border-left: 3px solid #3b82f6; border-radius: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kal-ereignis a { color: inherit; text-decoration: none; }
+.kal-ereignis a:hover { text-decoration: underline; }
+.kal-punkt { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; vertical-align: middle; }

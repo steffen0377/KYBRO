@@ -45,6 +45,7 @@ MENUE = (
     Eintrag("Kategorien", "bi-tags", "stammdaten:kategorien_liste", "stammdaten:kategorien", "kategorien"),
     Eintrag("Lager", "bi-archive", "lager:uebersicht", "lager:", "lager"),
     Eintrag("Kunden", "bi-people", "stammdaten:kunden_liste", "stammdaten:kunden", "kunden"),
+    Eintrag("Kalender", "bi-calendar3", "kalender:monat", "kalender:", "kalender"),
     Gruppe(
         "verkauf",
         "Verkauf",
