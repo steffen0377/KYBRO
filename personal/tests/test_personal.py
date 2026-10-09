@@ -260,7 +260,9 @@ class RechteTests(TestCase):
         r = self.client.get(reverse("core:dashboard"))
         self.assertNotContains(r, "Meine Zeiten")
         mitarbeiter(benutzer=self.user)
-        self.assertContains(self.client.get(reverse("core:dashboard")), "Meine Zeiten")
+        r = self.client.get(reverse("core:dashboard"))
+        self.assertContains(r, "Meine Zeiten")
+        self.assertContains(r, 'href="#nav-benutzer"')
 
 
 class KalenderTests(TestCase):

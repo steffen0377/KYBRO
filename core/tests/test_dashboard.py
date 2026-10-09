@@ -40,7 +40,8 @@ class DashboardTests(TestCase):
         antwort = self.client.get(reverse("core:dashboard"))
         self.assertEqual(antwort.status_code, 200)
         self.assertContains(antwort, "Willkommen, Anna Beispiel")
-        self.assertContains(antwort, "Angemeldet als")
+        self.assertNotContains(antwort, "Angemeldet als")
+        self.assertNotContains(antwort, "schrittweise")
 
     def test_abmelden_ist_ein_formular_mit_csrf_schutz(self):
         self.client.force_login(User.objects.create_user("anna", password="geheim-1234"))

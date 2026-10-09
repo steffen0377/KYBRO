@@ -66,7 +66,6 @@
       </button>
       <span class="d-none d-md-inline"></span>
       <div class="d-flex align-items-center">
-        <span class="me-3">Angemeldet als <strong>{{ user.anzeigename }}</strong></span>
         <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
           {% csrf_token %}
           <button type="submit" class="btn btn-app-outline-secondary btn-sm">Abmelden</button>

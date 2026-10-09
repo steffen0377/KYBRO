@@ -37,9 +37,18 @@ class Gruppe:
     icon: str
     kinder: tuple[Eintrag, ...] = field(default_factory=tuple)
     nur_admin: bool = False
+    # Beschriftung ist der Name des angemeldeten Benutzers.
+    benutzername: bool = False
 
 
 MENUE = (
+    Gruppe(
+        "benutzer",
+        "",
+        "bi-person-circle",
+        (Eintrag("Meine Zeiten", "bi-clock-history", "personal:meine_zeiten", "personal:mein", nur_mitarbeiter=True),),
+        benutzername=True,
+    ),
     Eintrag("Dashboard", "bi-speedometer2", "core:dashboard", praefix="core:dashboard"),
     Eintrag("Artikel", "bi-box-seam", "stammdaten:artikel_liste", "stammdaten:artikel", "artikel"),
     Eintrag("Kategorien", "bi-tags", "stammdaten:kategorien_liste", "stammdaten:kategorien", "kategorien"),
@@ -72,7 +81,6 @@ MENUE = (
             Eintrag("Anwesenheit", "bi-calendar-check", "personal:anwesenheit", "personal:anwesenheit", "personal"),
             Eintrag("Urlaub", "bi-sun", "personal:urlaub_liste", "personal:urlaub", "personal"),
             Eintrag("Über-/Fehlstunden", "bi-plus-slash-minus", "personal:stunden_liste", "personal:stunden", "personal"),
-            Eintrag("Meine Zeiten", "bi-clock-history", "personal:meine_zeiten", "personal:mein", nur_mitarbeiter=True),
         ),
     ),
     Gruppe(
@@ -142,7 +150,7 @@ def baue_menue(user, aktuelle_view: str) -> list[dict]:
             {
                 "typ": "gruppe",
                 "id": element.id,
-                "label": element.label,
+                "label": user.anzeigename if element.benutzername else element.label,
                 "icon": element.icon,
                 "kinder": kinder,
                 "aktiv": any(kind["aktiv"] for kind in kinder),
