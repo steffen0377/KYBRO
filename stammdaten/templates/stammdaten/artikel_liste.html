@@ -5,9 +5,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4>Artikel{% if gewaehlte_kategorie %} — Kategorie: {{ gewaehlte_kategorie.name }}{% endif %}</h4>
-  {% if user|darf:"artikel:schreiben" %}
-    <a href="{% url 'stammdaten:artikel_neu' %}" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neuer Artikel</a>
-  {% endif %}
+  <div class="d-flex gap-2">
+    {% if user|darf:"kategorien:lesen" %}
+      <a href="{% url 'stammdaten:kategorien_liste' %}" class="btn btn-app-outline-secondary"><i class="bi bi-tags"></i> Kategorien verwalten</a>
+    {% endif %}
+    {% if user|darf:"artikel:schreiben" %}
+      <a href="{% url 'stammdaten:artikel_neu' %}" class="btn btn-app-primary"><i class="bi bi-plus"></i> Neuer Artikel</a>
+    {% endif %}
+  </div>
 </div>
 <div class="mb-3">
   <div class="position-relative" style="max-width:420px;">

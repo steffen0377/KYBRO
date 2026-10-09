@@ -23,7 +23,7 @@ class Eintrag:
     icon: str
     url_name: str
     # Aktiv, wenn der Name der aktuellen View mit diesem Präfix beginnt.
-    praefix: str = ""
+    praefix: str | tuple[str, ...] = ""
     modul: str | None = None
     nur_admin: bool = False
     # Nur für Benutzer, die mit einem Mitarbeiter verknüpft sind (Self-Service).
@@ -45,7 +45,7 @@ class Gruppe:
     id: str
     label: str
     icon: str
-    kinder: tuple[Eintrag, ...] = field(default_factory=tuple)
+    kinder: tuple["Eintrag | Gruppe", ...] = field(default_factory=tuple)
     nur_admin: bool = False
     # Beschriftung ist der Name des angemeldeten Benutzers.
     benutzername: bool = False
@@ -64,34 +64,45 @@ MENUE = (
     ),
     Abschnitt(),
     Eintrag("Dashboard", "bi-speedometer2", "core:dashboard", praefix="core:dashboard"),
-    Eintrag("Kalender", "bi-calendar3", "kalender:monat", "kalender:", "kalender"),
-    Abschnitt("Stammdaten"),
-    Eintrag("Kunden", "bi-people", "stammdaten:kunden_liste", "stammdaten:kunden", "kunden"),
-    Eintrag("Artikel", "bi-box-seam", "stammdaten:artikel_liste", "stammdaten:artikel", "artikel"),
-    Eintrag("Kategorien", "bi-tags", "stammdaten:kategorien_liste", "stammdaten:kategorien", "kategorien"),
-    Eintrag("Lager", "bi-archive", "lager:uebersicht", "lager:", "lager"),
-    Abschnitt("Geschäft"),
     Gruppe(
-        "verkauf",
-        "Verkauf",
-        "bi-cart",
+        "warenwirtschaft",
+        "Warenwirtschaft",
+        "bi-shop",
         (
-            Eintrag("Angebote", "bi-file-earmark-text", "belege:angebote_liste", "belege:angebote", "angebote"),
-            Eintrag("Aufträge", "bi-clipboard-check", "belege:auftraege_liste", "belege:auftraege", "auftraege"),
-            Eintrag("Rechnungen", "bi-receipt", "belege:rechnungen_liste", "belege:rechnungen", "rechnungen"),
-            Eintrag("Abonnements", "bi-repeat", "belege:abos_liste", "belege:abos", "abos"),
+            Eintrag("Kunden", "bi-people", "stammdaten:kunden_liste", "stammdaten:kunden", "kunden"),
+            Eintrag(
+                "Artikel", "bi-box-seam", "stammdaten:artikel_liste",
+                ("stammdaten:artikel", "stammdaten:kategorien"), "artikel",
+            ),
+            Eintrag("Lager", "bi-archive", "lager:uebersicht", "lager:", "lager"),
+            Gruppe(
+                "verkauf",
+                "Verkauf",
+                "bi-cart",
+                (
+                    Eintrag("Angebote", "bi-file-earmark-text", "belege:angebote_liste", "belege:angebote", "angebote"),
+                    Eintrag("Aufträge", "bi-clipboard-check", "belege:auftraege_liste", "belege:auftraege", "auftraege"),
+                    Eintrag("Rechnungen", "bi-receipt", "belege:rechnungen_liste", "belege:rechnungen", "rechnungen"),
+                    Eintrag("Abonnements", "bi-repeat", "belege:abos_liste", "belege:abos", "abos"),
+                ),
+            ),
+            Gruppe(
+                "einkauf",
+                "Einkauf",
+                "bi-bag",
+                (Eintrag("Lieferanten", "bi-truck", "stammdaten:lieferanten_liste", "stammdaten:lieferanten", "lieferanten"),),
+            ),
         ),
     ),
     Gruppe(
-        "einkauf",
-        "Einkauf",
-        "bi-bag",
-        (Eintrag("Lieferanten", "bi-truck", "stammdaten:lieferanten_liste", "stammdaten:lieferanten", "lieferanten"),),
+        "zusammenarbeit",
+        "Zusammenarbeit",
+        "bi-diagram-3",
+        (Eintrag("Kalender", "bi-calendar3", "kalender:monat", "kalender:", "kalender"),),
     ),
-    Abschnitt("Verwaltung"),
     Gruppe(
         "personal",
-        "Personal",
+        "Personalverwaltung",
         "bi-person-badge",
         (
             Eintrag("Mitarbeiter", "bi-people", "personal:mitarbeiter_liste", "personal:mitarbeiter", "personal"),
@@ -108,6 +119,7 @@ MENUE = (
             Eintrag("Benutzer", "bi-person", "accounts:benutzer_liste", "accounts:benutzer", nur_admin=True),
             Eintrag("Gruppen und Rechte", "bi-shield-lock", "accounts:gruppe_liste", "accounts:gruppe", nur_admin=True),
             Eintrag("Personal", "bi-person-badge", "personal:einstellungen", "personal:einstellungen", nur_admin=True),
+            Eintrag("Kalender", "bi-calendar3", "einstellungen:kalender", "einstellungen:kalender", nur_admin=True),
             Eintrag("Firma und Dokumente", "bi-building-gear", "einstellungen:firma", "einstellungen:", nur_admin=True),
         ),
         nur_admin=True,
@@ -148,6 +160,25 @@ def _eintrag(eintrag: Eintrag, aktuelle_view: str) -> dict:
     }
 
 
+def _baue(element, user, aktuelle_view: str) -> dict | None:
+    """Wertet einen Menüeintrag oder eine (auch verschachtelte) Gruppe für ``user`` aus."""
+    if not _sichtbar(element, user):
+        return None
+    if isinstance(element, Eintrag):
+        return {"typ": "eintrag", **_eintrag(element, aktuelle_view)}
+    kinder = [k for k in (_baue(kind, user, aktuelle_view) for kind in element.kinder) if k]
+    if not kinder:
+        return None
+    return {
+        "typ": "gruppe",
+        "id": element.id,
+        "label": user.anzeigename if element.benutzername else element.label,
+        "icon": element.icon,
+        "kinder": kinder,
+        "aktiv": any(kind["aktiv"] for kind in kinder),
+    }
+
+
 def baue_menue(user, aktuelle_view: str) -> list[dict]:
     """Liefert das Menü für ``user`` als Liste von Dictionaries für das Template."""
     ergebnis = []
@@ -156,26 +187,9 @@ def baue_menue(user, aktuelle_view: str) -> list[dict]:
         if isinstance(element, Abschnitt):
             offen = {"typ": "abschnitt", "label": element.label}
             continue
-        if not _sichtbar(element, user):
+        neu = _baue(element, user, aktuelle_view)
+        if neu is None:
             continue
-        if isinstance(element, Eintrag):
-            neu = {"typ": "eintrag", **_eintrag(element, aktuelle_view)}
-        else:
-            kinder = [
-                _eintrag(kind, aktuelle_view)
-                for kind in element.kinder
-                if _sichtbar(kind, user)
-            ]
-            if not kinder:
-                continue
-            neu = {
-                "typ": "gruppe",
-                "id": element.id,
-                "label": user.anzeigename if element.benutzername else element.label,
-                "icon": element.icon,
-                "kinder": kinder,
-                "aktiv": any(kind["aktiv"] for kind in kinder),
-            }
         if offen is not None:
             ergebnis.append(offen)
             offen = None

@@ -11,11 +11,15 @@ from einstellungen.models import Lizenz
 User = get_user_model()
 
 
-def alle_eintraege():
-    for e in MENUE:
+def alle_eintraege(elemente=MENUE):
+    for e in elemente:
         if isinstance(e, Abschnitt):
             continue
-        yield from (k for k in ([e] if isinstance(e, Eintrag) else e.kinder) if not k.post)
+        if isinstance(e, Eintrag):
+            if not e.post:
+                yield e
+        else:
+            yield from alle_eintraege(e.kinder)
 
 
 @override_settings(LIZENZ_PRUEFUNG=True)
@@ -32,5 +36,13 @@ class RauchTests(TestCase):
             antwort = self.client.get(reverse(eintrag.url_name))
             self.assertEqual(antwort.status_code, 200, eintrag.url_name)
         menue = self.client.get(reverse("core:dashboard")).context["navigation"]
-        gruppen = [k for m in menue if m["typ"] != "abschnitt" for k in (m.get("kinder") or [m])]
-        self.assertTrue(all(k["verfuegbar"] for k in gruppen), "ein Menüpunkt ist noch ausgegraut")
+        def blaetter(punkte):
+            for m in punkte:
+                if m["typ"] == "abschnitt":
+                    continue
+                if m["typ"] == "gruppe":
+                    yield from blaetter(m["kinder"])
+                else:
+                    yield m
+
+        self.assertTrue(all(k["verfuegbar"] for k in blaetter(menue)), "ein Menüpunkt ist noch ausgegraut")

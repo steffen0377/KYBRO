@@ -13,7 +13,7 @@ def beschriftungen(menue):
         if punkt["typ"] == "abschnitt" or punkt.get("id") == "benutzer":
             continue  # Zwischenüberschriften und persönlicher Bereich zählen nicht
         ergebnis.append(punkt["label"])
-        ergebnis.extend(kind["label"] for kind in punkt.get("kinder", []))
+        ergebnis.extend(beschriftungen(punkt.get("kinder", [])))
     return ergebnis
 
 
@@ -66,9 +66,17 @@ class MenueTests(TestCase):
         self.assertEqual(menue[0]["label"], "Ad Min")
         self.assertEqual(menue[0]["kinder"][-1]["label"], "Abmelden")
         self.assertEqual(menue[1], {"typ": "abschnitt", "label": ""})
-        self.assertIn("Stammdaten", [m["label"] for m in menue if m["typ"] == "abschnitt"])
         antwort = self.client.get(reverse("core:dashboard"))
         self.assertContains(antwort, f'action="{reverse("accounts:logout")}"')
+
+    def test_verkauf_und_einkauf_sind_untermenues_der_warenwirtschaft(self):
+        admin = User.objects.create_superuser("admin", password="geheim-1234")
+        menue = {m["id"]: m for m in self.menue_fuer(admin) if m["typ"] == "gruppe"}
+        ww = {k.get("id") or k["label"]: k for k in menue["warenwirtschaft"]["kinder"]}
+        self.assertEqual([k["label"] for k in ww["verkauf"]["kinder"]],
+                         ["Angebote", "Aufträge", "Rechnungen", "Abonnements"])
+        self.assertEqual([k["label"] for k in ww["einkauf"]["kinder"]], ["Lieferanten"])
+        self.assertEqual([k["label"] for k in menue["zusammenarbeit"]["kinder"]], ["Kalender"])
 
     def test_abschnitt_ohne_sichtbare_punkte_entfaellt(self):
         user = User.objects.create_user("anna", password="geheim-1234")
@@ -92,7 +100,9 @@ class MenueTests(TestCase):
             )
         )
         user.groups.add(gruppe)
-        self.assertEqual(beschriftungen(self.menue_fuer(user)), ["Dashboard", "Lager"])
+        self.assertEqual(
+            beschriftungen(self.menue_fuer(user)), ["Dashboard", "Warenwirtschaft", "Lager"]
+        )
 
     def test_gruppe_ohne_sichtbare_eintraege_wird_ausgeblendet(self):
         user = User.objects.create_user("anna", password="geheim-1234")
@@ -115,7 +125,10 @@ class MenueTests(TestCase):
     def test_administrator_sieht_alle_bereiche(self):
         admin = User.objects.create_superuser("admin", password="geheim-1234")
         namen = beschriftungen(self.menue_fuer(admin))
-        for erwartet in ("Dashboard", "Artikel", "Kunden", "Verkauf", "Einkauf", "Einstellungen"):
+        for erwartet in (
+            "Dashboard", "Artikel", "Kunden", "Warenwirtschaft", "Verkauf", "Einkauf",
+            "Zusammenarbeit", "Kalender", "Personalverwaltung", "Einstellungen",
+        ):
             self.assertIn(erwartet, namen)
 
     def test_dashboard_ist_als_aktiv_markiert(self):
