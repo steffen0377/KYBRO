@@ -1,7 +1,7 @@
 {# Ein Menüpunkt oder eine (verschachtelte) Gruppe; ebene="oben" oder "kind" #}
 {% if punkt.typ == "gruppe" %}
 <li class="nav-item">
-  <a class="nav-link {% if ebene == 'oben' %}text-white{% else %}text-white-50{% endif %} d-flex align-items-center {% if not punkt.aktiv %}collapsed{% endif %}" href="#nav-{{ punkt.id }}" data-bs-toggle="collapse" role="button" aria-expanded="{% if punkt.aktiv %}true{% else %}false{% endif %}" aria-controls="nav-{{ punkt.id }}">
+  <a class="nav-link text-white d-flex align-items-center {% if not punkt.aktiv %}collapsed{% endif %}" href="#nav-{{ punkt.id }}" data-bs-toggle="collapse" role="button" aria-expanded="{% if punkt.aktiv %}true{% else %}false{% endif %}" aria-controls="nav-{{ punkt.id }}">
     <i class="bi {{ punkt.icon }} me-2"></i>{{ punkt.label }}
     <i class="bi bi-chevron-down ms-auto small nav-chevron"></i>
   </a>
@@ -14,9 +14,9 @@
 {% else %}
 <li class="nav-item">
   {% if punkt.post %}
-    <form method="post" action="{{ punkt.url }}" class="m-0">{% csrf_token %}<button type="submit" class="nav-link text-white-50 w-100 text-start border-0 bg-transparent"><i class="bi {{ punkt.icon }} me-2"></i>{{ punkt.label }}</button></form>
+    <form method="post" action="{{ punkt.url }}" class="m-0">{% csrf_token %}<button type="submit" class="nav-link text-white w-100 text-start border-0 bg-transparent"><i class="bi {{ punkt.icon }} me-2"></i>{{ punkt.label }}</button></form>
   {% elif punkt.verfuegbar %}
-    <a class="nav-link {% if ebene == 'oben' %}text-white{% else %}text-white-50{% endif %} {% if punkt.aktiv %}active{% endif %}" href="{{ punkt.url }}"><i class="bi {{ punkt.icon }} me-2"></i>{{ punkt.label }}</a>
+    <a class="nav-link text-white {% if punkt.aktiv %}active{% endif %}" href="{{ punkt.url }}"><i class="bi {{ punkt.icon }} me-2"></i>{{ punkt.label }}</a>
   {% else %}
     <span class="nav-link disabled text-white-50" title="Folgt in einer späteren Phase"><i class="bi {{ punkt.icon }} me-2"></i>{{ punkt.label }}</span>
   {% endif %}
