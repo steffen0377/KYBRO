@@ -1,0 +1,4 @@
+# Nur für die Entwicklung und die Tests (nicht im Betrieb nötig)
+-r requirements.txt
+# Echter CalDAV-Server für die Gegenprobe des Kalender-Abgleichs (kalender/tests/test_caldav.py); GPLv3, wird nicht ausgeliefert
+radicale>=3.2

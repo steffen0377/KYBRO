@@ -1,0 +1,12 @@
+# /etc/systemd/system/kybro-kalender.timer
+#   sudo systemctl enable --now kybro-kalender.timer
+#   Prüfen: systemctl list-timers kybro-kalender.timer   |   Protokoll: journalctl -u kybro-kalender.service
+[Unit]
+Description=KYBRO: Kalender alle 10 Minuten abgleichen
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target

@@ -7,6 +7,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from core.fields import VerschluesseltesTextFeld
+
 
 def neue_uid() -> str:
     return f"{uuid.uuid4()}@kybro"
@@ -90,3 +92,61 @@ class KalenderZugang(models.Model):
     def erneuern(self) -> None:
         self.schluessel = neuer_schluessel()
         self.save(update_fields=["schluessel"])
+
+
+class CalDavVerbindung(models.Model):
+    """Verbindung zu einem CalDAV-Server (Nextcloud, Radicale, …) für den Abgleich. Einzeleintrag."""
+
+    aktiv = models.BooleanField("Abgleich aktiv", default=False)
+    url = models.CharField(
+        "Server-Adresse", max_length=300, blank=True,
+        help_text="Nextcloud: https://cloud.example.de (die Endung /remote.php/dav wird bei Bedarf ergänzt). Radicale: http://server:5232",
+    )
+    benutzer = models.CharField("Benutzer", max_length=150, blank=True, help_text="Dienstkonto, z. B. kybro-sync")
+    passwort = VerschluesseltesTextFeld("Passwort", blank=True, help_text="Bei Nextcloud ein App-Passwort verwenden.")
+    tls_pruefen = models.BooleanField("TLS-Zertifikat prüfen", default=True)
+    zuletzt_abgeglichen = models.DateTimeField("Zuletzt abgeglichen", null=True, blank=True)
+    letzter_status = models.TextField("Letztes Ergebnis", blank=True)
+
+    class Meta:
+        verbose_name = "CalDAV-Verbindung"
+        verbose_name_plural = "CalDAV-Verbindung"
+
+    def __str__(self):
+        return "CalDAV-Verbindung"
+
+    @classmethod
+    def holen(cls) -> "CalDavVerbindung":
+        return cls.objects.get_or_create(pk=1)[0]
+
+    @property
+    def eingerichtet(self) -> bool:
+        return bool(self.url and self.benutzer and self.passwort)
+
+
+class Zuordnung(models.Model):
+    """Welcher KYBRO-Kalender in welchen Kalender auf dem Server geschrieben wird."""
+
+    quelle = models.CharField("KYBRO-Kalender", max_length=20, unique=True, help_text="k<ID>, urlaub oder anwesenheit")
+    ziel_url = models.CharField("Zielkalender (Adresse)", max_length=500)
+    ziel_name = models.CharField("Zielkalender", max_length=150, blank=True)
+
+    class Meta:
+        verbose_name = "Zuordnung"
+        verbose_name_plural = "Zuordnungen"
+        ordering = ["quelle"]
+
+    def __str__(self):
+        return f"{self.quelle} → {self.ziel_name or self.ziel_url}"
+
+
+class SyncEintrag(models.Model):
+    """Was bereits auf den Server geschrieben wurde (Prüfsumme je Termin), damit nur Änderungen übertragen werden."""
+
+    zuordnung = models.ForeignKey(Zuordnung, on_delete=models.CASCADE, related_name="eintraege")
+    uid = models.CharField(max_length=120)
+    pruefsumme = models.CharField(max_length=64)
+    ende = models.DateField()
+
+    class Meta:
+        unique_together = [("zuordnung", "uid")]

@@ -1,0 +1,13 @@
+# /etc/systemd/system/kybro-kalender.service
+# Gleicht die KYBRO-Kalender mit dem eingerichteten CalDAV-Server ab (gesteuert durch kybro-kalender.timer).
+[Unit]
+Description=KYBRO: Kalender mit CalDAV-Server abgleichen
+After=mariadb.service network-online.target
+
+[Service]
+Type=oneshot
+User=kybro
+Group=kybro
+WorkingDirectory=/opt/kybro
+EnvironmentFile=/opt/kybro/.env
+ExecStart=/opt/kybro/venv/bin/python manage.py kalender_abgleich

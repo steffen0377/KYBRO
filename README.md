@@ -19,6 +19,7 @@ Alle sechs Phasen der Ablösung sind umgesetzt. Offen sind nur die Abnahme durch
 | 5 | Abonnements, Einstellungen, Lizenzen, LDAP, Mobile-API | fertig |
 | 6 | Abnahme und Betrieb (Dokumentation, Dienste) | fertig, Abnahme offen |
 | 7 | Personalverwaltung (Mitarbeiter, Verträge, Urlaub, Anwesenheit) | fertig |
+| 8 | Kalender (eigene Kalender, Abo-Feed, Abgleich mit CalDAV-Servern wie Nextcloud) | fertig |
 
 Geplante Erweiterungen: Zahlungsabgleich, Versand von Angeboten und Rechnungen per E-Mail aus der
 Anwendung (die SMTP-Einstellungen und der Versandbaustein `einstellungen/mail.py` sind vorbereitet).

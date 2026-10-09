@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Einstellungen</h4>
+{% include "einstellungen/_register.html" %}
+
+<form method="post" class="card p-4 mb-3">
+  {% csrf_token %}
+  <h5 class="mb-1">{{ titel }}</h5>
+  <p class="small text-muted">KYBRO schreibt seine Kalender über CalDAV in Kalender auf einem Server, die dort dann auf allen Geräten erscheinen
+    (einseitig: KYBRO ist die führende Quelle, Änderungen auf dem Server werden beim nächsten Abgleich überschrieben). Dafür am besten ein eigenes
+    Dienstkonto verwenden, dem die Zielkalender gehören.</p>
+  {% for fehler in form.non_field_errors %}<div class="alert alert-app-danger">{{ fehler }}</div>{% endfor %}
+  <div class="row">
+    {% for feld in form %}<div class="col-md-6">{% include "core/feld.html" with feld=feld %}</div>{% endfor %}
+  </div>
+  <div>
+    <button class="btn btn-app-primary" type="submit" name="aktion" value="speichern">Speichern</button>
+    <button class="btn btn-app-outline-secondary" type="submit" name="aktion" value="testen">Speichern und Verbindung testen</button>
+  </div>
+</form>
+
+<form method="post" class="card p-4 mb-3">
+  {% csrf_token %}
+  <input type="hidden" name="aktion" value="zuordnung">
+  <h5 class="mb-1">Zuordnung der Kalender</h5>
+  <p class="small text-muted">Welcher KYBRO-Kalender soll in welchen Kalender auf dem Server geschrieben werden?
+    {% if not entdeckt %}Mit „Speichern und Verbindung testen“ werden die vorhandenen Kalender geladen. {% endif %}
+    Ein Zielkalender sollte nur von KYBRO befüllt werden. Wird eine Zuordnung geändert oder entfernt, löscht KYBRO die von ihm geschriebenen Termine im alten Zielkalender.</p>
+  <div class="table-responsive">
+  <table class="table align-middle">
+    <thead><tr><th>KYBRO-Kalender</th><th>Zielkalender auf dem Server</th><th>oder neu anlegen</th></tr></thead>
+    <tbody>
+    {% for z in zeilen %}
+      <tr>
+        <td><span class="kal-punkt" style="background:{{ z.quelle.farbe }}"></span> {{ z.quelle.name }}{% if z.quelle.system %} <span class="badge text-bg-secondary">System</span>{% endif %}</td>
+        <td>
+          <select class="form-select form-select-sm" name="ziel_{{ z.quelle.schluessel }}">
+            <option value="">– nicht abgleichen –</option>
+            {% for o in z.optionen %}<option value="{{ o.url }}" {% if o.url == z.ziel %}selected{% endif %}>{{ o.name }}</option>{% endfor %}
+          </select>
+        </td>
+        <td><input class="form-control form-control-sm" name="neu_{{ z.quelle.schluessel }}" placeholder="z. B. KYBRO {{ z.quelle.name }}"></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <div><button class="btn btn-app-primary" type="submit">Zuordnung speichern</button></div>
+</form>
+
+<div class="card p-4">
+  <h5 class="mb-1">Abgleich</h5>
+  <p class="small text-muted">Der Abgleich läuft automatisch, wenn der Systemdienst <code>kybro-kalender.timer</code> eingerichtet ist (siehe docs/Kalender.md); hier lässt er sich sofort auslösen.</p>
+  <form method="post" class="mb-3">{% csrf_token %}
+    <button class="btn btn-app-primary" type="submit" name="aktion" value="abgleichen" {% if not verbindung.eingerichtet %}disabled{% endif %}>Jetzt abgleichen</button>
+  </form>
+  {% if verbindung.zuletzt_abgeglichen %}
+    <div class="small">Zuletzt: {{ verbindung.zuletzt_abgeglichen|date:"d.m.Y H:i" }} Uhr</div>
+    <pre class="small mb-0">{{ verbindung.letzter_status }}</pre>
+  {% else %}<div class="small text-muted">Noch nicht abgeglichen.</div>{% endif %}
+</div>
+{% endblock %}

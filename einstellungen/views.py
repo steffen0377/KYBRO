@@ -26,7 +26,7 @@ from .models import Authentifizierung, BriefbogenElement, Firma, Lizenz, Nummern
 
 REGISTER = (
     ("firma", "Firma"), ("briefbogen", "Briefbogen"), ("nummernkreise", "Nummernkreise"), ("mail", "E-Mail"),
-    ("formulare", "Formulare"), ("lizenzen", "Lizenzen"), ("anmeldung", "Anmeldung"),
+    ("formulare", "Formulare"), ("kalender", "Kalender"), ("lizenzen", "Lizenzen"), ("anmeldung", "Anmeldung"),
 )
 
 
