@@ -14,7 +14,7 @@ STABILER_STEMPEL = datetime.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
 
 def _escape(text: str) -> str:
     return (
-        (text or "").replace("\\", "\\\\").replace(";", "\;").replace(",", "\\,").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\\n")
+        (text or "").replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\\n")
     )
 
 
